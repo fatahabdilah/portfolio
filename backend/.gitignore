@@ -1,0 +1,7 @@
+# Aturan Khusus Backend
+
+# File Rahasia (Wajib - ini akan menyimpan MONGO_URI dan SECRET key)
+.env
+
+# Dependencies (Sudah diabaikan di root, ini hanya untuk kejelasan)
+/node_modules

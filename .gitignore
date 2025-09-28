@@ -1,0 +1,8 @@
+# Aturan Global untuk Project MERN
+
+# File Rahasia Lingkungan (Wajib disembunyikan!)
+.env
+
+# Dependencies/Modules
+# Ini mengabaikan semua folder node_modules di semua level
+node_modules/
