@@ -5,6 +5,7 @@ require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const userRoutes = require("./routes/userRoutes"); // <-- WAJIB: Import rute pengguna
 
 // Inisialisasi aplikasi Express
 const app = express();
@@ -25,9 +26,13 @@ app.use(express.json());
 // ---------------------------------
 // | 4. ROUTES (Tempatkan di sini) |
 // ---------------------------------
+// Rute Pengujian Root
 app.get("/", (req, res) => {
-  res.send("Server My-Portfolio berjalan! Siap terhubung ke DB.");
+  res.send("Server My-Portfolio running! Ready to connect to DB.");
 });
+
+// Rute Pengguna untuk Login dan Daftar Akun
+app.use("/api/users", userRoutes); // <-- WAJIB: Gunakan rute pengguna
 
 // -----------------------------------
 // | 5. KONEKSI DATABASE & SERVER START |
@@ -36,14 +41,18 @@ const connectDB = async () => {
   try {
     // Mencoba menghubungkan ke MongoDB
     await mongoose.connect(MONGO_URI);
+
+    // Pesan log Bahasa Inggris
     console.log("✅ MongoDB connected successfully!");
 
     // Menjalankan server Express hanya setelah koneksi DB sukses
     app.listen(PORT, () => {
+      // Pesan log Bahasa Inggris
       console.log(`🚀 Server running on http://localhost:${PORT}`);
       console.log("-------------------------------------------");
     });
   } catch (err) {
+    // Pesan log Bahasa Inggris
     console.error("❌ CONNECTION FAILED:", err.message);
     // Keluar dari proses jika koneksi gagal
     process.exit(1);
