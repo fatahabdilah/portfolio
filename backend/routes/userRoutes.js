@@ -5,7 +5,7 @@ const requireAuth = require("../middleware/requireAuth"); // <-- WAJIB: Import M
 const router = express.Router();
 
 // POST /api/users/register (PUBLIK)
-router.post("/register", registerUser);
+// router.post("/register", registerUser);
 
 // POST /api/users/login (PUBLIK)
 router.post("/login", loginUser);

@@ -23,6 +23,12 @@ const userSchema = new Schema(
       type: String,
       required: true,
     },
+    role: {
+      type: String,
+      enum: ['user', 'admin'], // Hanya boleh 'user' atau 'admin'
+      default: 'user', // Default untuk keamanan
+      required: true,
+    }
   },
   { timestamps: true }
 );
