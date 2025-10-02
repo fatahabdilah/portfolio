@@ -25,10 +25,12 @@ const userSchema = new Schema(
     },
     role: {
       type: String,
-      enum: ['user', 'admin'], // Hanya boleh 'user' atau 'admin'
-      default: 'user', // Default untuk keamanan
+      enum: ["user", "admin"], // Hanya boleh 'user' atau 'admin'
+      default: "user", // Default untuk keamanan
       required: true,
-    }
+    },
+    resetPasswordToken: String,
+    resetPasswordExpires: Date,
   },
   { timestamps: true }
 );
