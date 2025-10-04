@@ -2,12 +2,40 @@ const User = require("../models/UserModel");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const bcrypt = require("bcrypt");
+const nodemailer = require("nodemailer");
+
 
 // Fungsi helper untuk membuat token JWT
 const createToken = (_id) => {
   // Kita butuh SECRET key di .env
   return jwt.sign({ _id }, process.env.SECRET, { expiresIn: "3d" });
 };
+
+const sendEmail = async (email, subject, text, html) => {
+
+  const transporter = nodemailer.createTransport({
+    host: process.env.EMAIL_SERVICE_HOST,
+    port: process.env.EMAIL_SERVICE_PORT,
+    secure: false, // true jika port 465, false jika port 587
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
+    },
+  });
+
+  const mailOptions = {
+    from: process.env.EMAIL_USER, // Alamat pengirim
+    to: email, // Alamat penerima (user yang lupa password)
+    subject: subject,
+    text: text,
+    html: html,
+  };
+
+  await transporter.sendMail(mailOptions);
+  console.log('[EMAIL] Reset password email sent to ${email}');
+};
+
+    
 
 // --- Controller: Register ---
 const registerUser = async (req, res) => {
@@ -68,11 +96,22 @@ const forgotPassword = async (req, res) => {
 
     await user.save();
 
+    const resetURL = `http://localhost:5000/reset-password/${resetToken}`;
+
+    const subject = 'Password Reset Link for My-Portfolio';
+    const text = `You requested a password reset. Please use the following link to reset your password: ${resetURL}`;
+    const html = `<p>You requested a password reset. Please click the link below to reset your password:</p>
+                  <a href="${resetURL}">Reset Password</a>
+                  <p>This link is valid for 1 hour.</p>`;
+
+    await sendEmail(user.email, subject, text, html);
+
     res.status(200).json({
       message:
         "Reset token generated and saved (check your console/db for the token)",
       resetToken,
     });
+
   } catch (error) {
     console.error("Password reset request failed:", error.message);
     res.status(400).json({ error: error.message });
