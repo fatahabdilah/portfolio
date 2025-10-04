@@ -4,7 +4,6 @@ const crypto = require("crypto");
 const bcrypt = require("bcrypt");
 const nodemailer = require("nodemailer");
 
-
 // Fungsi helper untuk membuat token JWT
 const createToken = (_id) => {
   // Kita butuh SECRET key di .env
@@ -12,7 +11,6 @@ const createToken = (_id) => {
 };
 
 const sendEmail = async (email, subject, text, html) => {
-
   const transporter = nodemailer.createTransport({
     host: process.env.EMAIL_SERVICE_HOST,
     port: process.env.EMAIL_SERVICE_PORT,
@@ -34,8 +32,6 @@ const sendEmail = async (email, subject, text, html) => {
   await transporter.sendMail(mailOptions);
   console.log('[EMAIL] Reset password email sent to ${email}');
 };
-
-    
 
 // --- Controller: Register ---
 const registerUser = async (req, res) => {
@@ -98,11 +94,43 @@ const forgotPassword = async (req, res) => {
 
     const resetURL = `http://localhost:5000/reset-password/${resetToken}`;
 
-    const subject = 'Password Reset Link for My-Portfolio';
+    const subject = "Password Reset Link for My-Portfolio";
     const text = `You requested a password reset. Please use the following link to reset your password: ${resetURL}`;
-    const html = `<p>You requested a password reset. Please click the link below to reset your password:</p>
-                  <a href="${resetURL}">Reset Password</a>
-                  <p>This link is valid for 1 hour.</p>`;
+    const html = `<div style="font-family: 'Poppins', Arial, sans-serif; padding: 25px; border-radius: 12px; max-width: 600px; margin: auto; background-color: #f9f9f9; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+                    <h2 style="color: #222; border-left: 5px solid #2196F3; padding-left: 10px; font-size: 22px;">
+                      Permintaan Reset Password
+                    </h2>
+                    
+                    <p style="font-size: 16px; color: #333;">
+                      Halo <strong>${user.name}</strong>,
+                    </p>
+                    
+                    <p style="font-size: 16px; color: #555; line-height: 1.6;">
+                      Kami menerima permintaan untuk mereset password akun Anda (<strong>${user.email}</strong>).  
+                      Jika Anda tidak membuat permintaan ini, tidak perlu khawatir — tidak akan ada perubahan pada akun Anda.
+                    </p>
+                    <div style="text-align: center; margin: 25px 0;">
+                        <a href="${resetURL}" 
+                          style="display: inline-block; padding: 12px 25px; font-size: 16px; color: #fff; background: linear-gradient(135deg, #2196F3, #21CBF3); border-radius: 8px; text-decoration: none; font-weight: 600; transition: background 0.3s;">
+                            Reset Password Saya
+                        </a>
+                    </div>
+
+                    <p style="font-size: 14px; color: #777;">
+                        Tautan ini hanya berlaku selama <strong>1 jam</strong>.  
+                        Jika tombol di atas tidak berfungsi, salin dan tempel tautan berikut ke browser Anda:
+                    </p>
+                    <p style="font-size: 14px; color: #2196F3; word-break: break-all;">
+                        ${resetURL}
+                    </p>
+
+                    <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+
+                    <p style="font-size: 14px; color: #999;">
+                        Terima kasih, <br>
+                        <strong>Tim My-Portfolio</strong>
+                    </p>
+                  </div>`;
 
     await sendEmail(user.email, subject, text, html);
 
@@ -111,7 +139,6 @@ const forgotPassword = async (req, res) => {
         "Reset token generated and saved (check your console/db for the token)",
       resetToken,
     });
-
   } catch (error) {
     console.error("Password reset request failed:", error.message);
     res.status(400).json({ error: error.message });
@@ -143,17 +170,14 @@ const resetPassword = async (req, res) => {
     user.resetPasswordExpires = undefined;
     await user.save();
 
-    res.status(200).json({ 
-      message: "Password has been successfully reset" 
-
+    res.status(200).json({
+      message: "Password has been successfully reset",
     });
-  }catch (error) {
-    console.error('Password reset failed:', error.message);
+  } catch (error) {
+    console.error("Password reset failed:", error.message);
     res.status(400).json({ error: error.message });
   }
 };
-
-
 
 module.exports = {
   // registerUser,
