@@ -132,41 +132,68 @@ const forgotPassword = async (req, res) => {
 
     const subject = "Password Reset Link for My-Portfolio";
     const text = `You requested a password reset. Please use the following link to reset your password: ${resetURL}`;
-    const html = `<div style="font-family: 'Poppins', Arial, sans-serif; padding: 25px; border-radius: 12px; max-width: 600px; margin: auto; background-color: #f9f9f9; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
-                    <h2 style="color: #222; border-left: 5px solid #2196F3; padding-left: 10px; font-size: 22px;">
-                      Permintaan Reset Password
-                    </h2>
-                    
-                    <p style="font-size: 16px; color: #333;">
-                      Halo <strong>${user.name}</strong>,
-                    </p>
-                    
-                    <p style="font-size: 16px; color: #555; line-height: 1.6;">
-                      Kami menerima permintaan untuk mereset password akun Anda (<strong>${user.email}</strong>).  
-                      Jika Anda tidak membuat permintaan ini, tidak perlu khawatir — tidak akan ada perubahan pada akun Anda.
-                    </p>
-                    <div style="text-align: center; margin: 25px 0;">
-                        <a href="${resetURL}" 
-                          style="display: inline-block; padding: 12px 25px; font-size: 16px; color: #fff; background: linear-gradient(135deg, #2196F3, #21CBF3); border-radius: 8px; text-decoration: none; font-weight: 600; transition: background 0.3s;">
-                            Reset Password Saya
-                        </a>
-                    </div>
+    const html = `
+     <div style="font-family: 'Poppins', Arial, sans-serif; 
+                padding: 15px; /* Padding lebih kecil untuk HP */
+                border-radius: 12px; 
+                /* LEBAR UTAMA: Max 600px, tetapi fleksibel */
+                max-width: 600px; 
+                width: 90%; /* Selalu ambil 90% lebar viewport */
+                margin: 20px auto; /* Margin atas/bawah yang lebih aman */
+                background-color: #ffffff; /* Ubah ke putih bersih */
+                border: 1px solid #e0e0e0;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+                box-sizing: border-box;">
 
-                    <p style="font-size: 14px; color: #777;">
-                        Tautan ini hanya berlaku selama <strong>1 jam</strong>.  
-                        Jika tombol di atas tidak berfungsi, salin dan tempel tautan berikut ke browser Anda:
-                    </p>
-                    <p style="font-size: 14px; color: #2196F3; word-break: break-all;">
-                        ${resetURL}
-                    </p>
+        <h2 style="color: #222; 
+                   border-left: 5px solid #2196F3; 
+                   padding-left: 10px; 
+                   font-size: 20px; /* Ukuran font sedikit lebih kecil */
+                   margin-bottom: 20px;
+                   line-height: 1.2;">
+            Permintaan Reset Password
+        </h2>
+        
+        <p style="font-size: 15px; color: #333; margin-top: 0;">
+            Halo <strong>${user.name}</strong>,
+        </p>
+        
+        <p style="font-size: 15px; color: #555; line-height: 1.6;">
+            Kami menerima permintaan untuk mereset password akun Anda (<strong>${user.email}</strong>). 
+            Jika Anda tidak membuat permintaan ini, abaikan email ini.
+        </p>
+        
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="${resetURL}" 
+               style="display: inline-block; 
+                      padding: 15px 30px; /* Padding lebih besar untuk tombol */
+                      font-size: 17px; /* Ukuran font lebih besar untuk tombol */
+                      color: #fff; 
+                      background: linear-gradient(135deg, #2196F3, #21CBF3); 
+                      border-radius: 8px; 
+                      text-decoration: none; 
+                      font-weight: 700; 
+                      transition: background 0.3s;
+                      white-space: nowrap;"> Reset Password Saya
+            </a>
+        </div>
 
-                    <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+        <p style="font-size: 13px; color: #777; line-height: 1.4;">
+            Tautan ini hanya berlaku selama <strong>1 jam</strong>.  
+            Jika tombol di atas tidak berfungsi, salin dan tempel tautan berikut ke browser Anda:
+        </p>
+        <p style="font-size: 13px; color: #2196F3; word-break: break-all;">
+            ${resetURL}
+        </p>
 
-                    <p style="font-size: 14px; color: #999;">
-                        Terima kasih, <br>
-                        <strong>Tim My-Portfolio</strong>
-                    </p>
-                  </div>`;
+        <hr style="border: none; border-top: 1px solid #eee; margin: 25px 0;">
+
+        <p style="font-size: 13px; color: #999;">
+            Terima kasih, <br>
+            <strong>Tim My-Portfolio</strong>
+        </p>
+    </div>
+    `;
 
     await sendEmail(user.email, subject, text, html);
 
