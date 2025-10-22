@@ -5,7 +5,8 @@ require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
-const userRoutes = require("./routes/userRoutes"); // <-- WAJIB: Import rute pengguna
+const userRoutes = require("./routes/userRoutes"); 
+const projectRoutes = require("./routes/projectRoutes");
 
 // Inisialisasi aplikasi Express
 const app = express();
@@ -32,7 +33,8 @@ app.get("/", (req, res) => {
 });
 
 // Rute Pengguna untuk Login dan Daftar Akun
-app.use("/api/users", userRoutes); // <-- WAJIB: Gunakan rute pengguna
+app.use("/api/users", userRoutes); 
+app.use("/api/projects", projectRoutes);
 
 // -----------------------------------
 // | 5. KONEKSI DATABASE & SERVER START |

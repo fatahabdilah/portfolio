@@ -1,4 +1,8 @@
 const express = require("express");
+
+const { testUpload } = require('../controllers/uploadController'); 
+const uploadImageMiddleware = require('../middleware/upload.middleware');
+
 const {
   // registerUser,
   loginUser,
@@ -18,6 +22,11 @@ router.post("/forgot-password", forgotPassword);
 // --- RUTE BARU DITAMBAHKAN ---
 // PUT /api/users/resetpassword/:token (PUBLIK)
 router.put("/resetpassword/:token", resetPassword); // <-- RUTE YANG HILANG
+
+router.post('/test-upload', 
+    uploadImageMiddleware, // Middleware Multer harus dijalankan PERTAMA
+    testUpload             // Kemudian Controller dijalankan
+);
 
 // --- RUTE DIAMANKAN (DIUJI) ---
 router.get("/profile", requireAuth, (req, res) => {
