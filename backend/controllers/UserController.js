@@ -4,18 +4,26 @@ const crypto = require("crypto");
 const bcrypt = require("bcrypt");
 const nodemailer = require("nodemailer");
 
-// Fungsi helper untuk membuat token JWT utama (untuk login sesi)
+// --- Helper Functions ---
+
+/**
+ * @desc Creates a primary session JWT (JSON Web Token) for authentication.
+ * @param {ObjectId} _id - The Mongoose ID of the user.
+ * @returns {string} The signed JWT string.
+ */
 const createToken = (_id) => {
-  // Kita butuh SECRET key di .env
+  // Uses the SECRET key from .env
   return jwt.sign({ _id }, process.env.SECRET, { expiresIn: "3d" });
 };
 
-// Fungsi helper untuk mengirim email (sudah diperbaiki logging)
+/**
+ * @desc Sends an email using Nodemailer configuration from environment variables.
+ */
 const sendEmail = async (email, subject, text, html) => {
   const transporter = nodemailer.createTransport({
     host: process.env.EMAIL_SERVICE_HOST,
     port: process.env.EMAIL_SERVICE_PORT,
-    secure: false, // true jika port 465, false jika port 587
+    secure: false, // Set to true if using port 465, false for 587
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS,
@@ -23,38 +31,53 @@ const sendEmail = async (email, subject, text, html) => {
   });
 
   const mailOptions = {
-    from: process.env.EMAIL_USER, // Alamat pengirim
-    to: email, // Alamat penerima (user yang lupa password)
+    from: process.env.EMAIL_USER,
+    to: email,
     subject: subject,
     text: text,
     html: html,
   };
 
   await transporter.sendMail(mailOptions);
-  console.log(`[EMAIL] Reset password email sent to ${email}`); // <-- Diperbaiki ke template literal
+  console.log(`[EMAIL] Reset password email sent to ${email}`);
 };
 
-// --- Controller: Register (Dikomentari karena menggunakan Seeder) ---
+
+// ---------------------------------------------------------------------
+// | 1. USER AUTHENTICATION & SESSION CONTROL                          |
+// ---------------------------------------------------------------------
+
+/**
+ * @desc User Registration Controller. Creates a new user and issues a token.
+ * @route POST /api/users/register
+ * @access Public
+ */
 /*
 const registerUser = async (req, res) => {
-  const { email, password, name } = req.body;
-  try {
-    const user = await User.register(email, password, name);
-    const token = createToken(user._id);
+  const { email, password, name } = req.body;
+  try {
+    // Note: User.register method handles hashing and validation
+    const user = await User.register(email, password, name); 
+    const token = createToken(user._id);
 
-    res.status(201).json({
-      email: user.email,
-      name: user.name,
-      token,
-      message: "Registration successful", // Pesan Sukses Inggris
-    });
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
+    res.status(201).json({
+      email: user.email,
+      name: user.name,
+      token,
+      message: "Registration successful", 
+    });
+  } catch (error) {
+    // Catches validation errors (e.g., email already in use)
+    res.status(400).json({ error: error.message });
+  }
 };
 */
 
-// --- Controller: Login ---
+/**
+ * @desc User Login Controller. Validates credentials and issues a JWT.
+ * @route POST /api/users/login
+ * @access Public
+ */
 const loginUser = async (req, res) => {
   const { email, password } = req.body;
 
@@ -75,7 +98,21 @@ const loginUser = async (req, res) => {
   }
 };
 
-// --- Controller: Forgot Password ---
+
+// ---------------------------------------------------------------------
+// | 2. PASSWORD RESET FLOW: FORGOT PASSWORD                           |
+// ---------------------------------------------------------------------
+
+// TOGGLE: Choose the security method for the reset token
+// const USE_JWT_RESET = true; // Use this line for secure JWT token reset
+const USE_JWT_RESET = false; // Use this line for simple Crypto Random String reset
+
+
+/**
+ * @desc Initiates the password reset flow: generates a token and sends an email.
+ * @route POST /api/users/forgotpassword
+ * @access Public
+ */
 const forgotPassword = async (req, res) => {
   const { email } = req.body;
 
@@ -83,104 +120,75 @@ const forgotPassword = async (req, res) => {
     const user = await User.findOne({ email });
 
     if (!user) {
+      // Security measure: Respond 200 OK even if user not found to prevent email enumeration
       return res.status(200).json({
-        // Status 200 untuk mencegah enumerasi email
-        message:
-          "If a user with that email exists, a password reset link has been sent.",
+        message: "If a user with that email exists, a password reset link has been sent.",
       });
     }
-    // Bagian yang menggunakan JWT (Profesional & Aman)
-    // ----------------------------------------------------------------------------------
-    // 1. Buat token reset SEBAGAI JWT (Ditandatangani dengan RESET_SECRET)
-    const resetTokenJWT = jwt.sign(
-      { _id: user._id },
-      process.env.RESET_SECRET,
-      { expiresIn: "1h" }
-    );
 
-    // 2. Hash token JWT untuk disimpan di DB (Untuk keamanan tambahan)
-    const hashedToken = crypto
-      .createHash("sha256")
-      .update(resetTokenJWT)
-      .digest("hex");
+    let finalTokenToSend;
+    let tokenToStoreInDB;
+    const expirationTime = 3600000; // 1 hour in milliseconds
 
-    // 3. Simpan token yang di-hash di DB dan waktu kedaluwarsa
-    user.resetPasswordToken = hashedToken;
-    // user.resetPasswordExpires TIDAK diperlukan jika menggunakan JWT expiresIn,
-    // tapi kita simpan untuk memudahkan query
-    user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
+    if (USE_JWT_RESET) {
+      // [METHOD A: JWT + Hashing - Recommended]
+      const resetTokenJWT = jwt.sign(
+        { _id: user._id },
+        process.env.RESET_SECRET,
+        { expiresIn: "1h" }
+      );
+      tokenToStoreInDB = crypto
+        .createHash("sha256")
+        .update(resetTokenJWT)
+        .digest("hex");
+      finalTokenToSend = resetTokenJWT;
+    } else {
+      // [METHOD B: Crypto Random String]
+      tokenToStoreInDB = crypto.randomBytes(20).toString("hex");
+      finalTokenToSend = tokenToStoreInDB;
+    }
 
-    // resetToken adalah JWT mentah yang dikirim ke email
-    const finalTokenToSend = resetTokenJWT;
-    // ----------------------------------------------------------------------------------
+    // Save token hash/string and expiration time to database
+    user.resetPasswordToken = tokenToStoreInDB;
+    user.resetPasswordExpires = Date.now() + expirationTime; 
+    await user.save();
 
-    /* // Bagian yang HANYA menggunakan Crypto Random String (Metode Dasar)
-    // ----------------------------------------------------------------------------------
-    const resetTokenCrypto = crypto.randomBytes(20).toString("hex");
-    
-    // Simpan string acak langsung ke DB
-    user.resetPasswordToken = resetTokenCrypto;
-    user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
-    
-    const finalTokenToSend = resetTokenCrypto; // Kirim string acak ke email
-    // ----------------------------------------------------------------------------------
-    */
-
-    await user.save(); // Ganti URL ini dengan URL frontend kamu
-
-    const resetURL = `http://localhost:5173/reset-password/${finalTokenToSend}`;
-
+    // --- Email Content Preparation ---
+    // Note: Change 'http://localhost:5173' to your frontend production URL when deploying
+    const resetURL = `http://localhost:5173/reset-password/${finalTokenToSend}`; 
     const subject = "Password Reset Link for My-Portfolio";
     const text = `You requested a password reset. Please use the following link to reset your password: ${resetURL}`;
     const html = `
      <div style="font-family: 'Poppins', Arial, sans-serif; 
-                padding: 15px; /* Padding lebih kecil untuk HP */
-                border-radius: 12px; 
-                /* LEBAR UTAMA: Max 600px, tetapi fleksibel */
-                max-width: 600px; 
-                width: 90%; /* Selalu ambil 90% lebar viewport */
-                margin: 20px auto; /* Margin atas/bawah yang lebih aman */
-                background-color: #ffffff; /* Ubah ke putih bersih */
-                border: 1px solid #e0e0e0;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-                box-sizing: border-box;">
+                 padding: 15px; border-radius: 12px; max-width: 600px; width: 90%; 
+                 margin: 20px auto; background-color: #ffffff; border: 1px solid #e0e0e0;
+                 box-shadow: 0 4px 12px rgba(0,0,0,0.05); box-sizing: border-box;">
 
-        <h2 style="color: #222; 
-                   border-left: 5px solid #2196F3; 
-                   padding-left: 10px; 
-                   font-size: 20px; /* Ukuran font sedikit lebih kecil */
-                   margin-bottom: 20px;
-                   line-height: 1.2;">
-            Permintaan Reset Password
+        <h2 style="color: #222; border-left: 5px solid #2196F3; padding-left: 10px; font-size: 20px; margin-bottom: 20px; line-height: 1.2;">
+            Password Reset Request
         </h2>
         
         <p style="font-size: 15px; color: #333; margin-top: 0;">
-            Halo <strong>${user.name}</strong>,
+            Hello <strong>${user.name}</strong>,
         </p>
         
         <p style="font-size: 15px; color: #555; line-height: 1.6;">
-            Kami menerima permintaan untuk mereset password akun Anda (<strong>${user.email}</strong>). 
-            Jika Anda tidak membuat permintaan ini, abaikan email ini.
+            We received a request to reset the password for your account (<strong>${user.email}</strong>). 
+            If you did not make this request, please ignore this email.
         </p>
         
         <div style="text-align: center; margin: 30px 0;">
             <a href="${resetURL}" 
-               style="display: inline-block; 
-                      padding: 15px 30px; /* Padding lebih besar untuk tombol */
-                      font-size: 17px; /* Ukuran font lebih besar untuk tombol */
-                      color: #fff; 
-                      background: linear-gradient(135deg, #2196F3, #21CBF3); 
-                      border-radius: 8px; 
-                      text-decoration: none; 
-                      font-weight: 700; 
-                      transition: background 0.3s;
-                      white-space: nowrap;"> Reset Password Saya
+               style="display: inline-block; padding: 15px 30px; font-size: 17px; color: #fff; 
+                      background: linear-gradient(135deg, #2196F3, #21CBF3); border-radius: 8px; 
+                      text-decoration: none; font-weight: 700; transition: background 0.3s; white-space: nowrap;"> 
+                Reset My Password
             </a>
         </div>
 
         <p style="font-size: 13px; color: #777; line-height: 1.4;">
-            Tautan ini hanya berlaku selama <strong>1 jam</strong>.  
-            Jika tombol di atas tidak berfungsi, salin dan tempel tautan berikut ke browser Anda:
+            This link is valid for <strong>1 hour</strong>. 
+            If the button above does not work, please copy and paste the link below into your browser:
         </p>
         <p style="font-size: 13px; color: #2196F3; word-break: break-all;">
             ${resetURL}
@@ -189,8 +197,8 @@ const forgotPassword = async (req, res) => {
         <hr style="border: none; border-top: 1px solid #eee; margin: 25px 0;">
 
         <p style="font-size: 13px; color: #999;">
-            Terima kasih, <br>
-            <strong>Tim My-Portfolio</strong>
+            Thank you, <br>
+            <strong>The My-Portfolio Team</strong>
         </p>
     </div>
     `;
@@ -198,45 +206,47 @@ const forgotPassword = async (req, res) => {
     await sendEmail(user.email, subject, text, html);
 
     res.status(200).json({
-      message:
-        "Reset token generated and saved (check your console/db for the token)",
-      resetToken: finalTokenToSend, // <-- Kirim token yang digunakan
+      message: "Password reset link sent to your email.",
+      resetToken: finalTokenToSend, // Sent for testing purposes
     });
   } catch (error) {
     console.error("Password reset request failed:", error.message);
-    res.status(400).json({ error: error.message });
+    res.status(500).json({ error: 'Failed to send reset email.' }); 
   }
 };
 
-// --- Controller: Reset Password ---
+
+// ---------------------------------------------------------------------
+// | 3. PASSWORD RESET FLOW: RESET PASSWORD                            |
+// ---------------------------------------------------------------------
+
+/**
+ * @desc Resets the user's password using the token provided in the URL params.
+ * @route PUT /api/users/resetpassword/:token
+ * @access Public
+ */
 const resetPassword = async (req, res) => {
   const { token } = req.params;
   const { password } = req.body;
-  // Bagian yang menggunakan JWT (Profesional & Aman)
-  // ----------------------------------------------------------------------------------
-  // 1. Hash token dari URL (URL token) untuk dibandingkan dengan hash di DB
-  const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+  
+  let tokenToQueryDB;
 
-  // 2. Cari user berdasarkan HASHED TOKEN dan waktu kedaluwarsa
-  // Kita tetap memeriksa waktu kedaluwarsa di DB meskipun JWT sudah punya waktu kedaluwarsa bawaan.
-  const user = await User.findOne({
-    resetPasswordToken: hashedToken,
-    resetPasswordExpires: { $gt: Date.now() },
-  });
-  // ----------------------------------------------------------------------------------
-
-  /*
-    // Bagian yang HANYA menggunakan Crypto Random String (Metode Dasar)
-    // ----------------------------------------------------------------------------------
-    // const user = await User.findOne({ 
-    //   resetPasswordToken: token, // Mencari string acak mentah di DB
-    //   resetPasswordExpires: { $gt: Date.now() } 
-    // });
-    // ----------------------------------------------------------------------------------
-    */
+  if (USE_JWT_RESET) {
+    // [METHOD A: JWT + Hashing]
+    // Hash the token from the URL to match the hash stored in the DB
+    tokenToQueryDB = crypto.createHash("sha256").update(token).digest("hex");
+  } else {
+    // [METHOD B: Crypto Random String]
+    tokenToQueryDB = token; // Use the raw string from the URL
+  }
 
   try {
-    // Jika user tidak ditemukan, throw error
+    // 1. Find user by token (hashed or raw) and ensure it hasn't expired
+    const user = await User.findOne({
+      resetPasswordToken: tokenToQueryDB,
+      resetPasswordExpires: { $gt: Date.now() }, 
+    });
+
     if (!user) {
       throw Error("Password reset token is invalid or has expired.");
     }
@@ -245,11 +255,12 @@ const resetPassword = async (req, res) => {
       throw Error("New password must be provided.");
     }
 
+    // 2. Hash the new password and save
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
     user.password = hashedPassword;
-    user.resetPasswordToken = undefined;
+    user.resetPasswordToken = undefined; // Clear the token fields
     user.resetPasswordExpires = undefined;
     await user.save();
 
@@ -262,8 +273,9 @@ const resetPassword = async (req, res) => {
   }
 };
 
+
 module.exports = {
-  // registerUser,
+  // registerUser, // Uncomment this to enable public registration
   loginUser,
   forgotPassword,
   resetPassword,

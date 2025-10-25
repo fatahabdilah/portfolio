@@ -1,34 +1,47 @@
+// backend/routes/userRoutes.js
+
 const express = require("express");
-
-const { testUpload } = require('../controllers/uploadController'); 
-const uploadImageMiddleware = require('../middleware/upload.middleware');
-
-const {
-  // registerUser,
-  loginUser,
-  forgotPassword,
-  resetPassword, // <-- WAJIB: Import fungsi resetPassword
+const { 
+    loginUser, 
+    forgotPassword, 
+    resetPassword,
+    // registerUser, // Left commented out for clarity
 } = require("../controllers/UserController");
-const requireAuth = require("../middleware/requireAuth");
+const requireAuth = require("../middleware/requireAuth"); 
 
 const router = express.Router();
 
-// POST /api/users/login (PUBLIK)
+// --- PUBLIC AUTH ROUTES ---
+
+/**
+ * @route POST /api/users/login
+ * @desc Authenticate user and issue JWT.
+ * @access Public
+ */
 router.post("/login", loginUser);
 
-// POST /api/users/forgot-password (PUBLIK)
+/**
+ * @route POST /api/users/forgot-password
+ * @desc Initiate password reset process.
+ * @access Public
+ */
 router.post("/forgot-password", forgotPassword);
 
-// --- RUTE BARU DITAMBAHKAN ---
-// PUT /api/users/resetpassword/:token (PUBLIK)
-router.put("/resetpassword/:token", resetPassword); // <-- RUTE YANG HILANG
+/**
+ * @route PUT /api/users/resetpassword/:token
+ * @desc Reset user's password using the generated token.
+ * @access Public
+ */
+router.put("/resetpassword/:token", resetPassword);
 
-router.post('/test-upload', 
-    uploadImageMiddleware, // Middleware Multer harus dijalankan PERTAMA
-    testUpload             // Kemudian Controller dijalankan
-);
 
-// --- RUTE DIAMANKAN (DIUJI) ---
+// --- PRIVATE ROUTES ---
+
+/**
+ * @route GET /api/users/profile
+ * @desc Fetches the authenticated user's profile (JWT test).
+ * @access Private
+ */
 router.get("/profile", requireAuth, (req, res) => {
   res.status(200).json({
     message: "Secret access granted! Profile data retrieved.",

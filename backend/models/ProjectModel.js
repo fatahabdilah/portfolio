@@ -3,49 +3,73 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
+/**
+ * @typedef Project
+ * @property {string} title - The title of the project.
+ * @property {string} description - A detailed description of the project.
+ * @property {Array<ObjectId>} technologies - References to the Skill model.
+ * @property {string} imageUrl - Secure URL for the main image (hosted on Cloudinary).
+ * @property {string} imagePublicId - Cloudinary Public ID for asset management.
+ * @property {string} demoUrl - Optional URL for the live demo.
+ * @property {string} repoUrl - Optional URL for the GitHub repository.
+ * @property {ObjectId} user - Reference to the Admin user who owns the project.
+ */
 const projectSchema = new Schema({
-    // Judul Proyek (Wajib)
+    
+    // Project Title (Required and trim whitespace)
     title: {
         type: String,
         required: [true, 'Project title is required'],
         trim: true,
     },
-    // Deskripsi Proyek (Wajib)
+    
+    // Project Description (Required)
     description: {
         type: String,
         required: [true, 'Project description is required'],
     },
-    // Teknologi yang Digunakan (Array of Strings)
-    technologies: {
-        type: [String], // Array of strings (e.g., ['React', 'Node.js', 'MongoDB'])
-        required: [true, 'Technologies array cannot be empty'],
-    },
-    // URL Gambar Utama (dari Cloudinary)
+    
+    // Array of Technologies (References to Skill Model)
+    // Ensures technologies are validated as an array of ObjectIds linked to Skill documents.
+    technologies: [{ 
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Skill', // References the 'Skill' collection
+        required: [true, 'Technologies array cannot be empty'], 
+    }],
+    
+    // Main Image URL (Cloudinary storage link)
     imageUrl: {
         type: String,
         required: [true, 'Project image URL is required'],
     },
-    // Public ID dari Cloudinary (untuk menghapus gambar jika proyek dihapus)
+    
+    // Cloudinary Public ID (For secure deletion/updating of assets)
     imagePublicId: {
         type: String,
         required: true,
     },
-    // URL Live Demo
+    
+    // Optional Demo Link (Whitespace removed)
     demoUrl: {
         type: String,
         trim: true,
     },
-    // URL Repository GitHub
+    
+    // Optional Repository Link (Whitespace removed)
     repoUrl: {
         type: String,
         trim: true,
     },
-    // Referensi ke User Admin yang membuat proyek (Mengamankan data per user)
+    
+    // Owner/Admin Reference (Authorization and data isolation)
     user: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User', // Mengacu pada Model User
+        ref: 'User', // References the 'User' collection
         required: true,
     }
-}, { timestamps: true });
+}, { 
+    // Mongoose timestamps for tracking creation and updates
+    timestamps: true 
+});
 
 module.exports = mongoose.model('Project', projectSchema);

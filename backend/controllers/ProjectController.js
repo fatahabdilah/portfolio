@@ -1,20 +1,59 @@
-// backend/controllers/ProjectController.js
-
 const Project = require('../models/ProjectModel');
 const cloudinary = require('../config/cloudinary.config');
 const mongoose = require('mongoose');
 
-// Helper untuk menghapus gambar dari Cloudinary
+/**
+ * @desc Helper: Deletes an image from Cloudinary using its Public ID.
+ * @param {string} publicId - The unique ID of the of the image on Cloudinary.
+ */
 const deleteCloudinaryImage = async (publicId) => {
     if (publicId) {
         await cloudinary.uploader.destroy(publicId);
     }
 };
 
+/**
+ * @desc Helper: Processes the 'technologies' field sent via form-data (as a string or array).
+ * This function is critical for cleaning the input before Mongoose validation.
+ * @param {string | Array} technologies - The input from the request body.
+ * @returns {Array} Array of processed technology IDs.
+ */
+const processTechnologies = (technologies) => {
+    // KASUS 1: Input sudah berupa Array (diterima dari form-data berulang)
+    if (Array.isArray(technologies)) {
+        // Membersihkan tanda kutip/kurung dari setiap item
+        return technologies.map(id => {
+            if (typeof id === 'string') {
+                return id.replace(/[\[\]\'\" ]/g, '').trim(); 
+            }
+            return String(id);
+        }).filter(id => id.length > 0);
+    } 
+    
+    // KASUS 2: Input berupa string tunggal (dipisahkan koma)
+    if (typeof technologies === 'string') {
+        // Menghapus kurung siku/tanda kutip (jika ada) dan memisahkannya
+        let cleanedString = technologies.replace(/[\[\]\'\"]/g, ''); 
+        return cleanedString
+            .split(',')
+            .map(id => String(id.trim())) 
+            .filter(id => id.length > 0);
+    }
+    
+    // Default: jika tidak ada input
+    return [];
+};
 
-// ---------------------------------
-// | 1. CREATE Project (POST)      |
-// ---------------------------------
+
+// ---------------------------------------------------------------------
+// | 1. CREATE Project (POST)                                          |
+// ---------------------------------------------------------------------
+
+/**
+ * @desc Creates a new project, handles file upload to Cloudinary, and saves to MongoDB.
+ * @route POST /api/projects
+ * @access Private
+ */
 const createProject = async (req, res) => {
     const { title, description, technologies, demoUrl, repoUrl } = req.body;
     const userId = req.user._id;
@@ -23,9 +62,9 @@ const createProject = async (req, res) => {
     if (!req.file) {
         return res.status(400).json({ error: 'Image upload failed. No file provided.' });
     }
-
+    
     try {
-        // Upload file ke Cloudinary
+        // Upload image to Cloudinary from memory buffer
         result = await cloudinary.uploader.upload(
             'data:' + req.file.mimetype + ';base64,' + req.file.buffer.toString('base64'), 
             {
@@ -34,31 +73,31 @@ const createProject = async (req, res) => {
             }
         );
         
-        // Memastikan technologies adalah array
-        const techsArray = Array.isArray(technologies) 
-            ? technologies 
-            : technologies.split(',').map(tech => tech.trim());
-
-        // Buat Objek Proyek Baru
+        // Process technologies (will return a clean array of IDs)
+        const processedTechnologies = processTechnologies(technologies);
+        
+        // Create new Project document in MongoDB
         const project = await Project.create({
             title,
             description,
-            technologies: techsArray,
+            technologies: processedTechnologies, // Array of Skill Object IDs
             imageUrl: result.secure_url,
             imagePublicId: result.public_id,
             demoUrl,
             repoUrl,
-            user: userId,
+            user: userId, // Link to the authenticated Admin user
         });
-
+        
         res.status(201).json({ 
             message: 'Project created successfully!',
             project
         });
 
     } catch (error) {
-        console.error('Project creation failed:', error);
-        // Jika ada kegagalan, hapus gambar yang sudah terlanjur di-upload ke Cloudinary
+        // Log Mongoose validation error detail
+        console.error('Project creation failed:', error.message); 
+        
+        // Rollback: Delete the uploaded image if DB save fails
         if (result && result.public_id) {
              deleteCloudinaryImage(result.public_id);
         }
@@ -67,15 +106,21 @@ const createProject = async (req, res) => {
 };
 
 
-// ---------------------------------
-// | 2. READ All Projects (GET)    |
-// ---------------------------------
+// ---------------------------------------------------------------------
+// | 2. READ All Projects (GET)                                        |
+// ---------------------------------------------------------------------
+
+/**
+ * @desc Fetches all projects, populating the technology names.
+ * @route GET /api/projects
+ * @access Private
+ */
 const getProjects = async (req, res) => {
     try {
-        // Ambil semua proyek, diurutkan berdasarkan tanggal terbaru
         const projects = await Project.find({})
+            .populate('technologies', 'name') 
             .sort({ createdAt: -1 });
-
+            
         res.status(200).json(projects);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -83,9 +128,15 @@ const getProjects = async (req, res) => {
 };
 
 
-// ---------------------------------
-// | 3. READ Single Project (GET)  |
-// ---------------------------------
+// ---------------------------------------------------------------------
+// | 3. READ Single Project (GET)                                      |
+// ---------------------------------------------------------------------
+
+/**
+ * @desc Fetches a single project by ID, populating technology names.
+ * @route GET /api/projects/:id
+ * @access Private
+ */
 const getProject = async (req, res) => {
     const { id } = req.params;
 
@@ -93,7 +144,7 @@ const getProject = async (req, res) => {
         return res.status(404).json({ error: 'No such project' });
     }
 
-    const project = await Project.findById(id);
+    const project = await Project.findById(id).populate('technologies', 'name');
 
     if (!project) {
         return res.status(404).json({ error: 'No such project' });
@@ -103,9 +154,15 @@ const getProject = async (req, res) => {
 };
 
 
-// ---------------------------------
-// | 4. DELETE Project (DELETE)    |
-// ---------------------------------
+// ---------------------------------------------------------------------
+// | 4. DELETE Project (DELETE)                                        |
+// ---------------------------------------------------------------------
+
+/**
+ * @desc Deletes a project and its associated image from Cloudinary. Requires authorization.
+ * @route DELETE /api/projects/:id
+ * @access Private
+ */
 const deleteProject = async (req, res) => {
     const { id } = req.params;
     const userId = req.user._id;
@@ -114,15 +171,14 @@ const deleteProject = async (req, res) => {
         return res.status(404).json({ error: 'No such project' });
     }
 
-    // Cari proyek dan pastikan itu milik user yang sedang login (keamanan)
+    // Find and delete: ensure project ID and user ID match for authorization
     const project = await Project.findOneAndDelete({ _id: id, user: userId });
 
     if (!project) {
-        // Jika tidak ditemukan atau tidak cocok dengan user ID
         return res.status(404).json({ error: 'No such project or not authorized to delete' });
     }
 
-    // Hapus gambar dari Cloudinary
+    // Delete the associated image from Cloudinary
     await deleteCloudinaryImage(project.imagePublicId);
 
     res.status(200).json({ 
@@ -132,15 +188,20 @@ const deleteProject = async (req, res) => {
 };
 
 
-// ---------------------------------
-// | 5. UPDATE Project (PATCH)     |
-// ---------------------------------
+// ---------------------------------------------------------------------
+// | 5. UPDATE Project (PATCH)                                         |
+// ---------------------------------------------------------------------
+
+/**
+ * @desc Updates a project, handling optional image replacement and authorization.
+ * @route PATCH /api/projects/:id
+ * @access Private
+ */
 const updateProject = async (req, res) => {
     const { id } = req.params;
     const userId = req.user._id;
     let result;
     
-    // Siapkan body update
     let updateBody = { ...req.body };
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -148,13 +209,12 @@ const updateProject = async (req, res) => {
     }
 
     try {
-        // Jika ada file baru yang di-upload
+        // --- Logic: Handling Image Update (if req.file exists) ---
         if (req.file) {
-            // 1. Ambil proyek lama untuk publicId
             const oldProject = await Project.findById(id);
             if (!oldProject) throw new Error('Project not found');
 
-            // 2. Upload file baru
+            // Upload new image
             result = await cloudinary.uploader.upload(
                 'data:' + req.file.mimetype + ';base64,' + req.file.buffer.toString('base64'), 
                 {
@@ -163,25 +223,26 @@ const updateProject = async (req, res) => {
                 }
             );
 
-            // 3. Tambahkan data gambar baru ke updateBody
+            // Update body with new image details
             updateBody.imageUrl = result.secure_url;
             updateBody.imagePublicId = result.public_id;
             
-            // 4. Hapus gambar lama dari Cloudinary
+            // Delete old image from Cloudinary
             await deleteCloudinaryImage(oldProject.imagePublicId);
         }
 
-        // Handle technologies (jika dikirim sebagai string)
-        if (updateBody.technologies && typeof updateBody.technologies === 'string') {
-            updateBody.technologies = updateBody.technologies.split(',').map(tech => tech.trim());
+        // --- Logic: Processing Technologies Update ---
+        if (updateBody.technologies) {
+             updateBody.technologies = processTechnologies(updateBody.technologies);
         }
 
-        // Lakukan update
+        // Perform the update
         const project = await Project.findOneAndUpdate(
             { _id: id, user: userId }, 
-            { ...updateBody }, 
-            { new: true, runValidators: true } // new:true mengembalikan dokumen yang sudah diupdate
-        );
+            { $set: updateBody }, // Use $set to prevent overwriting the whole document
+            { new: true, runValidators: true }
+        ).populate('technologies', 'name');
+
 
         if (!project) {
             return res.status(404).json({ error: 'No such project or not authorized to update' });
@@ -190,7 +251,9 @@ const updateProject = async (req, res) => {
         res.status(200).json({ message: 'Project updated successfully!', project });
 
     } catch (error) {
-        // Hapus gambar yang baru diupload jika update Mongoose gagal
+        console.error('Project update failed:', error.message);
+        
+        // Rollback: Delete the newly uploaded image if Mongoose update fails
         if (result && result.public_id) {
              await deleteCloudinaryImage(result.public_id);
         }

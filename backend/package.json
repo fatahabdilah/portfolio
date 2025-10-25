@@ -1,16 +1,23 @@
 {
-  "name": "backend",
+  "name": "my-portfolio-backend",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Backend API for the MERN Stack portfolio application, managing user authentication, skills, and projects with Cloudinary integration.",
+  "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "seed": "node scripts/seed.js"
+    "seed": "node scripts/seed.js",
+    "test": "echo \"Error: No tests specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "mern",
+    "express",
+    "mongoose",
+    "jwt",
+    "cloudinary",
+    "portfolio"
+  ],
+  "author": "Fatah Abdilah",
   "license": "ISC",
   "dependencies": {
     "bcrypt": "^6.0.0",

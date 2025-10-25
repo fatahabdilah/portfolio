@@ -1,7 +1,13 @@
-# Aturan Khusus Backend
+# backend/.gitignore
 
-# File Rahasia (Wajib - ini akan menyimpan MONGO_URI dan SECRET key)
+####################################################################
+# SECURITY AND CREDENTIALS
+####################################################################
+# Environment variables containing sensitive keys (e.g., MONGO_URI, JWT Secrets)
 .env
 
-# Dependencies (Sudah diabaikan di root, ini hanya untuk kejelasan)
+####################################################################
+# DEPENDENCIES AND BUILD OUTPUT
+####################################################################
+# Local Node.js modules folder
 /node_modules

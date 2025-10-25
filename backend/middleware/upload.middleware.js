@@ -2,30 +2,41 @@
 
 const multer = require('multer');
 
-// Konfigurasi Multer untuk menyimpan file di memory (buffer)
-// Ini adalah cara yang direkomendasikan saat menggunakan Cloudinary
+// Configuration: Store files in memory buffer instead of disk.
+// This is the standard method when immediately processing and uploading to services like Cloudinary.
 const storage = multer.memoryStorage();
 
-// Filter untuk memastikan hanya gambar yang diizinkan
+/**
+ * @desc File filter to ensure only image mime types are accepted.
+ * @param {Object} req - Express request object.
+ * @param {Object} file - The file object being uploaded.
+ * @param {Function} cb - The callback function.
+ */
 const fileFilter = (req, file, cb) => {
-    // Memeriksa jenis file (mime type)
+    // Check file's MIME type
     if (file.mimetype.startsWith('image/')) {
-        cb(null, true); // Terima file
+        cb(null, true); // Accept file
     } else {
-        cb(new Error('File is not an image'), false); // Tolak file
+        // Reject file and throw an error message
+        cb(new Error('File is not an image type.'), false); 
     }
 };
 
-// Inisialisasi Multer
+// Initialize Multer instance with configurations
 const upload = multer({
     storage: storage,
     fileFilter: fileFilter,
     limits: {
-        fileSize: 5 * 1024 * 1024, // Batasi ukuran file hingga 5MB
+        // Limit file size to 5MB (5 * 1024 * 1024 bytes)
+        fileSize: 5 * 1024 * 1024, 
     }
 });
 
-// Kita akan menggunakannya untuk upload satu file dengan nama field 'projectImage'
+/**
+ * @desc Main middleware export: Configured to handle a single file upload.
+ * The file will be available under req.file in the controller.
+ * @type {Function}
+ */
 const uploadImageMiddleware = upload.single('projectImage');
 
 module.exports = uploadImageMiddleware;
