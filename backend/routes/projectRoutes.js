@@ -14,33 +14,39 @@ const uploadImageMiddleware = require('../middleware/upload.middleware'); // Mul
 const router = express.Router();
 
 // -----------------------------------------------------------
-// | GLOBAL MIDDLEWARE: Secure all modification routes below |
+// | PUBLIC READ ROUTES (No Authentication Needed)           |
 // -----------------------------------------------------------
 
-/**
- * @desc Applies JWT authentication to all subsequent routes in this file.
- * All POST, DELETE, and PATCH methods are now protected.
- */
-router.use(requireAuth); 
-
-
-// -----------------------------------------------------------
-// | PROJECT ROUTES (CRUD OPERATIONS)                        |
-// -----------------------------------------------------------
+// NOTE: These routes are PUBLIC because they are placed BEFORE router.use(requireAuth).
 
 /**
  * @route GET /api/projects
- * @desc Fetch all projects.
- * @access Private (Currently secured by router.use(requireAuth))
+ * @desc Fetch all projects (for display on the public portfolio).
+ * @access Public
  */
 router.get('/', getProjects);
 
 /**
  * @route GET /api/projects/:id
  * @desc Fetch a single project by ID.
- * @access Private
+ * @access Public
  */
 router.get('/:id', getProject);
+
+
+// -----------------------------------------------------------
+// | GLOBAL MIDDLEWARE: Secures all Modification Routes      |
+// -----------------------------------------------------------
+
+/**
+ * @desc Applies JWT authentication to all subsequent routes.
+ * Only authenticated Admin users can proceed beyond this point.
+ */
+router.use(requireAuth); 
+
+// -----------------------------------------------------------
+// | PRIVATE MODIFICATION ROUTES (Admin Only)                |
+// -----------------------------------------------------------
 
 /**
  * @route POST /api/projects
@@ -65,7 +71,7 @@ router.delete('/:id', deleteProject);
  * @access Private
  */
 router.patch('/:id', 
-    uploadImageMiddleware, // Needs Multer to process potential image update
+    uploadImageMiddleware, 
     updateProject
 ); 
 

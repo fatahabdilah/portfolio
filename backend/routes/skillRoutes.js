@@ -12,21 +12,24 @@ const requireAuth = require('../middleware/requireAuth'); // JWT Authentication 
 
 const router = express.Router();
 
+// NOTE: This global middleware is placed before the GET routes, effectively securing them.
+router.use(requireAuth); 
+
 // -----------------------------------------------------------
-// | PUBLIC ROUTES (READ ACCESS)                             |
+// | PUBLIC ROUTES (READ ACCESS) - Secured by Global Middleware |
 // -----------------------------------------------------------
 
 /**
  * @route GET /api/skills
- * @desc Fetch all available skills.
- * @access Public (Anyone can view skills)
+ * @desc Fetches all available skills.
+ * @access Private (Secured by router.use(requireAuth) above)
  */
 router.get('/', getSkills);
 
 /**
  * @route GET /api/skills/:id
- * @desc Fetch a single skill by ID.
- * @access Public
+ * @desc Fetches a single skill by ID.
+ * @access Private
  */
 router.get('/:id', getSkill);
 
@@ -39,7 +42,6 @@ router.get('/:id', getSkill);
  * @desc Applies JWT authentication to all subsequent routes (POST, PATCH, DELETE).
  * Only authenticated Admin users can proceed beyond this point.
  */
-router.use(requireAuth); 
 
 // -----------------------------------------------------------
 // | PRIVATE ROUTES (MODIFICATION ACCESS)                    |

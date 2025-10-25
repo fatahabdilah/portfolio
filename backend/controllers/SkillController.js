@@ -17,7 +17,7 @@ const handleDuplicateKeyError = (res, name) => {
 /**
  * @desc Creates a new skill entry.
  * @route POST /api/skills
- * @access Private
+ * @access Private (Admin Only)
  */
 const createSkill = async (req, res) => {
     const { name } = req.body;
@@ -42,7 +42,7 @@ const createSkill = async (req, res) => {
 /**
  * @desc Fetches all skills, sorted alphabetically.
  * @route GET /api/skills
- * @access Public
+ * @access Private (Admin Only)
  */
 const getSkills = async (req, res) => {
     try {
@@ -59,7 +59,7 @@ const getSkills = async (req, res) => {
 /**
  * @desc Fetches a single skill by its ID.
  * @route GET /api/skills/:id
- * @access Public
+ * @access Private (Admin Only)
  */
 const getSkill = async (req, res) => {
     const { id } = req.params;
@@ -82,7 +82,7 @@ const getSkill = async (req, res) => {
 /**
  * @desc Updates a skill's name by its ID. Requires ownership authorization.
  * @route PATCH /api/skills/:id
- * @access Private
+ * @access Private (Admin Only)
  */
 const updateSkill = async (req, res) => {
     const { id } = req.params;
@@ -119,7 +119,7 @@ const updateSkill = async (req, res) => {
 /**
  * @desc Deletes a skill by its ID. Requires ownership authorization.
  * @route DELETE /api/skills/:id
- * @access Private
+ * @access Private (Admin Only)
  */
 const deleteSkill = async (req, res) => {
     const { id } = req.params;

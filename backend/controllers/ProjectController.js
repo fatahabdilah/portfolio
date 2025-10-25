@@ -1,6 +1,7 @@
 const Project = require('../models/ProjectModel');
 const cloudinary = require('../config/cloudinary.config');
 const mongoose = require('mongoose');
+const Skill = require('../models/SkillModel'); 
 
 /**
  * @desc Helper: Deletes an image from Cloudinary using its Public ID.
@@ -19,9 +20,9 @@ const deleteCloudinaryImage = async (publicId) => {
  * @returns {Array} Array of processed technology IDs.
  */
 const processTechnologies = (technologies) => {
-    // KASUS 1: Input sudah berupa Array (diterima dari form-data berulang)
+    // KASUS 1: Input is Array (received from repeated form-data fields)
     if (Array.isArray(technologies)) {
-        // Membersihkan tanda kutip/kurung dari setiap item
+        // Clean quotes and trim spaces from each array element
         return technologies.map(id => {
             if (typeof id === 'string') {
                 return id.replace(/[\[\]\'\" ]/g, '').trim(); 
@@ -30,9 +31,9 @@ const processTechnologies = (technologies) => {
         }).filter(id => id.length > 0);
     } 
     
-    // KASUS 2: Input berupa string tunggal (dipisahkan koma)
+    // KASUS 2: Input is a single comma-separated string
     if (typeof technologies === 'string') {
-        // Menghapus kurung siku/tanda kutip (jika ada) dan memisahkannya
+        // Clean brackets/quotes and split by comma
         let cleanedString = technologies.replace(/[\[\]\'\"]/g, ''); 
         return cleanedString
             .split(',')
@@ -40,7 +41,7 @@ const processTechnologies = (technologies) => {
             .filter(id => id.length > 0);
     }
     
-    // Default: jika tidak ada input
+    // Default: if no input
     return [];
 };
 
@@ -52,7 +53,7 @@ const processTechnologies = (technologies) => {
 /**
  * @desc Creates a new project, handles file upload to Cloudinary, and saves to MongoDB.
  * @route POST /api/projects
- * @access Private
+ * @access Private (Requires Admin Token)
  */
 const createProject = async (req, res) => {
     const { title, description, technologies, demoUrl, repoUrl } = req.body;
@@ -64,7 +65,7 @@ const createProject = async (req, res) => {
     }
     
     try {
-        // Upload image to Cloudinary from memory buffer
+        // 1. Upload image to Cloudinary from memory buffer
         result = await cloudinary.uploader.upload(
             'data:' + req.file.mimetype + ';base64,' + req.file.buffer.toString('base64'), 
             {
@@ -73,10 +74,21 @@ const createProject = async (req, res) => {
             }
         );
         
-        // Process technologies (will return a clean array of IDs)
+        // 2. Process technologies (will return a clean array of IDs)
         const processedTechnologies = processTechnologies(technologies);
+
+        // BUG FIX: Validasi Keberadaan Skill
+        if (processedTechnologies.length > 0) {
+            // Check if all provided IDs exist in the Skill collection
+            const existingSkills = await Skill.find({ '_id': { $in: processedTechnologies } });
+            
+            if (existingSkills.length !== processedTechnologies.length) {
+                // If the count doesn't match, one or more IDs are invalid or non-existent
+                throw new Error('One or more technology IDs provided do not exist.');
+            }
+        }
         
-        // Create new Project document in MongoDB
+        // 3. Create new Project document in MongoDB
         const project = await Project.create({
             title,
             description,
@@ -94,7 +106,6 @@ const createProject = async (req, res) => {
         });
 
     } catch (error) {
-        // Log Mongoose validation error detail
         console.error('Project creation failed:', error.message); 
         
         // Rollback: Delete the uploaded image if DB save fails
@@ -113,10 +124,11 @@ const createProject = async (req, res) => {
 /**
  * @desc Fetches all projects, populating the technology names.
  * @route GET /api/projects
- * @access Private
+ * @access Public (Intended for Portfolio Viewers)
  */
 const getProjects = async (req, res) => {
     try {
+        // Fetch all projects and populate the technology details
         const projects = await Project.find({})
             .populate('technologies', 'name') 
             .sort({ createdAt: -1 });
@@ -135,7 +147,7 @@ const getProjects = async (req, res) => {
 /**
  * @desc Fetches a single project by ID, populating technology names.
  * @route GET /api/projects/:id
- * @access Private
+ * @access Public (Intended for Portfolio Viewers)
  */
 const getProject = async (req, res) => {
     const { id } = req.params;
@@ -161,7 +173,7 @@ const getProject = async (req, res) => {
 /**
  * @desc Deletes a project and its associated image from Cloudinary. Requires authorization.
  * @route DELETE /api/projects/:id
- * @access Private
+ * @access Private (Admin Only)
  */
 const deleteProject = async (req, res) => {
     const { id } = req.params;
@@ -195,7 +207,7 @@ const deleteProject = async (req, res) => {
 /**
  * @desc Updates a project, handling optional image replacement and authorization.
  * @route PATCH /api/projects/:id
- * @access Private
+ * @access Private (Admin Only)
  */
 const updateProject = async (req, res) => {
     const { id } = req.params;
@@ -209,6 +221,20 @@ const updateProject = async (req, res) => {
     }
 
     try {
+        // --- Logic: Processing Technologies Update ---
+        if (updateBody.technologies) {
+             const processedTechnologies = processTechnologies(updateBody.technologies);
+             
+             // BUG FIX: Validasi Keberadaan Skill
+             if (processedTechnologies.length > 0) {
+                 const existingSkills = await Skill.find({ '_id': { $in: processedTechnologies } });
+                 if (existingSkills.length !== processedTechnologies.length) {
+                     throw new Error('One or more technology IDs provided do not exist.');
+                 }
+             }
+             updateBody.technologies = processedTechnologies;
+        }
+        
         // --- Logic: Handling Image Update (if req.file exists) ---
         if (req.file) {
             const oldProject = await Project.findById(id);
@@ -231,15 +257,10 @@ const updateProject = async (req, res) => {
             await deleteCloudinaryImage(oldProject.imagePublicId);
         }
 
-        // --- Logic: Processing Technologies Update ---
-        if (updateBody.technologies) {
-             updateBody.technologies = processTechnologies(updateBody.technologies);
-        }
-
         // Perform the update
         const project = await Project.findOneAndUpdate(
             { _id: id, user: userId }, 
-            { $set: updateBody }, // Use $set to prevent overwriting the whole document
+            { $set: updateBody }, 
             { new: true, runValidators: true }
         ).populate('technologies', 'name');
 
