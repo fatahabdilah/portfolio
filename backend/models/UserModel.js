@@ -2,7 +2,6 @@
 
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
-const validator = require("validator");
 
 const Schema = mongoose.Schema;
 
@@ -19,11 +18,11 @@ const userSchema = new Schema(
   {
     email: {
       type: String,
-      required: [true, 'Email is required'], // Use inline array for consistent validation
+      required: [true, 'Email is required'],
       unique: true,
       trim: true,
       lowercase: true,
-      validate: [validator.isEmail, "Email is invalid"],
+      match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, "Email is invalid"],
     },
     password: {
       type: String,
@@ -44,18 +43,18 @@ const userSchema = new Schema(
     resetPasswordExpires: Date,
   },
   { 
-    timestamps: true // Adds createdAt and updatedAt fields
+    // Mongoose timestamps for tracking creation and updates
+    timestamps: true 
   }
 );
 
 
 // -------------------------------------------------------------
-// | Mongoose Static Methods (Business Logic)                  |
+// | Mongoose Static Methods (Business Logic)                  |
 // -------------------------------------------------------------
 
 /**
  * @desc Static method to create a new user (handles password hashing).
- * Note: This method is typically commented out for security in an admin-only portfolio (seeder used instead).
  * @param {string} email
  * @param {string} password
  * @param {string} name
