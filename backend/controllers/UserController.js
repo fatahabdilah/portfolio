@@ -154,8 +154,8 @@ const forgotPassword = async (req, res) => {
     await user.save();
 
     // --- Email Content Preparation ---
-    // Note: Change 'http://localhost:5173' to your frontend production URL when deploying
-    const resetURL = `http://localhost:5173/reset-password/${finalTokenToSend}`; 
+    const frontendURL = process.env.FRONTEND_URL;
+    const resetURL = `${frontendURL}/reset-password/${finalTokenToSend}`; 
     const subject = "Password Reset Link for My-Portfolio";
     const text = `You requested a password reset. Please use the following link to reset your password: ${resetURL}`;
     const html = `

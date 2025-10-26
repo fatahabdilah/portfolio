@@ -34,7 +34,6 @@ const projectSchema = new Schema({
     technologies: [{ 
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Skill', // References the 'Skill' collection
-        required: [true, 'Technologies array cannot be empty'], 
     }],
     
     // Main Image URL (Cloudinary storage link)

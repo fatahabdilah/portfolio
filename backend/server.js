@@ -25,8 +25,13 @@ const MONGO_URI = process.env.MONGO_URI;
 // | 3. MIDDLEWARE CONFIGURATION                               |
 // -------------------------------------------------------------
 
-// Enable CORS (Cross-Origin Resource Sharing) for development
-app.use(cors());
+// --- CORS Configuration ---
+const allowedOrigin = process.env.FRONTEND_URL;
+app.use(cors({
+    origin: allowedOrigin,
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+    credentials: true,
+}));
 
 // Body Parser: Allows Express to read JSON data sent by clients
 app.use(express.json());
@@ -65,7 +70,6 @@ const connectDB = async () => {
     console.log("✅ MongoDB connected successfully!");
 
     // Start Express server only after DB connection is successful
-    // Only listen if not in a testing environment (prevents address in use error during tests)
     if (process.env.NODE_ENV !== "test") { 
         app.listen(PORT, () => {
             console.log(`🚀 Server running on http://localhost:${PORT}`);
