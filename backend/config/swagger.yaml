@@ -9,8 +9,13 @@ info:
     name: Fatah Abdilah
     email: admin@myportfolio.com
 servers:
+  # Opsi 1: Base URL absolut
+  # - url: https://my-portfolio-backend-zeta-eight.vercel.app/api
+  #   description: Production API Base URL (if custom domain is not used)
+  
+  # Opsi 2: Path relatif yang lebih jelas (Biasanya lebih aman untuk deployment)
   - url: /api
-    description: Base URL for all API endpoints
+    description: Relative API Base Path
 
 # -------------------------------------------------------------
 # | Security Definitions and Schemas (DTOs)                   |

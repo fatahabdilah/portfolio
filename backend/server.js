@@ -19,39 +19,52 @@ const skillRoutes = require("./routes/skillRoutes");
 // Initialize the Express application
 const app = express();
 
-// Set environment variables for portability
+// ... (Bagian 3. MIDDLEWARE CONFIGURATION sama) ...
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI;
 
 // -------------------------------------------------------------
 // | 3. MIDDLEWARE CONFIGURATION                               |
 // -------------------------------------------------------------
-
-// --- CORS Configuration ---
 const allowedOrigin = process.env.FRONTEND_URL;
 app.use(cors({
     origin: allowedOrigin,
     methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
     credentials: true,
 }));
-
-// Body Parser: Allows Express to read JSON data sent by clients
 app.use(express.json());
 
+
 // -------------------------------------------------------------
-// | 4. SWAGGER DOCUMENTATION SETUP (Using Absolute Path)      |
+// | 4. SWAGGER DOCUMENTATION SETUP (Explicit Configuration)   |
 // -------------------------------------------------------------
 
 // Load the documentation file reliably using absolute path 
-// (Necessary for Vercel/Serverless to find the file correctly)
 const swaggerDocument = YAML.load(
     path.join(__dirname, 'config', 'swagger.yaml')
 );
+
 // Mount the Swagger UI on a dedicated route
+// Gunakan konfigurasi eksplisit untuk menghindari masalah caching di browser
 app.use('/docs', 
   swaggerUi.serve, 
-  swaggerUi.setup(swaggerDocument)
+  swaggerUi.setup(swaggerDocument, {
+    // Menambahkan opsi ini terkadang membantu di lingkungan proxy/serverless
+    swaggerOptions: {
+        url: "/api-docs-json" // Path virtual ke definisi JSON
+    },
+    // Pastikan server tidak mencoba memuat file statis yang salah
+    customCssUrl: 'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.1.0/swagger-ui.min.css',
+    customJsUrl: 'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.1.0/swagger-ui-bundle.js'
+  })
 );
+
+// Tambahkan rute untuk melayani definisi JSON Swagger
+// Ini memberikan endpoint yang jelas bagi Swagger UI untuk memuat data.
+app.get('/api-docs-json', (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    res.send(swaggerDocument);
+});
 
 console.log(`📚 Documentation available at /docs`);
 
@@ -78,11 +91,6 @@ app.use("/api/skills", skillRoutes);
 // | 6. DATABASE CONNECTION & SERVER INITIALIZATION (Vercel Fix) |
 // -------------------------------------------------------------
 
-/**
- * @desc Attempts to connect to MongoDB.
- * The server listener logic (app.listen) is REMOVED for Vercel deployment.
- * For local development, we manually call app.listen if MONGO_URI is set.
- */
 const connectDBAndStartServer = async () => {
     // 1. Attempt Connection
     if (!mongoose.connection.readyState) {
@@ -91,16 +99,13 @@ const connectDBAndStartServer = async () => {
             console.log("✅ MongoDB connected successfully!");
         } catch (err) {
             console.error("❌ CONNECTION FAILED:", err.message);
-            // In Vercel, we shouldn't exit the process here, but log the error.
             if (process.env.NODE_ENV !== "production") { 
                 process.exit(1); 
             }
-            // For production, the function will still return the 'app' but DB operations will fail.
         }
     }
 
     // 2. Start Express server ONLY if not in a test or Vercel environment
-    // We check if the environment supports standard listening (local dev).
     if (process.env.NODE_ENV !== "test" && process.env.VERCEL_ENV !== "production") {
         app.listen(PORT, () => {
             console.log(`🚀 Server running on http://localhost:${PORT}`);
@@ -109,9 +114,8 @@ const connectDBAndStartServer = async () => {
     }
 };
 
-// Initiate connection only. Do NOT await it, as Vercel needs the 'app' instance immediately.
+// Initiate connection only.
 connectDBAndStartServer();
 
-// Export the Express app instance. Vercel will use this exported app instance 
-// as the handler for incoming requests, removing the need for app.listen().
+// Export the Express app instance.
 module.exports = app;
