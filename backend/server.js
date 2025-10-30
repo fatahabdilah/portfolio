@@ -51,6 +51,17 @@ try {
     const swaggerDocument = YAML.load(yamlPath);
     console.log("[DEBUG R-150] YAML file loaded successfully. Definition found.");
     
+    // Tentukan URL HOST dinamis untuk lingkungan Vercel
+    const IS_PROD = process.env.NODE_ENV === "production" || process.env.VERCEL_ENV === "production";
+    
+    // VERCEL_URL adalah variabel lingkungan yang disediakan Vercel
+    const VERCEL_HOST = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : `http://localhost:${PORT}`;
+    
+    // URL yang akan dipanggil oleh Swagger JS:
+    const finalSwaggerUrl = `${VERCEL_HOST}/api-docs-json`;
+    console.log(`[DEBUG R-155] Final Swagger Definition URL set to: ${finalSwaggerUrl}`);
+
+
     // 1. Add the JSON endpoint for the Swagger definition
     app.get('/api-docs-json', (req, res) => {
         console.log("[DEBUG R-160] API DEFINITION HIT: /api-docs-json served.");
@@ -58,29 +69,17 @@ try {
         res.send(swaggerDocument);
     });
 
-    // 2. Middleware untuk menentukan URL absolut (Wajib untuk Vercel)
-    const swaggerMiddleware = (req, res, next) => {
-        // Mendapatkan host deployment (cth: my-portfolio-backend.vercel.app)
-        const host = req.headers.host || 'localhost:5000';
-        // Menentukan protokol (https untuk Vercel, http untuk local)
-        const protocol = req.secure || req.headers['x-forwarded-proto'] === 'https' ? 'https' : 'http';
-        
-        // Membangun URL dasar absolut lengkap
-        const absoluteBaseUrl = `${protocol}://${host}`;
-        
-        // Menyimpan URL absolut untuk Swagger
-        req.swaggerAbsoluteUrl = `${absoluteBaseUrl}/api-docs-json`;
-        console.log(`[DEBUG R-175] Calculated Swagger URL: ${req.swaggerAbsoluteUrl}`);
-        next();
-    };
-
-    // 3. Mount the Swagger UI on a dedicated route
+    // 2. Mount the Swagger UI on a dedicated route
     app.use('/docs', 
-      swaggerMiddleware, // Menentukan URL absolut
+      (req, res, next) => {
+          // Log permintaan /docs secara spesifik untuk debugging
+          console.log(`[DEBUG R-171] Incoming request to /docs path: ${req.path}`);
+          next();
+      },
       swaggerUi.serve, 
       swaggerUi.setup(null, { 
-        // Menggunakan fungsi inisialisasi untuk mengambil URL absolut dari req
-        swaggerUrl: (req) => req.swaggerAbsoluteUrl,
+        // Menggunakan URL absolut yang memaksa browser untuk memanggil host yang benar
+        swaggerUrl: finalSwaggerUrl, 
         explorer: true,
       })
     );
