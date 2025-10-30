@@ -10,6 +10,7 @@ const cors = require("cors");
 const path = require("path");
 const swaggerUi = require("swagger-ui-express");
 const swaggerDocument = require("./config/swagger.json");
+const swaggerUiDist = require("swagger-ui-dist");
 
 // Import Routes
 const userRoutes = require("./routes/userRoutes");
@@ -39,6 +40,10 @@ app.use(express.json());
 // -------------------------------------------------------------
 // | 4. SWAGGER DOCUMENTATION SETUP                            |
 // -------------------------------------------------------------
+
+// Sajikan aset statis Swagger UI secara eksplisit. Ini penting untuk Vercel.
+const pathToSwaggerUi = swaggerUiDist.getAbsoluteFSPath();
+app.use("/docs", express.static(pathToSwaggerUi));
 
 // Tentukan URL server berdasarkan lingkungan.
 // Di Vercel, `process.env.VERCEL_URL` akan tersedia.
