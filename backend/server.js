@@ -10,7 +10,6 @@ const cors = require("cors");
 const path = require("path");
 const swaggerUi = require("swagger-ui-express");
 const swaggerDocument = require("./config/swagger.json");
-const swaggerUiDist = require("swagger-ui-dist");
 
 // Import Routes
 const userRoutes = require("./routes/userRoutes");
@@ -40,21 +39,28 @@ app.use(express.json());
 // -------------------------------------------------------------
 // | 4. SWAGGER DOCUMENTATION SETUP                            |
 // -------------------------------------------------------------
+app.use(
+  "/docs",
+  (req, res, next) => {
+    // Buat salinan dari swaggerDocument untuk menghindari modifikasi objek asli yang di-cache.
+    const swaggerDoc = JSON.parse(JSON.stringify(swaggerDocument));
 
-// Sajikan aset statis Swagger UI secara eksplisit. Ini penting untuk Vercel.
-const pathToSwaggerUi = swaggerUiDist.getAbsoluteFSPath();
-app.use("/docs", express.static(pathToSwaggerUi));
+    // Tentukan URL server secara dinamis berdasarkan lingkungan.
+    const serverUrl = process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : `http://localhost:${PORT}`;
 
-// Tentukan URL server berdasarkan lingkungan.
-// Di Vercel, `process.env.VERCEL_URL` akan tersedia.
-const serverUrl = process.env.VERCEL_URL
-  ? `https://${process.env.VERCEL_URL}`
-  : `http://localhost:${PORT}`;
+    // Timpa server URL di dalam salinan dokumen.
+    swaggerDoc.servers = [{ url: serverUrl }];
 
-// Ganti URL server di dalam dokumen Swagger secara dinamis.
-swaggerDocument.servers = [{ url: serverUrl }];
-
-app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+    // Teruskan dokumen yang sudah dimodifikasi ke middleware swagger-ui-express.
+    // Ini adalah cara yang lebih andal untuk menyajikan dokumen dinamis.
+    req.swaggerDoc = swaggerDoc;
+    next();
+  },
+  swaggerUi.serve,
+  swaggerUi.setup()
+);
 
 // -------------------------------------------------------------
 // | 5. ROUTE DEFINITIONS                                      |
