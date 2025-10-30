@@ -40,16 +40,45 @@ console.log("[DEBUG R-130] Middleware setup complete.");
 
 
 // -------------------------------------------------------------
-// | 4. SWAGGER DOCUMENTATION SETUP (Vercel-Compatible)        |
+// | 4. SWAGGER DOCUMENTATION SETUP (Debugging Request Path)   |
 // -------------------------------------------------------------
 
-// Import the swagger file directly
-const swaggerDocument = require('./config/swagger.yaml');
+const serverDir = __dirname;
+const yamlPath = path.join(serverDir, 'config', 'swagger.yaml');
 
-// Mount the Swagger UI on a dedicated route
-app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+try {
+    console.log(`[DEBUG R-140] Attempting to load YAML from: ${yamlPath}`);
+    const swaggerDocument = YAML.load(yamlPath);
+    console.log("[DEBUG R-150] YAML file loaded successfully. Definition found.");
+    
+    // 1. Add the JSON endpoint for the Swagger definition
+    app.get('/api-docs-json', (req, res) => {
+        // Logging ini akan muncul HANYA JIKA browser memanggil endpoint ini
+        console.log("[DEBUG R-160] API DEFINITION HIT: /api-docs-json served.");
+        res.setHeader('Content-Type', 'application/json');
+        res.send(swaggerDocument);
+    });
 
-console.log("[DEBUG R-170] Swagger UI mounted on /docs.");
+    // 2. Custom Logger Middleware for /docs
+    const docsLogger = (req, res, next) => {
+        console.log(`[DEBUG R-171] Incoming request to /docs path: ${req.path}`);
+        next();
+    };
+
+    // 3. Mount the Swagger UI on a dedicated route
+    app.use('/docs', 
+      docsLogger, // Logger di depan
+      swaggerUi.serve, 
+      swaggerUi.setup(null, { 
+        swaggerUrl: "/api-docs-json", 
+        explorer: true,
+      })
+    );
+    console.log("[DEBUG R-170] Swagger UI mounted on /docs.");
+    
+} catch (error) {
+    console.error(`[DEBUG R-180 CRITICAL ERROR] Failed to load or set up Swagger: ${error.message}`);
+}
 
 
 // -------------------------------------------------------------
