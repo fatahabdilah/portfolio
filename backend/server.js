@@ -41,10 +41,9 @@ app.use(express.json());
 // | 4. SWAGGER DOCUMENTATION SETUP                            |
 // -------------------------------------------------------------
 
-// Buat rute unik untuk aset statis Swagger (CSS, JS).
-// Ini menghindari konflik dengan rute utama '/docs'.
+// Definisikan path untuk aset statis Swagger. Ini akan digunakan oleh Vercel
+// melalui vercel.json dan juga untuk membangun URL CSS di bawah.
 const swaggerUiAssetPath = "/docs-assets";
-app.use(swaggerUiAssetPath, express.static(swaggerUiDist.getAbsoluteFSPath()));
 
 app.use("/docs", swaggerUi.serve, (req, res) => {
   // Buat salinan dokumen untuk setiap permintaan agar aman dari modifikasi.

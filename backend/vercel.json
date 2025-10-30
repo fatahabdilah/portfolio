@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/docs-assets/(.*)",
+      "destination": "/node_modules/swagger-ui-dist/$1"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/backend/server.js"
+    }
+  ]
+}
