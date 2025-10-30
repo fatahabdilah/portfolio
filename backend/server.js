@@ -41,9 +41,10 @@ app.use(express.json());
 // | 4. SWAGGER DOCUMENTATION SETUP                            |
 // -------------------------------------------------------------
 
-// Sajikan file statis (CSS, JS) dari swagger-ui-dist.
-// Ini penting agar Vercel dapat menemukan aset-aset ini.
-app.use("/docs", express.static(swaggerUiDist.getAbsoluteFSPath()));
+// Buat rute unik untuk aset statis Swagger (CSS, JS).
+// Ini menghindari konflik dengan rute utama '/docs'.
+const swaggerUiAssetPath = "/docs-assets";
+app.use(swaggerUiAssetPath, express.static(swaggerUiDist.getAbsoluteFSPath()));
 
 app.use("/docs", swaggerUi.serve, (req, res) => {
   // Buat salinan dokumen untuk setiap permintaan agar aman dari modifikasi.
@@ -55,9 +56,12 @@ app.use("/docs", swaggerUi.serve, (req, res) => {
     : `http://localhost:${PORT}`;
   swaggerDoc.servers = [{ url: serverUrl }];
 
-  // Gunakan swaggerUi.setup dengan dokumen dinamis dan custom options.
-  // Ini akan merender halaman HTML dengan benar.
-  const ui = swaggerUi.setup(swaggerDoc);
+  // Beri tahu Swagger UI di mana menemukan aset statisnya.
+  const swaggerUiOptions = {
+    customCssUrl: `${swaggerUiAssetPath}/swagger-ui.css`,
+  };
+
+  const ui = swaggerUi.setup(swaggerDoc, swaggerUiOptions);
   ui(req, res);
 });
 
