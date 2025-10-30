@@ -10,6 +10,7 @@ const cors = require("cors");
 const path = require('path');
 const swaggerUi = require('swagger-ui-express'); 
 const YAML = require('yamljs'); 
+const fs = require('fs'); 
 
 // Import Routes
 const userRoutes = require("./routes/userRoutes"); 
@@ -36,37 +37,13 @@ app.use(express.json());
 
 
 // -------------------------------------------------------------
-// | 4. SWAGGER DOCUMENTATION SETUP                            |
+// | 4. SWAGGER DOCUMENTATION SETUP (Universal)                |
 // -------------------------------------------------------------
 
-const serverDir = __dirname;
-const yamlPath = path.join(serverDir, 'config', 'swagger.yaml');
+const yamlPath = path.join(__dirname, 'config', 'swagger.yaml');
+const swaggerDocument = YAML.parse(fs.readFileSync(yamlPath, 'utf8'));
 
-try {
-    const swaggerDocument = YAML.load(yamlPath);
-    
-    // VERCEL_URL adalah env var Vercel, jika ada, gunakan sebagai host absolut.
-    const VERCEL_HOST = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : `http://localhost:${PORT}`;
-    const finalSwaggerUrl = `${VERCEL_HOST}/api-docs-json`;
-
-    // 1. Endpoint untuk Definisi JSON
-    app.get('/api-docs-json', (req, res) => {
-        res.setHeader('Content-Type', 'application/json');
-        res.send(swaggerDocument);
-    });
-
-    // 2. Setup Swagger UI (Parameter pertama disetel ke null)
-    app.use('/docs', 
-      swaggerUi.serve, 
-      swaggerUi.setup(null, { 
-        swaggerUrl: finalSwaggerUrl, 
-        explorer: true,
-      })
-    );
-    
-} catch (error) {
-    console.error(`[SWAGGER ERROR] Failed to load YAML or setup Swagger: ${error.message}`);
-}
+app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 
 // -------------------------------------------------------------

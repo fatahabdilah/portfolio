@@ -2,24 +2,14 @@
   "version": 2,
   "builds": [
     {
-      "src": "backend/server.js",
-      "use": "@vercel/node",
-      "config": {
-        "includeFiles": [
-          "backend/config/swagger.yaml",
-          "backend/models/**",
-          "backend/routes/**",
-          "backend/controllers/**",
-          "backend/middleware/**",
-          "backend/config/cloudinary.config.js"
-        ]
-      }
+      "src": "server.js",
+      "use": "@vercel/node"
     }
   ],
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "backend/server.js"
+      "dest": "server.js"
     }
   ]
 }
