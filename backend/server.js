@@ -40,7 +40,7 @@ console.log("[DEBUG R-130] Middleware setup complete.");
 
 
 // -------------------------------------------------------------
-// | 4. SWAGGER DOCUMENTATION SETUP (Debugging Request Path)   |
+// | 4. SWAGGER DOCUMENTATION SETUP (Absolute URL Fix)         |
 // -------------------------------------------------------------
 
 const serverDir = __dirname;
@@ -53,24 +53,34 @@ try {
     
     // 1. Add the JSON endpoint for the Swagger definition
     app.get('/api-docs-json', (req, res) => {
-        // Logging ini akan muncul HANYA JIKA browser memanggil endpoint ini
         console.log("[DEBUG R-160] API DEFINITION HIT: /api-docs-json served.");
         res.setHeader('Content-Type', 'application/json');
         res.send(swaggerDocument);
     });
 
-    // 2. Custom Logger Middleware for /docs
-    const docsLogger = (req, res, next) => {
-        console.log(`[DEBUG R-171] Incoming request to /docs path: ${req.path}`);
+    // 2. Middleware untuk menentukan URL absolut (Wajib untuk Vercel)
+    const swaggerMiddleware = (req, res, next) => {
+        // Mendapatkan host deployment (cth: my-portfolio-backend.vercel.app)
+        const host = req.headers.host || 'localhost:5000';
+        // Menentukan protokol (https untuk Vercel, http untuk local)
+        const protocol = req.secure || req.headers['x-forwarded-proto'] === 'https' ? 'https' : 'http';
+        
+        // Membangun URL dasar absolut lengkap
+        const absoluteBaseUrl = `${protocol}://${host}`;
+        
+        // Menyimpan URL absolut untuk Swagger
+        req.swaggerAbsoluteUrl = `${absoluteBaseUrl}/api-docs-json`;
+        console.log(`[DEBUG R-175] Calculated Swagger URL: ${req.swaggerAbsoluteUrl}`);
         next();
     };
 
     // 3. Mount the Swagger UI on a dedicated route
     app.use('/docs', 
-      docsLogger, // Logger di depan
+      swaggerMiddleware, // Menentukan URL absolut
       swaggerUi.serve, 
       swaggerUi.setup(null, { 
-        swaggerUrl: "/api-docs-json", 
+        // Menggunakan fungsi inisialisasi untuk mengambil URL absolut dari req
+        swaggerUrl: (req) => req.swaggerAbsoluteUrl,
         explorer: true,
       })
     );
@@ -104,7 +114,7 @@ console.log("[DEBUG R-210] All routes successfully attached to Express instance.
 
 // -------------------------------------------------------------
 // | 6. DATABASE CONNECTION & SERVER INITIALIZATION (Vercel Fix) |
-// ---------------------------------------------------------------------
+// -------------------------------------------------------------
 console.log("[DEBUG R-220] 6. Starting DB connection setup.");
 const connectDBAndStartServer = async () => {
     // 1. Attempt Connection
