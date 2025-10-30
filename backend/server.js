@@ -37,8 +37,18 @@ app.use(express.json());
 // -------------------------------------------------------------
 // | 4. SWAGGER DOCUMENTATION SETUP                            |
 // -------------------------------------------------------------
+const swaggerOptions = {
+    swaggerOptions: {
+        url: "/swagger.json"
+    }
+};
 
-app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+app.get('/swagger.json', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(swaggerDocument);
+});
+
+app.use('/docs', swaggerUi.serve, swaggerUi.setup(undefined, swaggerOptions));
 
 
 // -------------------------------------------------------------
