@@ -24,19 +24,7 @@ const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI;
 
 // -------------------------------------------------------------
-// | 3. MIDDLEWARE CONFIGURATION                               |
-// -------------------------------------------------------------
-const allowedOrigin = process.env.FRONTEND_URL;
-app.use(cors({
-    origin: allowedOrigin,
-    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
-    credentials: true,
-}));
-app.use(express.json());
-
-
-// -------------------------------------------------------------
-// | 4. SWAGGER DOCUMENTATION SETUP (Explicit Configuration)   |
+// | 4. SWAGGER DOCUMENTATION SETUP (Cleaned Configuration)    |
 // -------------------------------------------------------------
 
 // Load the documentation file reliably using absolute path 
@@ -44,27 +32,25 @@ const swaggerDocument = YAML.load(
     path.join(__dirname, 'config', 'swagger.yaml')
 );
 
-// Mount the Swagger UI on a dedicated route
-// Gunakan konfigurasi eksplisit untuk menghindari masalah caching di browser
-app.use('/docs', 
-  swaggerUi.serve, 
-  swaggerUi.setup(swaggerDocument, {
-    // Menambahkan opsi ini terkadang membantu di lingkungan proxy/serverless
-    swaggerOptions: {
-        url: "/api-docs-json" // Path virtual ke definisi JSON
-    },
-    // Pastikan server tidak mencoba memuat file statis yang salah
-    customCssUrl: 'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.1.0/swagger-ui.min.css',
-    customJsUrl: 'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.1.0/swagger-ui-bundle.js'
-  })
-);
-
-// Tambahkan rute untuk melayani definisi JSON Swagger
-// Ini memberikan endpoint yang jelas bagi Swagger UI untuk memuat data.
+// Add the JSON endpoint for the Swagger definition (crucial for stability)
 app.get('/api-docs-json', (req, res) => {
     res.setHeader('Content-Type', 'application/json');
     res.send(swaggerDocument);
 });
+
+// Mount the Swagger UI on a dedicated route
+// Hapus opsi customCssUrl dan customJsUrl untuk menggunakan asset bawaan paket.
+app.use('/docs', 
+  swaggerUi.serve, 
+  swaggerUi.setup(swaggerDocument, {
+    swaggerOptions: {
+        url: "/api-docs-json" // Path virtual yang dieksplisitkan
+    },
+    // Opsi ini harusnya dihilangkan, membiarkan paket yang menanganinya:
+    // customCssUrl: '...', 
+    // customJsUrl: '...', 
+  })
+);
 
 console.log(`📚 Documentation available at /docs`);
 
