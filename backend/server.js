@@ -2,7 +2,7 @@
 
 // 1. Load environment variables immediately
 require("dotenv").config();
-console.log("[DEBUG] 1. Environment variables loaded.");
+console.log("[DEBUG R-100] 1. Environment variables loaded.");
 
 // 2. Import core libraries
 const express = require("express");
@@ -16,7 +16,7 @@ const YAML = require('yamljs');
 const userRoutes = require("./routes/userRoutes"); 
 const projectRoutes = require("./routes/projectRoutes");
 const skillRoutes = require("./routes/skillRoutes");
-console.log("[DEBUG] 2. Core libraries and routes imported.");
+console.log("[DEBUG R-110] 2. Core libraries and routes imported. Express instance created.");
 
 // Initialize the Express application
 const app = express();
@@ -28,77 +28,77 @@ const MONGO_URI = process.env.MONGO_URI;
 // -------------------------------------------------------------
 // | 3. MIDDLEWARE CONFIGURATION                               |
 // -------------------------------------------------------------
-console.log("[DEBUG] 3. Starting middleware configuration.");
+console.log("[DEBUG R-120] 3. Starting middleware configuration (CORS/JSON).");
 const allowedOrigin = process.env.FRONTEND_URL;
-console.log(`[DEBUG] CORS allowed origin set to: ${allowedOrigin}`);
-
 app.use(cors({
     origin: allowedOrigin,
     methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
     credentials: true,
 }));
 app.use(express.json());
+console.log("[DEBUG R-130] Middleware setup complete.");
 
 
 // -------------------------------------------------------------
-// | 4. SWAGGER DOCUMENTATION SETUP (Final Stable Configuration)|
+// | 4. SWAGGER DOCUMENTATION SETUP (Maximum Logging)          |
 // -------------------------------------------------------------
 
-// Log the directory name where server.js is located
 const serverDir = __dirname;
 const yamlPath = path.join(serverDir, 'config', 'swagger.yaml');
 
 try {
-    // Load the documentation file reliably using absolute path 
+    console.log(`[DEBUG R-140] Attempting to load YAML from: ${yamlPath}`);
     const swaggerDocument = YAML.load(yamlPath);
-    console.log("[DEBUG] YAML file loaded successfully.");
+    console.log("[DEBUG R-150] YAML file loaded successfully. Definition found.");
     
     // 1. Add the JSON endpoint for the Swagger definition
     app.get('/api-docs-json', (req, res) => {
-        console.log("[DEBUG] /api-docs-json endpoint hit.");
+        // Logging ini akan muncul HANYA JIKA browser benar-benar memanggil endpoint ini
+        console.log("[DEBUG R-160] API DEFINITION HIT: /api-docs-json served.");
         res.setHeader('Content-Type', 'application/json');
         res.send(swaggerDocument);
     });
 
     // 2. Mount the Swagger UI on a dedicated route
-    // Perbaikan: Gunakan URL dari options object untuk setup.
     app.use('/docs', 
       swaggerUi.serve, 
-      swaggerUi.setup(null, { // <<< Ganti swaggerDocument dengan null di parameter pertama
-        swaggerUrl: "/api-docs-json", // <<< Gunakan opsi swaggerUrl (BUKAN swaggerOptions: {url: ...})
-        explorer: true, // Opsional: Tambahkan bilah pencarian
+      swaggerUi.setup(null, { 
+        swaggerUrl: "/api-docs-json", 
+        explorer: true,
       })
     );
-    console.log("[DEBUG] Swagger UI setup complete on /docs.");
+    console.log("[DEBUG R-170] Swagger UI mounted on /docs.");
     
 } catch (error) {
-    console.error(`[DEBUG CRITICAL ERROR] Failed to load or set up Swagger: ${error.message}`);
+    console.error(`[DEBUG R-180 CRITICAL ERROR] Failed to load or set up Swagger: ${error.message}`);
 }
 
 
 // -------------------------------------------------------------
 // | 5. ROUTE DEFINITIONS                                      |
 // -------------------------------------------------------------
-console.log("[DEBUG] 5. Route definitions set.");
+console.log("[DEBUG R-190] 5. Setting up primary API routes.");
 /**
  * @route GET /
  * @desc Root testing route to confirm server status.
  * @access Public
  */
 app.get("/", (req, res) => {
-  res.send("Server My-Portfolio running! Ready to connect to DB.");
+    console.log("[DEBUG R-200] Root route (/) hit.");
+    res.send("Server My-Portfolio running! Ready to connect to DB.");
 });
 
 // Primary API Routes
 app.use("/api/users", userRoutes); 
 app.use("/api/projects", projectRoutes);
 app.use("/api/skills", skillRoutes);
+console.log("[DEBUG R-210] All routes successfully attached to Express instance.");
 
 
 // -------------------------------------------------------------
 // | 6. DATABASE CONNECTION & SERVER INITIALIZATION (Vercel Fix) |
 // -------------------------------------------------------------
-console.log("[DEBUG] 6. Starting DB connection setup.");
+console.log("[DEBUG R-220] 6. Starting DB connection setup.");
 const connectDBAndStartServer = async () => {
     // 1. Attempt Connection
     if (!mongoose.connection.readyState) {
@@ -124,8 +124,8 @@ const connectDBAndStartServer = async () => {
 
 // Initiate connection only.
 connectDBAndStartServer();
-console.log("[DEBUG] connectDBAndStartServer initiated.");
+console.log("[DEBUG R-230] connectDBAndStartServer initiated (Async).");
 
 // Export the Express app instance.
 module.exports = app; 
-console.log("[DEBUG] module.exports = app completed.");
+console.log("[DEBUG R-240] module.exports = app completed.");
