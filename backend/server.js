@@ -40,7 +40,7 @@ console.log("[DEBUG R-130] Middleware setup complete.");
 
 
 // -------------------------------------------------------------
-// | 4. SWAGGER DOCUMENTATION SETUP (Maximum Logging)          |
+// | 4. SWAGGER DOCUMENTATION SETUP (Debugging Request Path)   |
 // -------------------------------------------------------------
 
 const serverDir = __dirname;
@@ -53,14 +53,21 @@ try {
     
     // 1. Add the JSON endpoint for the Swagger definition
     app.get('/api-docs-json', (req, res) => {
-        // Logging ini akan muncul HANYA JIKA browser benar-benar memanggil endpoint ini
+        // Logging ini akan muncul HANYA JIKA browser memanggil endpoint ini
         console.log("[DEBUG R-160] API DEFINITION HIT: /api-docs-json served.");
         res.setHeader('Content-Type', 'application/json');
         res.send(swaggerDocument);
     });
 
-    // 2. Mount the Swagger UI on a dedicated route
+    // 2. Custom Logger Middleware for /docs
+    const docsLogger = (req, res, next) => {
+        console.log(`[DEBUG R-171] Incoming request to /docs path: ${req.path}`);
+        next();
+    };
+
+    // 3. Mount the Swagger UI on a dedicated route
     app.use('/docs', 
+      docsLogger, // Logger di depan
       swaggerUi.serve, 
       swaggerUi.setup(null, { 
         swaggerUrl: "/api-docs-json", 
@@ -97,7 +104,7 @@ console.log("[DEBUG R-210] All routes successfully attached to Express instance.
 
 // -------------------------------------------------------------
 // | 6. DATABASE CONNECTION & SERVER INITIALIZATION (Vercel Fix) |
-// -------------------------------------------------------------
+// ---------------------------------------------------------------------
 console.log("[DEBUG R-220] 6. Starting DB connection setup.");
 const connectDBAndStartServer = async () => {
     // 1. Attempt Connection
