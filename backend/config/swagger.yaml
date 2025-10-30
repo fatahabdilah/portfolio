@@ -1,0 +1,488 @@
+# backend/config/swagger.yaml - UPDATED
+
+openapi: 3.0.0
+info:
+  title: My Portfolio API Documentation
+  version: 1.0.0
+  description: Backend API documentation for the MERN stack portfolio application, providing CRUD operations for projects, skills, and secure user authentication (Admin access).
+  contact:
+    name: Fatah Abdilah
+    email: admin@myportfolio.com
+servers:
+  - url: /api
+    description: Base URL for all API endpoints
+
+# -------------------------------------------------------------
+# | Security Definitions and Schemas (DTOs)                   |
+# -------------------------------------------------------------
+components:
+  securitySchemes:
+    # This defines the JWT authentication method
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Enter the JWT access token obtained during login.
+
+  schemas:
+    # --- DTOs (Data Transfer Objects) for Models ---
+
+    UserModel:
+      type: object
+      properties:
+        _id:
+          type: string
+          description: Unique MongoDB ID.
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        role:
+          type: string
+          enum: [user, admin]
+
+    LoginRequest:
+      type: object
+      required: [email, password] # Mandatory validation
+      properties:
+        email:
+          type: string
+          example: admin@myportfolio.com
+        password:
+          type: string
+          example: ChangeMe123!
+
+    SkillModel:
+      type: object
+      required: [name] # Mandatory validation
+      properties:
+        _id:
+          type: string
+        name:
+          type: string
+          description: Unique name of the skill (e.g., React.js).
+          example: MongoDB
+        user:
+          type: string
+          description: User (Admin) ID who owns this skill.
+
+    ProjectModel:
+      type: object
+      required: [title, description, technologies, imageUrl, imagePublicId] # Mandatory validation
+      properties:
+        _id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        technologies:
+          type: array
+          items:
+            $ref: '#/components/schemas/SkillModel'
+          description: Array of populated skill objects.
+        imageUrl:
+          type: string
+          format: url
+        imagePublicId:
+          type: string
+        demoUrl:
+          type: string
+        repoUrl:
+          type: string
+        user:
+          type: string
+          description: User (Admin) ID who owns this project.
+
+    # Common Error Responses
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: A detailed error message.
+
+# -------------------------------------------------------------
+# | Paths (API Endpoints)                                     |
+# -------------------------------------------------------------
+paths:
+  # --------------------
+  # | USER/AUTH ROUTES   |
+  # --------------------
+  /users/login:
+    post:
+      tags:
+        - User Authentication (Public)
+      summary: Login to obtain Admin JWT token.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest' # Using DTO
+      responses:
+        '200':
+          description: Successful login and JWT token issued.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  email:
+                    type: string
+                  name:
+                    type: string
+                  token:
+                    type: string
+        '400':
+          $ref: '#/components/schemas/Error'
+
+  /users/forgot-password:
+    post:
+      tags:
+        - User Authentication (Public)
+      summary: Initiate password reset flow by sending a link to the user's email.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email] # Mandatory validation
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: admin@myportfolio.com
+      responses:
+        '200':
+          description: |
+            A generic success message is returned for security purposes, even if the email doesn't exist (to prevent email enumeration).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '500':
+          description: Server failed to send reset email.
+
+  /users/resetpassword/{token}:
+    put:
+      tags:
+        - User Authentication (Public)
+      summary: Reset the password using the token received via email.
+      parameters:
+        - name: token
+          in: path
+          required: true
+          description: The password reset token from the email URL.
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [password] # Mandatory validation
+              properties:
+                password:
+                  type: string
+                  description: The new password for the account.
+                  example: NewSecurePassword123!
+      responses:
+        '200':
+          description: Password successfully reset.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '400':
+          description: Token is invalid, expired, or new password not provided.
+          $ref: '#/components/schemas/Error'
+
+  /users/profile:
+    get:
+      tags:
+        - User Authentication (Private)
+      summary: Get the authenticated user's profile (JWT test).
+      security:
+        - BearerAuth: [] # Requires JWT token
+      responses:
+        '200':
+          description: Secret access granted.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  userId:
+                    type: string
+        '401':
+          $ref: '#/components/schemas/Error'
+
+  # --------------------
+  # | PROJECT ROUTES     |
+  # --------------------
+  /projects:
+    get:
+      tags:
+        - Projects (Public Read)
+      summary: Retrieve a list of all portfolio projects.
+      responses:
+        '200':
+          description: A list of projects with populated technologies.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProjectModel' # Using DTO
+    post:
+      tags:
+        - Projects (Private CRUD)
+      summary: Create a new project (Admin Only).
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [title, description, technologies, projectImage] # Mandatory validation
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                technologies:
+                  type: string
+                  description: Comma-separated list of Skill ObjectId's.
+                demoUrl:
+                  type: string
+                repoUrl:
+                  type: string
+                projectImage:
+                  type: string
+                  format: binary
+                  description: The image file to upload (Max 5MB).
+      responses:
+        '201':
+          description: Project successfully created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectModel'
+        '400':
+          $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/schemas/Error'
+
+  /projects/{id}:
+    get:
+      tags:
+        - Projects (Public Read)
+      summary: Retrieve a single project by ID.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Project details retrieved.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectModel'
+        '404':
+          $ref: '#/components/schemas/Error'
+    patch:
+      tags:
+        - Projects (Private CRUD)
+      summary: Update project details or replace the image (Admin Only).
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                technologies:
+                  type: string
+                  description: Comma-separated list of Skill Object IDs.
+                projectImage:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Project successfully updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectModel'
+        '400':
+          $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/schemas/Error'
+        '404':
+          $ref: '#/components/schemas/Error'
+    delete:
+      tags:
+        - Projects (Private CRUD)
+      summary: Delete a project and its image (Admin Only).
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Project successfully deleted.
+        '401':
+          $ref: '#/components/schemas/Error'
+        '404':
+          $ref: '#/components/schemas/Error'
+
+  # --------------------
+  # | SKILL ROUTES       |
+  # --------------------
+  /skills:
+    get:
+      tags:
+        - Skills (Private CRUD)
+      summary: Retrieve all skills (Admin Only).
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: A list of all skills.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SkillModel'
+    post:
+      tags:
+        - Skills (Private CRUD)
+      summary: Create a new skill (Admin Only).
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SkillModel' # Using DTO with required validation
+      responses:
+        '201':
+          description: Skill successfully created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillModel'
+        '400':
+          $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/schemas/Error'
+
+  /skills/{id}:
+    get:
+      tags:
+        - Skills (Private CRUD)
+      summary: Retrieve a single skill by ID (Admin Only).
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Skill details retrieved.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillModel'
+        '404':
+          $ref: '#/components/schemas/Error'
+    patch:
+      tags:
+        - Skills (Private CRUD)
+      summary: Update a skill's name (Admin Only).
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name] # Mandatory validation
+              properties:
+                name:
+                  type: string
+      responses:
+        '200':
+          description: Skill successfully updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillModel'
+        '400':
+          $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/schemas/Error'
+        '404':
+          $ref: '#/components/schemas/Error'
+    delete:
+      tags:
+        - Skills (Private CRUD)
+      summary: Delete a skill (Admin Only).
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Skill successfully deleted.
+        '401':
+          $ref: '#/components/schemas/Error'
+        '404':
+          $ref: '#/components/schemas/Error'

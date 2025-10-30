@@ -7,12 +7,13 @@ require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const swaggerUi = require('swagger-ui-express'); // Swagger UI Library
+const YAML = require('yamljs'); // YAML Parser for documentation file
 
 // Import Routes
 const userRoutes = require("./routes/userRoutes"); 
 const projectRoutes = require("./routes/projectRoutes");
 const skillRoutes = require("./routes/skillRoutes");
-
 
 // Initialize the Express application
 const app = express();
@@ -37,7 +38,23 @@ app.use(cors({
 app.use(express.json());
 
 // -------------------------------------------------------------
-// | 4. ROUTE DEFINITIONS                                      |
+// | 4. SWAGGER DOCUMENTATION SETUP (New Section)              |
+// -------------------------------------------------------------
+
+// Load the documentation file
+const swaggerDocument = YAML.load('./config/swagger.yaml');
+
+// Mount the Swagger UI on a dedicated route
+// Documentation will be accessible at: http://localhost:[PORT]/docs
+app.use('/docs', 
+  swaggerUi.serve, 
+  swaggerUi.setup(swaggerDocument)
+);
+
+console.log(`📚 Documentation available at /docs`);
+
+// -------------------------------------------------------------
+// | 5. ROUTE DEFINITIONS                                      |
 // -------------------------------------------------------------
 
 /**
@@ -56,7 +73,7 @@ app.use("/api/skills", skillRoutes);
 
 
 // -------------------------------------------------------------
-// | 5. DATABASE CONNECTION & SERVER INITIALIZATION            |
+// | 6. DATABASE CONNECTION & SERVER INITIALIZATION            |
 // -------------------------------------------------------------
 
 /**
