@@ -51,19 +51,8 @@ console.log(`[DEBUG] 8. YAML path: ${yamlPath}`);
 const swaggerDocument = YAML.parse(fs.readFileSync(yamlPath, 'utf8'));
 console.log("[DEBUG] 9. Swagger document loaded and parsed.");
 
-// Serve Swagger UI assets
-app.use('/docs', express.static(path.join(__dirname, 'node_modules/swagger-ui-dist')));
-
-// Serve Swagger JSON
-app.get('/docs.json', (req, res) => {
-    res.setHeader('Content-Type', 'application/json');
-    res.send(swaggerDocument);
-});
-
-// Setup Swagger UI
-app.use('/docs', swaggerUi.setup(null, {
-    swaggerUrl: '/docs.json',
-}));
+// Serve Swagger UI
+app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 console.log("[DEBUG] 11. Swagger UI middleware configured.");
 
