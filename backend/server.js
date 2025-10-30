@@ -10,6 +10,7 @@ const cors = require("cors");
 const path = require("path");
 const swaggerUi = require("swagger-ui-express");
 const swaggerDocument = require("./config/swagger.json");
+const swaggerUiDist = require("swagger-ui-dist");
 
 // Import Routes
 const userRoutes = require("./routes/userRoutes");
@@ -39,28 +40,26 @@ app.use(express.json());
 // -------------------------------------------------------------
 // | 4. SWAGGER DOCUMENTATION SETUP                            |
 // -------------------------------------------------------------
-app.use(
-  "/docs",
-  (req, res, next) => {
-    // Buat salinan dari swaggerDocument untuk menghindari modifikasi objek asli yang di-cache.
-    const swaggerDoc = JSON.parse(JSON.stringify(swaggerDocument));
 
-    // Tentukan URL server secara dinamis berdasarkan lingkungan.
-    const serverUrl = process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : `http://localhost:${PORT}`;
+// Sajikan file statis (CSS, JS) dari swagger-ui-dist.
+// Ini penting agar Vercel dapat menemukan aset-aset ini.
+app.use("/docs", express.static(swaggerUiDist.getAbsoluteFSPath()));
 
-    // Timpa server URL di dalam salinan dokumen.
-    swaggerDoc.servers = [{ url: serverUrl }];
+app.use("/docs", swaggerUi.serve, (req, res) => {
+  // Buat salinan dokumen untuk setiap permintaan agar aman dari modifikasi.
+  const swaggerDoc = JSON.parse(JSON.stringify(swaggerDocument));
 
-    // Teruskan dokumen yang sudah dimodifikasi ke middleware swagger-ui-express.
-    // Ini adalah cara yang lebih andal untuk menyajikan dokumen dinamis.
-    req.swaggerDoc = swaggerDoc;
-    next();
-  },
-  swaggerUi.serve,
-  swaggerUi.setup()
-);
+  // Tentukan URL server dinamis.
+  const serverUrl = process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}`
+    : `http://localhost:${PORT}`;
+  swaggerDoc.servers = [{ url: serverUrl }];
+
+  // Gunakan swaggerUi.setup dengan dokumen dinamis dan custom options.
+  // Ini akan merender halaman HTML dengan benar.
+  const ui = swaggerUi.setup(swaggerDoc);
+  ui(req, res);
+});
 
 // -------------------------------------------------------------
 // | 5. ROUTE DEFINITIONS                                      |
