@@ -45,7 +45,7 @@ const yamlPath = path.join(serverDir, 'config', 'swagger.yaml');
 try {
     const swaggerDocument = YAML.load(yamlPath);
     
-    // Tentukan URL HOST dinamis untuk lingkungan Vercel
+    // VERCEL_URL adalah env var Vercel, jika ada, gunakan sebagai host absolut.
     const VERCEL_HOST = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : `http://localhost:${PORT}`;
     const finalSwaggerUrl = `${VERCEL_HOST}/api-docs-json`;
 
@@ -55,11 +55,10 @@ try {
         res.send(swaggerDocument);
     });
 
-    // 2. Setup Swagger UI
+    // 2. Setup Swagger UI (Parameter pertama disetel ke null)
     app.use('/docs', 
       swaggerUi.serve, 
       swaggerUi.setup(null, { 
-        // Menggunakan URL absolut yang memecahkan masalah CORS/Proxy Vercel
         swaggerUrl: finalSwaggerUrl, 
         explorer: true,
       })
@@ -80,7 +79,8 @@ try {
  * @access Public
  */
 app.get("/", (req, res) => {
-  res.send("Server My-Portfolio running! Ready to connect to DB.");
+  // Rute ini hanya akan ter-trigger jika vercel.json berfungsi!
+  res.send("Server My-Portfolio running! Ready to connect to DB. Swagger documentation is at /docs");
 });
 
 // Primary API Routes
@@ -90,7 +90,7 @@ app.use("/api/skills", skillRoutes);
 
 
 // -------------------------------------------------------------
-// | 6. DATABASE CONNECTION & SERVER INITIALIZATION (Vercel Fix) |
+// | 6. DATABASE CONNECTION & SERVER INITIALIZATION            |
 // -------------------------------------------------------------
 
 const connectDBAndStartServer = async () => {
@@ -109,7 +109,6 @@ const connectDBAndStartServer = async () => {
     if (process.env.NODE_ENV !== "test" && process.env.VERCEL_ENV !== "production") {
         app.listen(PORT, () => {
             console.log(`🚀 Server running on http://localhost:${PORT}`);
-            console.log("-------------------------------------------");
         });
     }
 };
