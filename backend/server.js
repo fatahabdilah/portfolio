@@ -39,9 +39,16 @@ app.use(express.json());
 // -------------------------------------------------------------
 // | 4. SWAGGER DOCUMENTATION SETUP                            |
 // -------------------------------------------------------------
-// Di lingkungan serverless seperti Vercel, lebih andal untuk menyajikan swagger.json
-// secara langsung daripada melalui URL terpisah untuk menghindari masalah routing.
-// swaggerDocument diimpor dari file JSON dan langsung diteruskan ke setup.
+
+// Tentukan URL server berdasarkan lingkungan.
+// Di Vercel, `process.env.VERCEL_URL` akan tersedia.
+const serverUrl = process.env.VERCEL_URL
+  ? `https://${process.env.VERCEL_URL}`
+  : `http://localhost:${PORT}`;
+
+// Ganti URL server di dalam dokumen Swagger secara dinamis.
+swaggerDocument.servers = [{ url: serverUrl }];
+
 app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // -------------------------------------------------------------
