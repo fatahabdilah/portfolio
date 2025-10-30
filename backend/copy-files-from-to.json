@@ -1,0 +1,8 @@
+{
+  "copyFiles": [
+    {
+      "from": "node_modules/swagger-ui-dist/*.{js,css,html,png}",
+      "to": "public/docs-assets"
+    }
+  ]
+}
