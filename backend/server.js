@@ -8,8 +8,8 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const path = require('path');
-const swaggerUi = require('swagger-ui-express'); // Swagger UI Library
-const YAML = require('yamljs'); // YAML Parser for documentation file
+const swaggerUi = require('swagger-ui-express'); 
+const YAML = require('yamljs'); 
 
 // Import Routes
 const userRoutes = require("./routes/userRoutes"); 
@@ -39,15 +39,15 @@ app.use(cors({
 app.use(express.json());
 
 // -------------------------------------------------------------
-// | 4. SWAGGER DOCUMENTATION SETUP (New Section)              |
+// | 4. SWAGGER DOCUMENTATION SETUP (Using Absolute Path)      |
 // -------------------------------------------------------------
 
-// Load the documentation file
+// Load the documentation file reliably using absolute path 
+// (Necessary for Vercel/Serverless to find the file correctly)
 const swaggerDocument = YAML.load(
     path.join(__dirname, 'config', 'swagger.yaml')
 );
 // Mount the Swagger UI on a dedicated route
-// Documentation will be accessible at: http://localhost:[PORT]/docs
 app.use('/docs', 
   swaggerUi.serve, 
   swaggerUi.setup(swaggerDocument)
@@ -75,36 +75,43 @@ app.use("/api/skills", skillRoutes);
 
 
 // -------------------------------------------------------------
-// | 6. DATABASE CONNECTION & SERVER INITIALIZATION            |
+// | 6. DATABASE CONNECTION & SERVER INITIALIZATION (Vercel Fix) |
 // -------------------------------------------------------------
 
 /**
- * @desc Attempts to connect to MongoDB and starts the Express server upon success.
+ * @desc Attempts to connect to MongoDB.
+ * The server listener logic (app.listen) is REMOVED for Vercel deployment.
+ * For local development, we manually call app.listen if MONGO_URI is set.
  */
-const connectDB = async () => {
-  try {
-    // Attempt connection
-    await mongoose.connect(MONGO_URI);
+const connectDBAndStartServer = async () => {
+    // 1. Attempt Connection
+    if (!mongoose.connection.readyState) {
+        try {
+            await mongoose.connect(MONGO_URI);
+            console.log("✅ MongoDB connected successfully!");
+        } catch (err) {
+            console.error("❌ CONNECTION FAILED:", err.message);
+            // In Vercel, we shouldn't exit the process here, but log the error.
+            if (process.env.NODE_ENV !== "production") { 
+                process.exit(1); 
+            }
+            // For production, the function will still return the 'app' but DB operations will fail.
+        }
+    }
 
-    console.log("✅ MongoDB connected successfully!");
-
-    // Start Express server only after DB connection is successful
-    if (process.env.NODE_ENV !== "test") { 
+    // 2. Start Express server ONLY if not in a test or Vercel environment
+    // We check if the environment supports standard listening (local dev).
+    if (process.env.NODE_ENV !== "test" && process.env.VERCEL_ENV !== "production") {
         app.listen(PORT, () => {
             console.log(`🚀 Server running on http://localhost:${PORT}`);
             console.log("-------------------------------------------");
         });
     }
-
-  } catch (err) {
-    // Log failure and exit process
-    console.error("❌ CONNECTION FAILED:", err.message);
-    process.exit(1);
-  }
 };
 
-// Initiate connection and server start
-connectDB();
+// Initiate connection only. Do NOT await it, as Vercel needs the 'app' instance immediately.
+connectDBAndStartServer();
 
-// Export the Express app instance for unit testing (Supertest/Jest)
+// Export the Express app instance. Vercel will use this exported app instance 
+// as the handler for incoming requests, removing the need for app.listen().
 module.exports = app;
