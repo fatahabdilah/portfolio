@@ -43,7 +43,7 @@ console.log("[DEBUG] 6. Middleware configured.");
 
 
 // -------------------------------------------------------------
-// | 4. SWAGGER DOCUMENTATION SETUP (Universal)                |
+// | 4. SWAGGER DOCUMENTATION SETUP (Vercel-Compatible)        |
 // -------------------------------------------------------------
 console.log("[DEBUG] 7. Setting up Swagger documentation.");
 const yamlPath = path.join(__dirname, 'config', 'swagger.yaml');
@@ -51,10 +51,20 @@ console.log(`[DEBUG] 8. YAML path: ${yamlPath}`);
 const swaggerDocument = YAML.parse(fs.readFileSync(yamlPath, 'utf8'));
 console.log("[DEBUG] 9. Swagger document loaded and parsed.");
 
-app.use('/docs', (req, res, next) => {
-    console.log(`[DEBUG] 10. Request to /docs received. URL: ${req.originalUrl}`);
-    next();
-}, swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+// Serve Swagger UI assets
+app.use('/docs', express.static(path.join(__dirname, 'node_modules/swagger-ui-dist')));
+
+// Serve Swagger JSON
+app.get('/docs.json', (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    res.send(swaggerDocument);
+});
+
+// Setup Swagger UI
+app.use('/docs', swaggerUi.setup(null, {
+    swaggerUrl: '/docs.json',
+}));
+
 console.log("[DEBUG] 11. Swagger UI middleware configured.");
 
 
