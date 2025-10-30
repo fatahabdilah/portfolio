@@ -2,6 +2,7 @@
 
 // 1. Load environment variables immediately
 require("dotenv").config();
+console.log("[DEBUG] 1. Environment variables loaded.");
 
 // 2. Import core libraries
 const express = require("express");
@@ -15,49 +16,75 @@ const YAML = require('yamljs');
 const userRoutes = require("./routes/userRoutes"); 
 const projectRoutes = require("./routes/projectRoutes");
 const skillRoutes = require("./routes/skillRoutes");
+console.log("[DEBUG] 2. Core libraries and routes imported.");
 
 // Initialize the Express application
 const app = express();
 
-// ... (Bagian 3. MIDDLEWARE CONFIGURATION sama) ...
+// Set environment variables for portability
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI;
 
 // -------------------------------------------------------------
-// | 4. SWAGGER DOCUMENTATION SETUP (Cleaned Configuration)    |
+// | 3. MIDDLEWARE CONFIGURATION                               |
+// -------------------------------------------------------------
+console.log("[DEBUG] 3. Starting middleware configuration.");
+const allowedOrigin = process.env.FRONTEND_URL;
+console.log(`[DEBUG] CORS allowed origin set to: ${allowedOrigin}`);
+
+app.use(cors({
+    origin: allowedOrigin,
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+    credentials: true,
+}));
+app.use(express.json());
+
+
+// -------------------------------------------------------------
+// | 4. SWAGGER DOCUMENTATION SETUP (Debugging Paths)          |
 // -------------------------------------------------------------
 
-// Load the documentation file reliably using absolute path 
-const swaggerDocument = YAML.load(
-    path.join(__dirname, 'config', 'swagger.yaml')
-);
+// Log the directory name where server.js is located
+const serverDir = __dirname;
+console.log(`[DEBUG] __dirname (Server directory): ${serverDir}`);
 
-// Add the JSON endpoint for the Swagger definition (crucial for stability)
-app.get('/api-docs-json', (req, res) => {
-    res.setHeader('Content-Type', 'application/json');
-    res.send(swaggerDocument);
-});
+// Construct the full path to the YAML file
+const yamlPath = path.join(serverDir, 'config', 'swagger.yaml');
+console.log(`[DEBUG] Full YAML path calculated: ${yamlPath}`);
 
-// Mount the Swagger UI on a dedicated route
-// Hapus opsi customCssUrl dan customJsUrl untuk menggunakan asset bawaan paket.
-app.use('/docs', 
-  swaggerUi.serve, 
-  swaggerUi.setup(swaggerDocument, {
-    swaggerOptions: {
-        url: "/api-docs-json" // Path virtual yang dieksplisitkan
-    },
-    // Opsi ini harusnya dihilangkan, membiarkan paket yang menanganinya:
-    // customCssUrl: '...', 
-    // customJsUrl: '...', 
-  })
-);
+try {
+    // Load the documentation file reliably using absolute path 
+    const swaggerDocument = YAML.load(yamlPath);
+    console.log("[DEBUG] YAML file loaded successfully.");
+    
+    // Add the JSON endpoint for the Swagger definition (crucial for stability)
+    app.get('/api-docs-json', (req, res) => {
+        console.log("[DEBUG] /api-docs-json endpoint hit.");
+        res.setHeader('Content-Type', 'application/json');
+        res.send(swaggerDocument);
+    });
 
-console.log(`📚 Documentation available at /docs`);
+    // Mount the Swagger UI on a dedicated route
+    app.use('/docs', 
+      swaggerUi.serve, 
+      swaggerUi.setup(swaggerDocument, {
+        swaggerOptions: {
+            url: "/api-docs-json" 
+        },
+      })
+    );
+    console.log("[DEBUG] Swagger UI setup complete on /docs.");
+    
+} catch (error) {
+    console.error(`[DEBUG CRITICAL ERROR] Failed to load or set up Swagger: ${error.message}`);
+    // Jika ada error di sini, Vercel mungkin mengeluarkan error 500.
+}
+
 
 // -------------------------------------------------------------
 // | 5. ROUTE DEFINITIONS                                      |
 // -------------------------------------------------------------
-
+console.log("[DEBUG] 5. Route definitions set.");
 /**
  * @route GET /
  * @desc Root testing route to confirm server status.
@@ -76,7 +103,7 @@ app.use("/api/skills", skillRoutes);
 // -------------------------------------------------------------
 // | 6. DATABASE CONNECTION & SERVER INITIALIZATION (Vercel Fix) |
 // -------------------------------------------------------------
-
+console.log("[DEBUG] 6. Starting DB connection setup.");
 const connectDBAndStartServer = async () => {
     // 1. Attempt Connection
     if (!mongoose.connection.readyState) {
@@ -102,6 +129,8 @@ const connectDBAndStartServer = async () => {
 
 // Initiate connection only.
 connectDBAndStartServer();
+console.log("[DEBUG] connectDBAndStartServer initiated.");
 
 // Export the Express app instance.
-module.exports = app;
+module.exports = app; 
+console.log("[DEBUG] module.exports = app completed.");
