@@ -1,0 +1,479 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "My Portfolio API",
+    "version": "1.0.0",
+    "description": "My Portfolio API Information"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:5000"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Projects",
+      "description": "Everything about your Projects"
+    },
+    {
+      "name": "Skills",
+      "description": "Everything about your Skills"
+    },
+    {
+      "name": "Users",
+      "description": "Everything about your Users"
+    }
+  ],
+  "paths": {
+    "/api/projects": {
+      "get": {
+        "tags": ["Projects"],
+        "summary": "Fetch all projects",
+        "responses": {
+          "200": {
+            "description": "An array of Project objects"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Projects"],
+        "summary": "Create a new project",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "technologies": {
+                    "type": "string"
+                  },
+                  "projectImage": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The newly created Project object"
+          },
+          "400": {
+            "description": "Validation failed or Image upload failed"
+          },
+          "401": {
+            "description": "Request is unauthorized"
+          }
+        }
+      }
+    },
+    "/api/projects/{id}": {
+      "get": {
+        "tags": ["Projects"],
+        "summary": "Fetch a single project by its ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The requested Project object"
+          },
+          "404": {
+            "description": "No such project"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Projects"],
+        "summary": "Delete a project",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Project deleted successfully!"
+          },
+          "401": {
+            "description": "Request is unauthorized"
+          },
+          "404": {
+            "description": "No such project or not authorized to delete"
+          }
+        }
+      },
+      "patch": {
+        "tags": ["Projects"],
+        "summary": "Update an existing project",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string"
+                  },
+                  "technologies": {
+                    "type": "string"
+                  },
+                  "projectImage": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The updated Project object"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Request is unauthorized"
+          },
+          "404": {
+            "description": "No such project or not authorized to update"
+          }
+        }
+      }
+    },
+    "/api/skills": {
+      "get": {
+        "tags": ["Skills"],
+        "summary": "Fetches all available skills",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "An array of Skill objects"
+          },
+          "401": {
+            "description": "Request is unauthorized"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Skills"],
+        "summary": "Create a new skill entry",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The newly created Skill object"
+          },
+          "400": {
+            "description": "Skill already exists or Validation error"
+          },
+          "401": {
+            "description": "Request is unauthorized"
+          }
+        }
+      }
+    },
+    "/api/skills/{id}": {
+      "get": {
+        "tags": ["Skills"],
+        "summary": "Fetches a single skill by ID",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The requested Skill object"
+          },
+          "404": {
+            "description": "No such skill found."
+          }
+        }
+      },
+      "patch": {
+        "tags": ["Skills"],
+        "summary": "Update a skill's name",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The updated Skill object"
+          },
+          "400": {
+            "description": "Skill already exists or Validation error"
+          },
+          "401": {
+            "description": "Request is unauthorized"
+          },
+          "404": {
+            "description": "No such skill or not authorized to update."
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Skills"],
+        "summary": "Delete a skill",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Skill deleted successfully!"
+          },
+          "401": {
+            "description": "Request is unauthorized"
+          },
+          "404": {
+            "description": "No such skill or not authorized to delete."
+          }
+        }
+      }
+    },
+    "/api/users/login": {
+      "post": {
+        "tags": ["Users"],
+        "summary": "Authenticate user credentials and issue a JWT token",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "{ email, name, token: <JWT> }"
+          },
+          "400": {
+            "description": "Incorrect email or password"
+          }
+        }
+      }
+    },
+    "/api/users/forgot-password": {
+      "post": {
+        "tags": ["Users"],
+        "summary": "Initiates the password reset flow",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Password reset link sent to your email."
+          },
+          "500": {
+            "description": "Failed to send reset email."
+          }
+        }
+      }
+    },
+    "/api/users/resetpassword/{token}": {
+      "put": {
+        "tags": ["Users"],
+        "summary": "Finalizes the password reset",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "password": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Password has been successfully reset"
+          },
+          "400": {
+            "description": "Password reset token is invalid or has expired."
+          }
+        }
+      }
+    },
+    "/api/users/profile": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "Fetches the authenticated user's profile data",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{ email, name, token: <JWT> }"
+          },
+          "401": {
+            "description": "Authentication token required"
+          }
+        }
+      }
+    }
+  }
+}

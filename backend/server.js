@@ -9,8 +9,7 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const path = require('path');
 const swaggerUi = require('swagger-ui-express');
-const YAML = require('yamljs');
-const fs = require('fs');
+const swaggerDocument = require('./config/swagger.json');
 
 // Import Routes
 const userRoutes = require("./routes/userRoutes"); 
@@ -35,13 +34,9 @@ app.use(cors({
 }));
 app.use(express.json());
 
-
 // -------------------------------------------------------------
 // | 4. SWAGGER DOCUMENTATION SETUP                            |
 // -------------------------------------------------------------
-
-const yamlPath = path.join(__dirname, 'config', 'swagger.yaml');
-const swaggerDocument = YAML.parse(fs.readFileSync(yamlPath, 'utf8'));
 
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
