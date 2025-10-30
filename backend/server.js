@@ -41,43 +41,38 @@ app.use(express.json());
 
 
 // -------------------------------------------------------------
-// | 4. SWAGGER DOCUMENTATION SETUP (Debugging Paths)          |
+// | 4. SWAGGER DOCUMENTATION SETUP (Final Stable Configuration)|
 // -------------------------------------------------------------
 
 // Log the directory name where server.js is located
 const serverDir = __dirname;
-console.log(`[DEBUG] __dirname (Server directory): ${serverDir}`);
-
-// Construct the full path to the YAML file
 const yamlPath = path.join(serverDir, 'config', 'swagger.yaml');
-console.log(`[DEBUG] Full YAML path calculated: ${yamlPath}`);
 
 try {
     // Load the documentation file reliably using absolute path 
     const swaggerDocument = YAML.load(yamlPath);
     console.log("[DEBUG] YAML file loaded successfully.");
     
-    // Add the JSON endpoint for the Swagger definition (crucial for stability)
+    // 1. Add the JSON endpoint for the Swagger definition
     app.get('/api-docs-json', (req, res) => {
         console.log("[DEBUG] /api-docs-json endpoint hit.");
         res.setHeader('Content-Type', 'application/json');
         res.send(swaggerDocument);
     });
 
-    // Mount the Swagger UI on a dedicated route
+    // 2. Mount the Swagger UI on a dedicated route
+    // Perbaikan: Gunakan URL dari options object untuk setup.
     app.use('/docs', 
       swaggerUi.serve, 
-      swaggerUi.setup(swaggerDocument, {
-        swaggerOptions: {
-            url: "/api-docs-json" 
-        },
+      swaggerUi.setup(null, { // <<< Ganti swaggerDocument dengan null di parameter pertama
+        swaggerUrl: "/api-docs-json", // <<< Gunakan opsi swaggerUrl (BUKAN swaggerOptions: {url: ...})
+        explorer: true, // Opsional: Tambahkan bilah pencarian
       })
     );
     console.log("[DEBUG] Swagger UI setup complete on /docs.");
     
 } catch (error) {
     console.error(`[DEBUG CRITICAL ERROR] Failed to load or set up Swagger: ${error.message}`);
-    // Jika ada error di sini, Vercel mungkin mengeluarkan error 500.
 }
 
 
