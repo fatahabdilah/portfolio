@@ -7,6 +7,7 @@ require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const path = require('path');
 const swaggerUi = require('swagger-ui-express'); // Swagger UI Library
 const YAML = require('yamljs'); // YAML Parser for documentation file
 
@@ -42,8 +43,9 @@ app.use(express.json());
 // -------------------------------------------------------------
 
 // Load the documentation file
-const swaggerDocument = YAML.load('./config/swagger.yaml');
-
+const swaggerDocument = YAML.load(
+    path.join(__dirname, 'config', 'swagger.yaml')
+);
 // Mount the Swagger UI on a dedicated route
 // Documentation will be accessible at: http://localhost:[PORT]/docs
 app.use('/docs', 
