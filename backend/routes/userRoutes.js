@@ -1,13 +1,13 @@
 // backend/routes/userRoutes.js
 
 const express = require("express");
-const { 
-    loginUser, 
-    forgotPassword, 
-    resetPassword,
-    // registerUser, // Left commented out for clarity
+const {
+  loginUser,
+  forgotPassword,
+  resetPassword,
+  // registerUser, // Left commented out for clarity
 } = require("../controllers/UserController");
-const requireAuth = require("../middleware/requireAuth"); 
+const requireAuth = require("../middleware/requireAuth");
 
 const router = express.Router();
 
@@ -35,7 +35,7 @@ router.post("/login", loginUser);
 router.post("/forgot-password", forgotPassword);
 
 /**
- * @route PUT /api/users/resetpassword/:token
+ * @route PATCH /api/users/resetpassword/:token
  * @desc Finalizes the password reset. Resets user's password using the generated token from the email link.
  * @access Public
  * @param {string} token - The unique password reset token found in the URL.
@@ -43,8 +43,7 @@ router.post("/forgot-password", forgotPassword);
  * @returns {object} 200 - { message: "Password has been successfully reset" }
  * @returns {object} 400 - { error: "Password reset token is invalid or has expired." }
  */
-router.put("/resetpassword/:token", resetPassword);
-
+router.patch("/resetpassword/:token", resetPassword);
 
 // --- PRIVATE ROUTES ---
 
@@ -57,10 +56,10 @@ router.put("/resetpassword/:token", resetPassword);
  * @returns {object} 401 - { error: "Authentication token required" }
  */
 router.get("/profile", requireAuth, (req, res) => {
-    res.status(200).json({
-        message: "Secret access granted! Profile data retrieved.",
-        userId: req.user._id,
-    });
+  res.status(200).json({
+    message: "Secret access granted! Profile data retrieved.",
+    userId: req.user._id,
+  });
 });
 
 module.exports = router;

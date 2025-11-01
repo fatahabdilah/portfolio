@@ -3,11 +3,25 @@
   "info": {
     "title": "My Portfolio API",
     "version": "1.0.0",
-    "description": "My Portfolio API Information"
+    "description": "The official REST API for Fatah Abdilah's portfolio application. This API manages projects, skills, and user authentication.",
+    "contact": {
+      "name": "Fatah Abdilah",
+      "email": "fatah.abdilah@example.com",
+      "url": "https://your-portfolio-website.com"
+    },
+    "license": {
+      "name": "ISC",
+      "url": "https://opensource.org/licenses/ISC"
+    }
   },
   "servers": [
     {
       "url": "http://localhost:5000"
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
     }
   ],
   "components": {
@@ -16,6 +30,112 @@
         "type": "http",
         "scheme": "bearer",
         "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "Project": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string",
+            "example": "60d0fe4f5311236168a109ca"
+          },
+          "title": {
+            "type": "string",
+            "example": "E-commerce Platform"
+          },
+          "description": {
+            "type": "string",
+            "example": "A full-featured e-commerce website built with the MERN stack."
+          },
+          "technologies": {
+            "type": "array",
+            "description": "An array of Skill objects associated with the project.",
+            "items": {
+              "$ref": "#/components/schemas/Skill"
+            },
+            "example": [
+              {
+                "_id": "60d0fe4f5311236168a109cb",
+                "name": "React"
+              },
+              {
+                "_id": "60d0fe4f5311236168a109cc",
+                "name": "Node.js"
+              }
+            ]
+          },
+          "projectImage": {
+            "type": "string",
+            "format": "uri",
+            "example": "https://res.cloudinary.com/demo/image/upload/v1624582000/sample.jpg"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Skill": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string",
+            "example": "60d0fe4f5311236168a109cb"
+          },
+          "name": {
+            "type": "string",
+            "example": "JavaScript"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          }
+        },
+        "required": ["error"],
+        "examples": [
+          {
+            "error": "Resource not found."
+          }
+        ]
+      },
+      "SuccessMessage": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": ["message"]
+      }
+    },
+    "responses": {
+      "UnauthorizedError": {
+        "description": "Authentication error. The provided JWT is either missing, invalid, or expired.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": { "error": "Request is not authorized" }
+          }
+        }
       }
     }
   },
@@ -30,7 +150,7 @@
     },
     {
       "name": "Users",
-      "description": "Everything about your Users"
+      "description": "User authentication and management"
     }
   ],
   "paths": {
@@ -38,23 +158,34 @@
       "get": {
         "tags": ["Projects"],
         "summary": "Fetch all projects",
+        "description": "Retrieves a list of all project entries from the database. This endpoint is public and does not require authentication.",
+        "security": [],
         "responses": {
           "200": {
-            "description": "An array of Project objects"
+            "description": "A list of all projects was successfully retrieved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Project" }
+                }
+              }
+            }
           },
           "500": {
-            "description": "Server error"
+            "description": "Internal Server Error.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
           }
         }
       },
       "post": {
         "tags": ["Projects"],
         "summary": "Create a new project",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
+        "description": "Adds a new project to the database. Requires authentication. The request must be `multipart/form-data` to handle the image upload.",
         "requestBody": {
           "content": {
             "multipart/form-data": {
@@ -81,13 +212,31 @@
         },
         "responses": {
           "201": {
-            "description": "The newly created Project object"
+            "description": "The project was created successfully.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Project" }
+              }
+            }
           },
           "400": {
-            "description": "Validation failed or Image upload failed"
+            "description": "Bad Request. Input validation failed or there was an issue with the image upload.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
           },
           "401": {
-            "description": "Request is unauthorized"
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "500": {
+            "description": "Internal Server Error.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
           }
         }
       }
@@ -96,6 +245,8 @@
       "get": {
         "tags": ["Projects"],
         "summary": "Fetch a single project by its ID",
+        "description": "Retrieves a specific project using its unique MongoDB ObjectID. This endpoint is public.",
+        "security": [],
         "parameters": [
           {
             "name": "id",
@@ -103,26 +254,33 @@
             "required": true,
             "schema": {
               "type": "string"
-            }
+            },
+            "description": "The MongoDB ObjectID of the project to retrieve."
           }
         ],
         "responses": {
           "200": {
-            "description": "The requested Project object"
+            "description": "The requested project was found and returned.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Project" }
+              }
+            }
           },
           "404": {
-            "description": "No such project"
+            "description": "Not Found. A project with the specified ID does not exist.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
           }
         }
       },
       "delete": {
         "tags": ["Projects"],
         "summary": "Delete a project",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
+        "description": "Permanently removes a project from the database. Requires authentication.",
         "parameters": [
           {
             "name": "id",
@@ -130,29 +288,36 @@
             "required": true,
             "schema": {
               "type": "string"
-            }
+            },
+            "description": "The MongoDB ObjectID of the project to delete."
           }
         ],
         "responses": {
           "200": {
-            "description": "Project deleted successfully!"
+            "description": "The project was deleted successfully.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SuccessMessage" }
+              }
+            }
           },
           "401": {
-            "description": "Request is unauthorized"
+            "$ref": "#/components/responses/UnauthorizedError"
           },
           "404": {
-            "description": "No such project or not authorized to delete"
+            "description": "Not Found. A project with the specified ID does not exist.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
           }
         }
       },
       "patch": {
         "tags": ["Projects"],
         "summary": "Update an existing project",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
+        "description": "Updates one or more fields of an existing project. Requires authentication. The request must be `multipart/form-data` if an image is being updated.",
         "parameters": [
           {
             "name": "id",
@@ -160,7 +325,8 @@
             "required": true,
             "schema": {
               "type": "string"
-            }
+            },
+            "description": "The password reset token from the email link."
           }
         ],
         "requestBody": {
@@ -186,16 +352,31 @@
         },
         "responses": {
           "200": {
-            "description": "The updated Project object"
+            "description": "The project was updated successfully.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Project" }
+              }
+            }
           },
           "400": {
-            "description": "Validation failed"
+            "description": "Bad Request. Input validation failed.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
           },
           "401": {
-            "description": "Request is unauthorized"
+            "$ref": "#/components/responses/UnauthorizedError"
           },
           "404": {
-            "description": "No such project or not authorized to update"
+            "description": "Not Found. A project with the specified ID does not exist.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
           }
         }
       }
@@ -203,29 +384,37 @@
     "/api/skills": {
       "get": {
         "tags": ["Skills"],
-        "summary": "Fetches all available skills",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
+        "summary": "Fetch all available skills (Private)",
+        "description": "Retrieves a list of all skills from the database, sorted alphabetically. Requires authentication.",
         "responses": {
           "200": {
-            "description": "An array of Skill objects"
+            "description": "A list of all skills was successfully retrieved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Skill" }
+                }
+              }
+            }
           },
           "401": {
-            "description": "Request is unauthorized"
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "500": {
+            "description": "Internal Server Error.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
           }
         }
       },
       "post": {
         "tags": ["Skills"],
         "summary": "Create a new skill entry",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
+        "description": "Adds a new skill to the database. Requires authentication.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -235,20 +424,32 @@
                   "name": {
                     "type": "string"
                   }
-                }
+                },
+                "required": ["name"],
+                "example": { "name": "Docker" }
               }
             }
           }
         },
         "responses": {
           "201": {
-            "description": "The newly created Skill object"
+            "description": "The skill was created successfully.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Skill" }
+              }
+            }
           },
           "400": {
-            "description": "Skill already exists or Validation error"
+            "description": "Bad Request. The skill may already exist or the name is invalid.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
           },
           "401": {
-            "description": "Request is unauthorized"
+            "$ref": "#/components/responses/UnauthorizedError"
           }
         }
       }
@@ -256,12 +457,8 @@
     "/api/skills/{id}": {
       "get": {
         "tags": ["Skills"],
-        "summary": "Fetches a single skill by ID",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
+        "summary": "Fetch a single skill by ID (Private)",
+        "description": "Retrieves a specific skill using its unique MongoDB ObjectID. Requires authentication.",
         "parameters": [
           {
             "name": "id",
@@ -269,26 +466,33 @@
             "required": true,
             "schema": {
               "type": "string"
-            }
+            },
+            "description": "The MongoDB ObjectID of the skill to retrieve."
           }
         ],
         "responses": {
           "200": {
-            "description": "The requested Skill object"
+            "description": "The requested skill was found and returned.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Skill" }
+              }
+            }
           },
           "404": {
-            "description": "No such skill found."
+            "description": "Not Found. A skill with the specified ID does not exist.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
           }
         }
       },
       "patch": {
         "tags": ["Skills"],
         "summary": "Update a skill's name",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
+        "description": "Updates the name of an existing skill. Requires authentication.",
         "parameters": [
           {
             "name": "id",
@@ -296,7 +500,8 @@
             "required": true,
             "schema": {
               "type": "string"
-            }
+            },
+            "description": "The MongoDB ObjectID of the project to update."
           }
         ],
         "requestBody": {
@@ -308,34 +513,47 @@
                   "name": {
                     "type": "string"
                   }
-                }
+                },
+                "required": ["name"],
+                "example": { "name": "Kubernetes" }
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "The updated Skill object"
+            "description": "The skill was updated successfully.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Skill" }
+              }
+            }
           },
           "400": {
-            "description": "Skill already exists or Validation error"
+            "description": "Bad Request. The skill name may already exist or is invalid.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
           },
           "401": {
-            "description": "Request is unauthorized"
+            "$ref": "#/components/responses/UnauthorizedError"
           },
           "404": {
-            "description": "No such skill or not authorized to update."
+            "description": "Not Found. A skill with the specified ID does not exist.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
           }
         }
       },
       "delete": {
         "tags": ["Skills"],
         "summary": "Delete a skill",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
+        "description": "Permanently removes a skill from the database. Requires authentication.",
         "parameters": [
           {
             "name": "id",
@@ -343,49 +561,29 @@
             "required": true,
             "schema": {
               "type": "string"
-            }
+            },
+            "description": "The MongoDB ObjectID of the skill to delete."
           }
         ],
         "responses": {
           "200": {
-            "description": "Skill deleted successfully!"
-          },
-          "401": {
-            "description": "Request is unauthorized"
-          },
-          "404": {
-            "description": "No such skill or not authorized to delete."
-          }
-        }
-      }
-    },
-    "/api/users/login": {
-      "post": {
-        "tags": ["Users"],
-        "summary": "Authenticate user credentials and issue a JWT token",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "email": {
-                    "type": "string"
-                  },
-                  "password": {
-                    "type": "string"
-                  }
-                }
+            "description": "The skill was deleted successfully.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SuccessMessage" }
               }
             }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "{ email, name, token: <JWT> }"
           },
-          "400": {
-            "description": "Incorrect email or password"
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "description": "Not Found. A skill with the specified ID does not exist.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
           }
         }
       }
@@ -393,7 +591,52 @@
     "/api/users/forgot-password": {
       "post": {
         "tags": ["Users"],
-        "summary": "Initiates the password reset flow",
+        "summary": "Initiate the password reset flow",
+        "description": "Sends a password reset link to the user's email address if the account exists. For security reasons, this endpoint always returns a success message, regardless of whether the email was found in the database.",
+        "security": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  }
+                },
+                "required": ["email"],
+                "example": { "email": "user@example.com" }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The request has been processed. If an account with this email exists, a reset link has been sent.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SuccessMessage" }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error, e.g., failed to send the email.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/login": {
+      "post": {
+        "tags": ["Users"],
+        "summary": "Authenticate user and get a token",
+        "description": "Authenticates a user's credentials (email and password) and returns a JWT token for accessing protected endpoints.",
+        "security": [],
         "requestBody": {
           "content": {
             "application/json": {
@@ -419,7 +662,7 @@
       }
     },
     "/api/users/resetpassword/{token}": {
-      "put": {
+      "patch": {
         "tags": ["Users"],
         "summary": "Finalizes the password reset",
         "parameters": [
@@ -429,7 +672,8 @@
             "required": true,
             "schema": {
               "type": "string"
-            }
+            },
+            "description": "The MongoDB ObjectID of the skill to update."
           }
         ],
         "requestBody": {
@@ -441,17 +685,29 @@
                   "password": {
                     "type": "string"
                   }
-                }
+                },
+                "required": ["password"],
+                "example": { "password": "MyNewSecurePassword123!" }
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Password has been successfully reset"
+            "description": "The password was reset successfully.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SuccessMessage" }
+              }
+            }
           },
           "400": {
-            "description": "Password reset token is invalid or has expired."
+            "description": "Bad Request. The password reset token is invalid or has expired.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
           }
         }
       }
@@ -459,19 +715,24 @@
     "/api/users/profile": {
       "get": {
         "tags": ["Users"],
-        "summary": "Fetches the authenticated user's profile data",
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
+        "summary": "Get authenticated user's profile",
+        "description": "Fetches the profile data for the currently authenticated user. Requires a valid JWT in the Authorization header.",
         "responses": {
           "200": {
-            "description": "{ email, name, token: <JWT> }"
+            "description": "User profile data retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" },
+                    "userId": { "type": "string" }
+                  }
+                }
+              }
+            }
           },
-          "401": {
-            "description": "Authentication token required"
-          }
+          "401": { "$ref": "#/components/responses/UnauthorizedError" }
         }
       }
     }
