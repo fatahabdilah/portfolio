@@ -10,6 +10,7 @@ const cors = require("cors");
 const path = require("path");
 const swaggerUi = require("swagger-ui-express");
 const swaggerDocument = require("./config/swagger.json");
+const swaggerUiDist = require("swagger-ui-dist");
 
 // Import Routes
 const userRoutes = require("./routes/userRoutes");
@@ -94,31 +95,29 @@ app.use("/api/skills", skillRoutes);
 // -------------------------------------------------------------
 
 const connectDBAndStartServer = async () => {
-  try {
-    // Cek apakah sudah terkoneksi untuk menghindari koneksi ganda (berguna untuk hot-reloading di dev)
-    if (mongoose.connection.readyState >= 1) {
-      return;
-    }
-    await mongoose.connect(MONGO_URI);
-    console.log("✅ MongoDB connected successfully!");
-  } catch (err) {
-    console.error("❌ DATABASE CONNECTION FAILED:", err.message);
-    // Hentikan proses hanya di lingkungan non-produksi. Di Vercel, ini akan mencegah server crash.
-    if (process.env.NODE_ENV !== "production") {
-      process.exit(1);
+  if (!mongoose.connection.readyState) {
+    try {
+      await mongoose.connect(MONGO_URI);
+      console.log("✅ MongoDB connected successfully!");
+    } catch (err) {
+      console.error("❌ CONNECTION FAILED:", err.message);
+      if (process.env.NODE_ENV !== "production") {
+        process.exit(1);
+      }
     }
   }
-};
 
-connectDBAndStartServer().then(() => {
-  // Jalankan server hanya jika bukan di lingkungan Vercel dan bukan untuk testing
-  // Vercel akan menangani servernya sendiri, kita hanya perlu mengekspor 'app'
-  if (process.env.NODE_ENV !== "test" && !process.env.VERCEL) {
+  if (
+    process.env.NODE_ENV !== "test" &&
+    process.env.VERCEL_ENV !== "production"
+  ) {
     app.listen(PORT, () => {
       console.log(`🚀 Server running on http://localhost:${PORT}`);
     });
   }
-});
+};
+
+connectDBAndStartServer();
 
 // Export the Express app instance.
 module.exports = app;
