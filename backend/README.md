@@ -124,3 +124,20 @@ Pendekatan ini sangat kuat karena **eksplisit dan tidak bergantung pada "sihir" 
 - **Bersih**: Konfigurasi menjadi lebih sederhana karena kita tidak memerlukan file `vercel.json` dengan aturan `rewrites` yang rumit. Semua logika terkandung di dalam kode aplikasi kita.
 
 Dengan mengikuti metode ini, Anda dapat dengan percaya diri men-deploy dokumentasi Swagger yang fungsional dan terlihat bagus di Vercel setiap saat.
+
+---
+
+## Catatan Tambahan: Mengapa Konfigurasi `vercel.json` Saat Ini Berhasil?
+
+Setelah melalui berbagai percobaan, konfigurasi `vercel.json` yang akhirnya berhasil adalah yang mengarah langsung ke `node_modules`:
+
+```json
+{
+  "source": "/docs-assets/(.*)",
+  "destination": "/backend/node_modules/swagger-ui-dist/$1"
+}
+```
+
+**Alasan Keberhasilan:** Saat Vercel membangun proyek Node.js, ia memaketkan seluruh direktori `node_modules` yang relevan bersama dengan kode server Anda. Ternyata, sistem `rewrites` Vercel dapat "mengintip" ke dalam paket build ini dan menyajikan file secara langsung sebelum permintaan tersebut dieksekusi sebagai *serverless function*. Ini memungkinkan Vercel untuk menemukan dan menyajikan file CSS dari `node_modules/swagger-ui-dist`.
+
+**Penting untuk diketahui:** Ini adalah perilaku internal Vercel yang tidak terdokumentasi secara luas. Ini bisa dianggap "rapuh" karena jika Vercel mengubah cara mereka membangun proyek di masa depan, metode ini bisa tiba-tiba rusak. Namun, untuk saat ini, ini adalah solusi yang berfungsi dengan baik untuk proyek ini.

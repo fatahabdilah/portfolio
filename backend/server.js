@@ -10,7 +10,6 @@ const cors = require("cors");
 const path = require("path");
 const swaggerUi = require("swagger-ui-express");
 const swaggerDocument = require("./config/swagger.json");
-const swaggerUiDist = require("swagger-ui-dist");
 
 // Import Routes
 const userRoutes = require("./routes/userRoutes");
@@ -41,27 +40,21 @@ app.use(express.json());
 // | 4. SWAGGER DOCUMENTATION SETUP                            |
 // -------------------------------------------------------------
 
-// Definisikan path untuk aset statis Swagger. Ini akan digunakan oleh Vercel
-// melalui vercel.json dan juga untuk membangun URL CSS di bawah.
+// Define the public path for Swagger assets. This is used to build the custom CSS URL.
 const swaggerUiAssetPath = "/docs-assets";
 
-// Sajikan direktori 'public' yang berisi aset Swagger yang sudah disalin.
-app.use(
-  swaggerUiAssetPath,
-  express.static(path.join(__dirname, "public", "docs-assets"))
-);
-
 app.use("/docs", swaggerUi.serve, (req, res) => {
-  // Buat salinan dokumen untuk setiap permintaan agar aman dari modifikasi.
+  // Create a deep copy of the document for each request to prevent modification of the cached original.
   const swaggerDoc = JSON.parse(JSON.stringify(swaggerDocument));
 
-  // Tentukan URL server dinamis.
+  // Dynamically set the server URL. Use Vercel's URL in production, otherwise use localhost.
   const serverUrl = process.env.VERCEL_URL
     ? `https://${process.env.VERCEL_URL}`
     : `http://localhost:${PORT}`;
   swaggerDoc.servers = [{ url: serverUrl }];
 
-  // Beri tahu Swagger UI di mana menemukan aset statisnya.
+  // Tell Swagger UI where to find its custom stylesheet.
+  // Vercel serves this file directly via the rewrite rule in vercel.json.
   const swaggerUiOptions = {
     customCssUrl: `${swaggerUiAssetPath}/swagger-ui.css`,
   };
@@ -107,10 +100,7 @@ const connectDBAndStartServer = async () => {
     }
   }
 
-  if (
-    process.env.NODE_ENV !== "test" &&
-    process.env.VERCEL_ENV !== "production"
-  ) {
+  if (!process.env.VERCEL_ENV) {
     app.listen(PORT, () => {
       console.log(`🚀 Server running on http://localhost:${PORT}`);
     });
