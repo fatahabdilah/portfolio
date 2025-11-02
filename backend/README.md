@@ -1,38 +1,28 @@
 # ⚙️ Dokumentasi API: My-Portfolio Backend
 
-Dokumen ini menjelaskan implementasi **Swagger UI** (Dokumentasi OpenAPI) untuk API *backend* yang di-deploy menggunakan **Vercel**. Implementasi ini dirancang untuk mengatasi masalah *path* aset statis (CSS, JS) dalam lingkungan *serverless* Vercel dengan mengintegrasikan konfigurasi dari empat *file* utama: `package.json`, `copy-files-from-to.json`, `vercel.json`, dan `server.js`.
+Dokumen ini menjelaskan implementasi **Swagger UI** (Dokumentasi OpenAPI) untuk API *backend* yang di-deploy menggunakan **Vercel**. Pendekatan ini menggunakan *script* *build* Vercel untuk penyalinan aset statis, yang merupakan metode yang ringkas dan efisien.
 
 ---
 
 ## 1. Arsitektur dan Aliran Aset Statis
 
-Integrasi Swagger UI yang sukses di Vercel memerlukan sinkronisasi antara penyalinan aset lokal dan *routing* pada server yang di-deploy.
+Integrasi Swagger UI yang sukses di Vercel memerlukan sinkronisasi antara penyalinan aset statis dan *routing* Vercel/Express.
 
-### 1.1. Penyalinan Aset (Melalui `npm install`)
+### 1.1. Penyalinan Aset (Melalui `vercel-build`)
 
-Proses ini memastikan aset statis Swagger UI tersedia di lokasi publik yang dapat diakses oleh server Express.
+Penyalinan aset Swagger UI dilakukan langsung menggunakan *command* *copy* di *script* `vercel-build` pada `package.json`. Ini memastikan aset statis tersedia di lokasi publik sebelum server Express dimulai.
 
-1.  **`package.json`**: Mengaktifkan *script* *post-install* untuk menyalin *file*:
+1.  **`package.json`**: Menggunakan *script* `vercel-build` yang dijalankan Vercel sebelum *startup*:
     ```json
     // ...
     "scripts": {
-      "postinstall": "npx copy-files-from-to --config copy-files-from-to.json"
-    }
+      // ...
+      "vercel-build": "mkdir -p public/docs-assets && cp -r node_modules/swagger-ui-dist/* public/docs-assets/",
+      // ...
+    },
     // ...
     ```
-
-2.  **`copy-files-from-to.json`**: Mendefinisikan sumber dan tujuan penyalinan:
-    ```json
-    {
-      "copyFiles": [
-        {
-          "from": "node_modules/swagger-ui-dist/*.{js,css,html,png}",
-          "to": "public/docs-assets"
-        }
-      ]
-    }
-    ```
-    **Hasil:** Aset disalin ke **`public/docs-assets`**.
+    **Hasil:** Aset disalin dari `node_modules/swagger-ui-dist/` ke **`<project-root>/public/docs-assets`**.
 
 ### 1.2. Penanganan Permintaan Aset (Routing)
 
@@ -93,9 +83,3 @@ app.use("/docs", swaggerUi.serve, (req, res) => {
   const ui = swaggerUi.setup(swaggerDoc, swaggerUiOptions);
   ui(req, res);
 });
-3. Penggunaan
-Setelah deployment sukses di Vercel, dokumentasi API dapat diakses melalui:
-
-URL Dokumentasi: https://[URL_DOMAIN_ANDA]/docs
-
-Pastikan variabel lingkungan seperti MONGO_URI, FRONTEND_URL, dan variabel lain yang relevan telah dikonfigurasi di pengaturan Vercel Anda.
