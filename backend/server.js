@@ -12,8 +12,6 @@ const swaggerUi = require("swagger-ui-express");
 const swaggerDocument = require("./config/swagger.json");
 require("swagger-ui-dist");
 
-
-
 // Import Routes
 const userRoutes = require("./routes/userRoutes");
 const projectRoutes = require("./routes/projectRoutes");
@@ -47,14 +45,13 @@ app.use(express.json());
 const swaggerUiAssetPath = "/docs-assets";
 
 // Sajikan direktori 'public' yang berisi aset Swagger yang sudah disalin.
-// Ini melayani aset pada path /docs-assets.
 app.use(
   swaggerUiAssetPath,
   express.static(path.join(__dirname, "public", "docs-assets"))
 );
 
 app.use("/docs", swaggerUi.serve, (req, res) => {
-  // Buat salinan dokumen untuk setiap permintaan.
+  // Buat salinan dokumen untuk setiap permintaan agar aman dari modifikasi.
   const swaggerDoc = JSON.parse(JSON.stringify(swaggerDocument));
 
   // Tentukan URL server dinamis.
@@ -78,13 +75,17 @@ app.use("/docs", swaggerUi.serve, (req, res) => {
 
 /**
  * @route GET /
- * @desc Root testing route to confirm server status.
+ * @desc Professional API root response.
  * @access Public
  */
 app.get("/", (req, res) => {
-  res.send(
-    "Server My-Portfolio running! Ready to connect to DB. Swagger documentation is at /docs"
-  );
+  res.status(200).json({
+    status: "success",
+    message: "Welcome to the My-Portfolio REST API.",
+    documentation: "/docs",
+    version: "1.0.0",
+    developer: "Fatah Abdilah",
+  });
 });
 
 // Primary API Routes
