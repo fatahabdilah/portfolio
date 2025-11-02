@@ -45,11 +45,9 @@ app.use(express.json());
 // melalui vercel.json dan juga untuk membangun URL CSS di bawah.
 const swaggerUiAssetPath = "/docs-assets";
 
-// Sajikan direktori 'public' yang berisi aset Swagger yang sudah disalin.
-app.use(
-  swaggerUiAssetPath,
-  express.static(path.join(__dirname, "public", "docs-assets"))
-);
+// Serve Swagger assets directly from node_modules for the local server.
+// In production, Vercel's rewrite rule in vercel.json takes precedence.
+app.use(swaggerUiAssetPath, express.static(swaggerUiDist.getAbsoluteFSPath()));
 
 app.use("/docs", swaggerUi.serve, (req, res) => {
   // Buat salinan dokumen untuk setiap permintaan agar aman dari modifikasi.
