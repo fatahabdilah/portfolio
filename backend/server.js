@@ -44,12 +44,6 @@ app.use(express.json());
 // This path is used to serve the assets and to build the custom CSS URL.
 const swaggerUiAssetPath = "/docs-assets";
 
-// Serve the 'public' directory which contains the copied Swagger assets.
-app.use(
-  swaggerUiAssetPath,
-  express.static(path.join(__dirname, "public", "docs-assets"))
-);
-
 app.use("/docs", swaggerUi.serve, (req, res) => {
   // Create a copy of the document for each request to prevent modification of the cached original.
   const swaggerDoc = JSON.parse(JSON.stringify(swaggerDocument));

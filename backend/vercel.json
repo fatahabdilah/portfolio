@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/docs-assets/(.*)",
+      "destination": "/backend/public/docs-assets/$1"
+    },
+    {
       "source": "/(.*)",
       "destination": "/backend/server.js"
     }
