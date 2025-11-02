@@ -43,6 +43,12 @@ app.use(express.json());
 // Define the public path for Swagger assets. This is used to build the custom CSS URL.
 const swaggerUiAssetPath = "/docs-assets";
 
+// Serve Swagger assets statically for the local development environment.
+// This is crucial for `npm run dev` to work correctly. Vercel ignores this
+// and uses the `vercel.json` rewrite rule instead.
+const swaggerUiDist = require("swagger-ui-dist");
+app.use(swaggerUiAssetPath, express.static(swaggerUiDist.getAbsoluteFSPath()));
+
 app.use("/docs", swaggerUi.serve, (req, res) => {
   // Create a deep copy of the document for each request to prevent modification of the cached original.
   const swaggerDoc = JSON.parse(JSON.stringify(swaggerDocument));
