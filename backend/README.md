@@ -24,6 +24,15 @@ Penyalinan aset Swagger UI dilakukan langsung menggunakan *command* *copy* di *s
     ```
     **Hasil:** Aset disalin dari `node_modules/swagger-ui-dist/` ke **`<project-root>/public/docs-assets`**.
 
+2.  **`backend/server.js` (Memastikan Ketersediaan Aset)**:
+    Panggilan `require("swagger-ui-dist");` di `server.js` dipertahankan (walaupun tidak ditugaskan ke variabel) untuk memastikan Vercel menyertakan *package* tersebut dalam *bundle deployment*, sehingga asetnya tersedia untuk disalin.
+    ```javascript
+    // backend/server.js (Bagian Import)
+    const swaggerDocument = require("./config/swagger.json");
+    require("swagger-ui-dist"); // DIJAGA untuk memastikan ketersediaan aset di Vercel
+    // ...
+    ```
+
 ### 1.2. Penanganan Permintaan Aset (Routing)
 
 Penanganan permintaan untuk aset statis ditangani oleh *middleware* Express.js, dengan *rewrite* Vercel sebagai lapisan penanganan *serverless*.
