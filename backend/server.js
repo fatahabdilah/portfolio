@@ -25,7 +25,7 @@ const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI;
 
 // -------------------------------------------------------------
-// | 3. MIDDLEWARE CONFIGURATION                               |
+// | 3. MIDDLEWARE CONFIGURATION                               |
 // -------------------------------------------------------------
 const allowedOrigin = process.env.FRONTEND_URL;
 app.use(
@@ -38,21 +38,21 @@ app.use(
 app.use(express.json());
 
 // -------------------------------------------------------------
-// | 4. SWAGGER DOCUMENTATION SETUP                            |
+// | 4. SWAGGER DOCUMENTATION SETUP                            |
 // -------------------------------------------------------------
 
-// Definisikan path untuk aset statis Swagger. Ini akan digunakan oleh Vercel
-// melalui vercel.json dan juga untuk membangun URL CSS di bawah.
+// Definisikan path untuk aset statis Swagger.
 const swaggerUiAssetPath = "/docs-assets";
 
 // Sajikan direktori 'public' yang berisi aset Swagger yang sudah disalin.
+// Ini melayani aset pada path /docs-assets.
 app.use(
   swaggerUiAssetPath,
   express.static(path.join(__dirname, "public", "docs-assets"))
 );
 
 app.use("/docs", swaggerUi.serve, (req, res) => {
-  // Buat salinan dokumen untuk setiap permintaan agar aman dari modifikasi.
+  // Buat salinan dokumen untuk setiap permintaan.
   const swaggerDoc = JSON.parse(JSON.stringify(swaggerDocument));
 
   // Tentukan URL server dinamis.
@@ -71,7 +71,7 @@ app.use("/docs", swaggerUi.serve, (req, res) => {
 });
 
 // -------------------------------------------------------------
-// | 5. ROUTE DEFINITIONS                                      |
+// | 5. ROUTE DEFINITIONS                                      |
 // -------------------------------------------------------------
 
 /**
@@ -91,7 +91,7 @@ app.use("/api/projects", projectRoutes);
 app.use("/api/skills", skillRoutes);
 
 // -------------------------------------------------------------
-// | 6. DATABASE CONNECTION & SERVER INITIALIZATION            |
+// | 6. DATABASE CONNECTION & SERVER INITIALIZATION            |
 // -------------------------------------------------------------
 
 const connectDBAndStartServer = async () => {

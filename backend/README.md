@@ -1,126 +1,101 @@
-# Deploying Express Swagger UI on Vercel: A Comprehensive Guide
+# ⚙️ Dokumentasi API: My-Portfolio Backend
 
-Dokumen ini menjelaskan solusi lengkap dan andal untuk men-deploy dokumentasi API yang dibuat dengan `swagger-ui-express` pada platform serverless seperti Vercel. Mengikuti panduan ini akan membantu Anda menghindari error umum seperti `MIME type ('text/html')` dan tampilan UI yang berantakan.
-
-## Daftar Isi
-
-1. Masalah Umum
-2. Strategi Solusi: "Copy & Serve"
-3. Implementasi Langkah-demi-Langkah
-   - Langkah 1: Salin Aset Statis Swagger
-   - Langkah 2: Sajikan Aset yang Telah Disalin
-   - Langkah 3: Konfigurasi Swagger UI Secara Dinamis
-4. Mengapa Solusi Ini Berhasil?
+Dokumen ini menjelaskan implementasi **Swagger UI** (Dokumentasi OpenAPI) untuk API *backend* yang di-deploy menggunakan **Vercel**. Implementasi ini dirancang untuk mengatasi masalah *path* aset statis (CSS, JS) dalam lingkungan *serverless* Vercel dengan mengintegrasikan konfigurasi dari empat *file* utama: `package.json`, `copy-files-from-to.json`, `vercel.json`, dan `server.js`.
 
 ---
 
-## 1. Masalah Umum
+## 1. Arsitektur dan Aliran Aset Statis
 
-Saat men-deploy aplikasi Express dengan `swagger-ui-express` ke Vercel, banyak developer menghadapi masalah berikut:
+Integrasi Swagger UI yang sukses di Vercel memerlukan sinkronisasi antara penyalinan aset lokal dan *routing* pada server yang di-deploy.
 
-- **Tampilan Berantakan**: Halaman Swagger muncul tanpa gaya (styling) CSS.
-- **Error MIME Type**: Console browser menampilkan error `Refused to apply style from '...' because its MIME type ('text/html') is not a supported stylesheet MIME type`.
+### 1.1. Penyalinan Aset (Melalui `npm install`)
 
-**Akar Masalah**: `swagger-ui-express` mencoba menyajikan file asetnya (CSS, JS) dari dalam direktori `node_modules`. Lingkungan serverless Vercel tidak dapat mengakses atau menyajikan file dari `node_modules` sebagai aset statis publik secara default. Akibatnya, ketika browser meminta file CSS, Vercel mengembalikan halaman HTML (seringkali halaman 404), yang menyebabkan error MIME type.
+Proses ini memastikan aset statis Swagger UI tersedia di lokasi publik yang dapat diakses oleh server Express.
 
-## 2. Strategi Solusi: "Copy & Serve"
-
-Daripada mencoba "mengakali" routing Vercel untuk menemukan `node_modules`, kita akan menggunakan pendekatan yang lebih eksplisit dan andal:
-
-1.  **Copy**: Selama proses build di Vercel (setelah `npm install`), kita akan menyalin semua file aset yang diperlukan dari `node_modules/swagger-ui-dist` ke dalam direktori `public` di dalam proyek kita.
-2.  **Serve**: Kita akan mengkonfigurasi Express untuk menyajikan file dari direktori `public` ini sebagai aset statis.
-3.  **Configure**: Kita akan memberitahu `swagger-ui-express` secara eksplisit di mana menemukan file CSS-nya, sambil secara dinamis mengatur URL server API berdasarkan lingkungan (lokal vs. produksi).
-
-## 3. Implementasi Langkah-demi-Langkah
-
-### Langkah 1: Salin Aset Statis Swagger
-
-Kita menggunakan skrip `postinstall` di `package.json` untuk mengotomatiskan proses penyalinan file setiap kali dependensi di-install.
-
-**`package.json`**:
-
-```json
-{
-  "scripts": {
-    // Skrip ini akan berjalan secara otomatis di Vercel setelah 'npm install'
-    "postinstall": "npx copy-files-from-to --config copy-files-from-to.json"
-  },
-  "devDependencies": {
-    // Tambahkan library ini untuk membantu proses penyalinan
-    "copy-files-from-to": "^3.9.0"
-  }
-}
-```
-
-**`copy-files-from-to.json`**:
-Buat file ini untuk mendefinisikan file apa yang akan disalin dan ke mana.
-
-```json
-{
-  "copyFiles": [
-    {
-      "from": "node_modules/swagger-ui-dist/*.{js,css,html,png}",
-      "to": "public/docs-assets"
+1.  **`package.json`**: Mengaktifkan *script* *post-install* untuk menyalin *file*:
+    ```json
+    // ...
+    "scripts": {
+      "postinstall": "npx copy-files-from-to --config copy-files-from-to.json"
     }
-  ]
-}
-```
+    // ...
+    ```
 
-### Langkah 2: Sajikan Aset yang Telah Disalin
+2.  **`copy-files-from-to.json`**: Mendefinisikan sumber dan tujuan penyalinan:
+    ```json
+    {
+      "copyFiles": [
+        {
+          "from": "node_modules/swagger-ui-dist/*.{js,css,html,png}",
+          "to": "public/docs-assets"
+        }
+      ]
+    }
+    ```
+    **Hasil:** Aset disalin ke **`public/docs-assets`**.
 
-Di `server.js`, kita perlu memberitahu Express untuk menyajikan file dari direktori `public/docs-assets` yang baru kita buat.
+### 1.2. Penanganan Permintaan Aset (Routing)
 
-**`server.js`**:
+Penanganan permintaan untuk aset statis ditangani oleh *middleware* Express.js, dengan *rewrite* Vercel sebagai lapisan penanganan *serverless*.
+
+1.  **`backend/server.js` (Express Static Middleware)**:
+    Server melayani aset yang disalin dari `public/docs-assets` pada *path* `/docs-assets`:
+    ```javascript
+    // ...
+    const swaggerUiAssetPath = "/docs-assets";
+    app.use(
+      swaggerUiAssetPath,
+      express.static(path.join(__dirname, "public", "docs-assets"))
+    );
+    // ...
+    ```
+
+2.  **`vercel.json` (Vercel Rewrite Rules)**:
+    Aturan *rewrite* ini memastikan permintaan aset dirutekan dengan benar di lingkungan Vercel, dan semua *traffic* lainnya diarahkan ke *entry point* *backend*.
+    ```json
+    {
+      "rewrites": [
+        {
+          "source": "/docs-assets/(.*)",
+          "destination": "/backend/node_modules/swagger-ui-dist/$1"
+        },
+        {
+          "source": "/(.*)",
+          "destination": "/backend/server.js"
+        }
+      ]
+    }
+    ```
+
+---
+
+## 2. Inisialisasi Swagger UI (`/docs` Route)
+
+Rute `/docs` adalah titik akhir yang menginisialisasi dan menyajikan UI interaktif, memastikan URL server yang benar disuntikkan.
 
 ```javascript
-// Definisikan path yang akan digunakan untuk mengakses aset Swagger.
-const swaggerUiAssetPath = "/docs-assets";
-
-// Sajikan direktori 'public/docs-assets' yang berisi aset Swagger yang sudah disalin.
-// path.join memastikan path ini bekerja di semua sistem operasi.
-app.use(
-  swaggerUiAssetPath,
-  express.static(path.join(__dirname, "public", "docs-assets"))
-);
-```
-
-### Langkah 3: Konfigurasi Swagger UI Secara Dinamis
-
-Ini adalah bagian terpenting di `server.js` yang menyatukan semuanya.
-
-**`server.js`**:
-
-```javascript
+// backend/server.js (Rute /docs)
 app.use("/docs", swaggerUi.serve, (req, res) => {
-  // 1. Buat salinan dokumen untuk setiap permintaan.
-  // Ini mencegah modifikasi objek asli yang di-cache, yang bisa menyebabkan masalah di lokal.
+  // 1. Tentukan URL Server Dinamis
   const swaggerDoc = JSON.parse(JSON.stringify(swaggerDocument));
-
-  // 2. Tentukan URL server API secara dinamis.
-  // Gunakan URL Vercel jika tersedia, jika tidak, gunakan localhost.
   const serverUrl = process.env.VERCEL_URL
     ? `https://${process.env.VERCEL_URL}`
     : `http://localhost:${PORT}`;
   swaggerDoc.servers = [{ url: serverUrl }];
 
-  // 3. Beri tahu Swagger UI di mana menemukan aset statisnya.
-  // Ini adalah langkah kunci untuk memperbaiki tampilan yang berantakan.
+  // 2. Tentukan Path CSS Kustom
+  // Ini mengarahkan UI untuk mengambil CSS dari path yang dilayani oleh Express
   const swaggerUiOptions = {
     customCssUrl: `${swaggerUiAssetPath}/swagger-ui.css`,
   };
 
-  // 4. Render halaman Swagger UI dengan dokumen dan opsi yang sudah dikustomisasi.
+  // 3. Setup dan Sajikan UI
   const ui = swaggerUi.setup(swaggerDoc, swaggerUiOptions);
   ui(req, res);
 });
-```
+3. Penggunaan
+Setelah deployment sukses di Vercel, dokumentasi API dapat diakses melalui:
 
-## 4. Mengapa Solusi Ini Berhasil?
+URL Dokumentasi: https://[URL_DOMAIN_ANDA]/docs
 
-Pendekatan ini sangat kuat karena **eksplisit dan tidak bergantung pada "sihir" platform**.
-
-- **Konsisten**: Proses build (menyalin file) dan penyajian (Express) bekerja dengan cara yang sama di lingkungan lokal dan di Vercel.
-- **Andal**: Kita tidak lagi mencoba memaksa Vercel untuk menemukan file di `node_modules`. Sebaliknya, kita menempatkan aset di lokasi yang dirancang untuk disajikan (`public`), yang dijamin akan ditemukan oleh Express.
-- **Bersih**: Konfigurasi menjadi lebih sederhana karena kita tidak memerlukan file `vercel.json` dengan aturan `rewrites` yang rumit. Semua logika terkandung di dalam kode aplikasi kita.
-
-Dengan mengikuti metode ini, Anda dapat dengan percaya diri men-deploy dokumentasi Swagger yang fungsional dan terlihat bagus di Vercel setiap saat.
+Pastikan variabel lingkungan seperti MONGO_URI, FRONTEND_URL, dan variabel lain yang relevan telah dikonfigurasi di pengaturan Vercel Anda.
