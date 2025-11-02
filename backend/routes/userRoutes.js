@@ -5,7 +5,6 @@ const {
   loginUser,
   forgotPassword,
   resetPassword,
-  // registerUser, // Left commented out for clarity
 } = require("../controllers/UserController");
 const requireAuth = require("../middleware/requireAuth");
 

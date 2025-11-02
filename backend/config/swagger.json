@@ -326,7 +326,7 @@
             "schema": {
               "type": "string"
             },
-            "description": "The password reset token from the email link."
+            "description": "The MongoDB ObjectID of the project to update."
           }
         ],
         "requestBody": {
@@ -336,6 +336,9 @@
                 "type": "object",
                 "properties": {
                   "title": {
+                    "type": "string"
+                  },
+                  "description": {
                     "type": "string"
                   },
                   "technologies": {
@@ -501,7 +504,7 @@
             "schema": {
               "type": "string"
             },
-            "description": "The MongoDB ObjectID of the project to update."
+            "description": "The MongoDB ObjectID of the skill to update."
           }
         ],
         "requestBody": {
@@ -673,7 +676,7 @@
             "schema": {
               "type": "string"
             },
-            "description": "The MongoDB ObjectID of the skill to update."
+            "description": "The password reset token from the email link."
           }
         ],
         "requestBody": {
