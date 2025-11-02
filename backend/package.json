@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
+    "postinstall": "npx copy-files-from-to --config copy-files-from-to.json",
     "seed": "node scripts/seed.js",
     "test": "echo \"Error: No tests specified\" && exit 1"
   },
@@ -33,6 +34,7 @@
     "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
+    "copy-files-from-to": "^3.9.0",
     "nodemon": "^3.1.10"
   }
 }
