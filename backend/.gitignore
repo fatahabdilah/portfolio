@@ -1,13 +1,18 @@
-# backend/.gitignore
-
 ####################################################################
 # SECURITY AND CREDENTIALS
 ####################################################################
 # Environment variables containing sensitive keys (e.g., MONGO_URI, JWT Secrets)
-.env
+.env.development  
+.env # Optional: Ignores the legacy file just in case it's recreated
 
 ####################################################################
 # DEPENDENCIES AND BUILD OUTPUT
 ####################################################################
 # Local Node.js modules folder
 /node_modules
+
+# Vercel build output and logs
+.vercel
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

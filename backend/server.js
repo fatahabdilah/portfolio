@@ -1,9 +1,7 @@
 // backend/server.js
 
-// 1. Load environment variables immediately
-require("dotenv").config();
 
-// 2. Import core libraries
+// 1. Import core libraries
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
@@ -25,7 +23,7 @@ const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI;
 
 // -------------------------------------------------------------
-// | 3. MIDDLEWARE CONFIGURATION                               |
+// | 2. MIDDLEWARE CONFIGURATION                               |
 // -------------------------------------------------------------
 const allowedOrigin = process.env.FRONTEND_URL;
 app.use(
@@ -38,7 +36,7 @@ app.use(
 app.use(express.json());
 
 // -------------------------------------------------------------
-// | 4. SWAGGER DOCUMENTATION SETUP                            |
+// | 3. SWAGGER DOCUMENTATION SETUP                            |
 // -------------------------------------------------------------
 
 // Definisikan path untuk aset statis Swagger.
@@ -70,7 +68,7 @@ app.use("/docs", swaggerUi.serve, (req, res) => {
 });
 
 // -------------------------------------------------------------
-// | 5. ROUTE DEFINITIONS                                      |
+// | 4. ROUTE DEFINITIONS                                      |
 // -------------------------------------------------------------
 
 /**
@@ -94,7 +92,7 @@ app.use("/api/projects", projectRoutes);
 app.use("/api/skills", skillRoutes);
 
 // -------------------------------------------------------------
-// | 6. DATABASE CONNECTION & SERVER INITIALIZATION            |
+// | 5. DATABASE CONNECTION & SERVER INITIALIZATION            |
 // -------------------------------------------------------------
 
 const connectDBAndStartServer = async () => {
