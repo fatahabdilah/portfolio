@@ -4,7 +4,7 @@
   "description": "Backend API for the MERN Stack portfolio application, managing user authentication, skills, and projects with Cloudinary integration.",
   "main": "server.js",
   "scripts": {
-"start": "node -r dotenv/config server.js dotenv_config_path=.env.development",
+    "start": "node -r dotenv/config server.js dotenv_config_path=.env.development",
     "dev": "nodemon -r dotenv/config server.js dotenv_config_path=.env.development",
     "vercel-build": "mkdir -p public/docs-assets && cp -r node_modules/swagger-ui-dist/* public/docs-assets/",
     "seed": "node -r dotenv/config scripts/seed.js dotenv_config_path=.env.development",
@@ -22,12 +22,12 @@
   "license": "ISC",
   "dependencies": {
     "bcrypt": "^6.0.0",
-    "cloudinary": "^2.7.0",
+    "cloudinary": "^2.8.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.2",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.18.2",
+    "mongoose": "^8.19.3",
     "multer": "^2.0.2",
     "nodemailer": "^7.0.6",
     "swagger-jsdoc": "^6.2.8",
