@@ -1,5 +1,5 @@
 // backend/server.js
-
+require("dotenv").config();
 
 // 1. Import core libraries
 const express = require("express");

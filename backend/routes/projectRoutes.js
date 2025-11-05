@@ -9,7 +9,7 @@ const {
     updateProject 
 } = require('../controllers/ProjectController');
 const requireAuth = require('../middleware/requireAuth'); // JWT Authentication Middleware
-const uploadImageMiddleware = require('../middleware/upload.middleware'); // Multer Upload Middleware
+const uploadImageMiddleware = require('../middleware/uploadMiddleware'); // Multer Upload Middleware
 
 const router = express.Router();
 
