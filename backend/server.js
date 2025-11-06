@@ -23,7 +23,7 @@ const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI;
 
 // -------------------------------------------------------------
-// | 2. MIDDLEWARE CONFIGURATION                               |
+// | 2. MIDDLEWARE CONFIGURATION                |
 // -------------------------------------------------------------
 const allowedOrigin = process.env.FRONTEND_URL;
 app.use(
@@ -36,7 +36,7 @@ app.use(
 app.use(express.json());
 
 // -------------------------------------------------------------
-// | 3. SWAGGER DOCUMENTATION SETUP                            |
+// | 3. SWAGGER DOCUMENTATION SETUP                            |
 // -------------------------------------------------------------
 
 // Definisikan path untuk aset statis Swagger.
@@ -70,14 +70,14 @@ app.use("/docs", swaggerUi.serve, (req, res) => {
 });
 
 // -------------------------------------------------------------
-// | 4. ROUTE DEFINITIONS                                      |
+// | 4. ROUTE DEFINITIONS                                      |
 // -------------------------------------------------------------
 
 /**
- * @route GET /
- * @desc Professional API root response.
- * @access Public
- */
+ * @route GET /
+ * @desc Professional API root response.
+ * @access Public
+ */
 app.get("/", (req, res) => {
   res.status(200).json({
     status: "success",
@@ -94,13 +94,16 @@ app.use("/api/projects", projectRoutes);
 app.use("/api/skills", skillRoutes);
 
 // -------------------------------------------------------------
-// | 5. DATABASE CONNECTION & SERVER INITIALIZATION            |
+// | 5. DATABASE CONNECTION & SERVER INITIALIZATION            |
 // -------------------------------------------------------------
 
 const connectDBAndStartServer = async () => {
   if (!mongoose.connection.readyState) {
     try {
-      await mongoose.connect(MONGO_URI);
+      await mongoose.connect(MONGO_URI, {
+        // 💡 Solusi Timeout: Menetapkan batas waktu koneksi server.
+        serverSelectionTimeoutMS: 10000, 
+      });
       console.log("✅ MongoDB connected successfully!");
     } catch (err) {
       console.error("❌ CONNECTION FAILED:", err.message);
