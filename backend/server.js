@@ -53,9 +53,11 @@ app.use("/docs", swaggerUi.serve, (req, res) => {
   const swaggerDoc = JSON.parse(JSON.stringify(swaggerDocument));
 
   // Tentukan URL server dinamis.
-  const serverUrl = process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : `http://localhost:${PORT}`;
+  const serverUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL 
+    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` 
+    : process.env.VERCEL_URL
+        ? `https://${process.env.VERCEL_URL}` 
+        : `http://localhost:${PORT}`;
   swaggerDoc.servers = [{ url: serverUrl }];
 
   // Beri tahu Swagger UI di mana menemukan aset statisnya.
