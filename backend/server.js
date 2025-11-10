@@ -125,5 +125,5 @@ const connectDBAndStartServer = async () => {
 
 connectDBAndStartServer();
 
-// Export the Express app instance.
+// Export the Express app instance. 
 module.exports = app;
