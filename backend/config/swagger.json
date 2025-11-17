@@ -123,6 +123,25 @@
           }
         },
         "required": ["message"]
+      },
+      "UserLoginSuccess": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "admin@myportfolio.com"
+          },
+          "name": {
+            "type": "string",
+            "example": "Fatah Abdilah"
+          },
+          "token": {
+            "type": "string",
+            "description": "The JWT token used for subsequent private API calls."
+          }
+        },
+        "required": ["email", "name", "token"]
       }
     },
     "responses": {
@@ -199,13 +218,15 @@
                     "type": "string"
                   },
                   "technologies": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Comma-separated list of Skill Object IDs."
                   },
                   "projectImage": {
                     "type": "string",
                     "format": "binary"
                   }
-                }
+                },
+                "required": ["title", "description", "technologies", "projectImage"]
               }
             }
           }
@@ -280,7 +301,7 @@
       "delete": {
         "tags": ["Projects"],
         "summary": "Delete a project",
-        "description": "Permanently removes a project from the database. Requires authentication.",
+        "description": "Permanently removes a project from the database and deletes its associated image from Cloudinary. Requires authentication.",
         "parameters": [
           {
             "name": "id",
@@ -305,7 +326,7 @@
             "$ref": "#/components/responses/UnauthorizedError"
           },
           "404": {
-            "description": "Not Found. A project with the specified ID does not exist.",
+            "description": "Not Found. A project with the specified ID does not exist or the user is not authorized to delete it.",
             "content": {
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/Error" }
@@ -342,11 +363,19 @@
                     "type": "string"
                   },
                   "technologies": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Comma-separated list of Skill Object IDs."
                   },
                   "projectImage": {
                     "type": "string",
-                    "format": "binary"
+                    "format": "binary",
+                    "description": "Optional new image file to replace the old one."
+                  },
+                  "demoUrl": {
+                    "type": "string"
+                  },
+                  "repoUrl": {
+                    "type": "string"
                   }
                 }
               }
@@ -374,7 +403,7 @@
             "$ref": "#/components/responses/UnauthorizedError"
           },
           "404": {
-            "description": "Not Found. A project with the specified ID does not exist.",
+            "description": "Not Found. A project with the specified ID does not exist or the user is not authorized to update it.",
             "content": {
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/Error" }
@@ -544,7 +573,7 @@
             "$ref": "#/components/responses/UnauthorizedError"
           },
           "404": {
-            "description": "Not Found. A skill with the specified ID does not exist.",
+            "description": "Not Found. A skill with the specified ID does not exist or the user is not authorized to update it.",
             "content": {
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/Error" }
@@ -556,7 +585,7 @@
       "delete": {
         "tags": ["Skills"],
         "summary": "Delete a skill",
-        "description": "Permanently removes a skill from the database. Requires authentication.",
+        "description": "Permanently removes a skill from the database. Deletion automatically removes references from all related projects (cascade delete). Requires authentication.",
         "parameters": [
           {
             "name": "id",
@@ -581,7 +610,7 @@
             "$ref": "#/components/responses/UnauthorizedError"
           },
           "404": {
-            "description": "Not Found. A skill with the specified ID does not exist.",
+            "description": "Not Found. A skill with the specified ID does not exist or the user is not authorized to delete it.",
             "content": {
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/Error" }
@@ -647,19 +676,37 @@
                 "type": "object",
                 "properties": {
                   "email": {
-                    "type": "string"
+                    "type": "string",
+                    "format": "email",
+                    "example": "admin@myportfolio.com"
+                  },
+                  "password": {
+                    "type": "string",
+                    "format": "password",
+                    "example": "ChangeMe123!"
                   }
-                }
+                },
+                "required": ["email", "password"]
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Password reset link sent to your email."
+            "description": "Login successful. Returns user details and the JWT token.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/UserLoginSuccess" }
+              }
+            }
           },
-          "500": {
-            "description": "Failed to send reset email."
+          "400": {
+            "description": "Bad Request. Incorrect email or password.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
           }
         }
       }
@@ -668,6 +715,7 @@
       "patch": {
         "tags": ["Users"],
         "summary": "Finalizes the password reset",
+        "description": "Resets user's password using the token provided in the URL.",
         "parameters": [
           {
             "name": "token",
@@ -686,11 +734,12 @@
                 "type": "object",
                 "properties": {
                   "password": {
-                    "type": "string"
+                    "type": "string",
+                    "format": "password",
+                    "example": "MyNewSecurePassword123!"
                   }
                 },
-                "required": ["password"],
-                "example": { "password": "MyNewSecurePassword123!" }
+                "required": ["password"]
               }
             }
           }

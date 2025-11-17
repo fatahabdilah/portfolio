@@ -5,7 +5,7 @@ const mongoose = require('mongoose');
 
 /**
  * @desc Handles Mongoose duplicate key error (code 11000).
- * @param {Object} error - The Mongoose error object.
+ * @param {Object} res - Express response object.
  * @param {string} name - The name of the skill being processed.
  * @returns {Object} The error response object.
  */
@@ -33,8 +33,8 @@ const createSkill = async (req, res) => {
         if (error.code === 11000) {
             return handleDuplicateKeyError(res, name);
         }
-        // General validation error handling
-        res.status(400).json({ error: error.message });
+        // PRO ENHANCEMENT: Return a generic validation error message instead of error.message
+        res.status(400).json({ error: 'Skill validation failed.' });
     }
 };
 
@@ -50,7 +50,7 @@ const getSkills = async (req, res) => {
         const skills = await Skill.find({}).sort({ name: 1 });
         res.status(200).json(skills);
     } catch (error) {
-        // Use 500 for server-side failures (e.g., DB connection issues)
+        // PRO ENHANCEMENT: Use a general server error message
         res.status(500).json({ error: 'Server failed to retrieve skills.' }); 
     }
 };
@@ -69,13 +69,18 @@ const getSkill = async (req, res) => {
         return res.status(404).json({ error: 'No such skill found.' });
     }
 
-    const skill = await Skill.findById(id);
+    try {
+        const skill = await Skill.findById(id);
 
-    if (!skill) {
-        return res.status(404).json({ error: 'No such skill found.' });
+        if (!skill) {
+            return res.status(404).json({ error: 'No such skill found.' });
+        }
+
+        res.status(200).json(skill);
+    } catch (error) {
+        // Catch any potential DB/server error during findById
+        res.status(500).json({ error: 'Server failed to retrieve skill.' });
     }
-
-    res.status(200).json(skill);
 };
 
 
@@ -111,7 +116,8 @@ const updateSkill = async (req, res) => {
         if (error.code === 11000) {
             return handleDuplicateKeyError(res, name);
         }
-        res.status(400).json({ error: error.message });
+        // PRO ENHANCEMENT: Return a generic validation error message
+        res.status(400).json({ error: 'Skill update validation failed.' });
     }
 };
 
@@ -129,14 +135,20 @@ const deleteSkill = async (req, res) => {
         return res.status(404).json({ error: 'No such skill found.' });
     }
 
-    // Find and delete, ensuring ownership
-    const skill = await Skill.findOneAndDelete({ _id: id, user: userId });
+    try {
+        // Find and delete, ensuring ownership
+        const skill = await Skill.findOneAndDelete({ _id: id, user: userId });
 
-    if (!skill) {
-        return res.status(404).json({ error: 'No such skill or not authorized to delete.' });
+        if (!skill) {
+            return res.status(404).json({ error: 'No such skill or not authorized to delete.' });
+        }
+
+        res.status(200).json({ message: 'Skill deleted successfully!', skill });
+    } catch (error) {
+        // Catch server-side error during deletion (e.g., cascade hook failure)
+        console.error('Skill deletion failed:', error.message);
+        res.status(500).json({ error: 'Server failed to delete skill due to a database issue.' });
     }
-
-    res.status(200).json({ message: 'Skill deleted successfully!', skill });
 };
 
 

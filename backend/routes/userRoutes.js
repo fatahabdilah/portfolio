@@ -5,6 +5,7 @@ const {
   loginUser,
   forgotPassword,
   resetPassword,
+  getProfile, // Import the new controller function
 } = require("../controllers/UserController");
 const requireAuth = require("../middleware/requireAuth");
 
@@ -54,11 +55,7 @@ router.patch("/resetpassword/:token", resetPassword);
  * @returns {object} 200 - { message: "...", userId: <ObjectID> }
  * @returns {object} 401 - { error: "Authentication token required" }
  */
-router.get("/profile", requireAuth, (req, res) => {
-  res.status(200).json({
-    message: "Secret access granted! Profile data retrieved.",
-    userId: req.user._id,
-  });
-});
+// Use the dedicated controller function
+router.get("/profile", requireAuth, getProfile); 
 
 module.exports = router;

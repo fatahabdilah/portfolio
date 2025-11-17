@@ -48,32 +48,6 @@ const sendEmail = async (email, subject, text, html) => {
 // ---------------------------------------------------------------------
 
 /**
- * @desc User Registration Controller. Creates a new user and issues a token.
- * @route POST /api/users/register
- * @access Public
- */
-/*
-const registerUser = async (req, res) => {
-  const { email, password, name } = req.body;
-  try {
-    // Note: User.register method handles hashing and validation
-    const user = await User.register(email, password, name); 
-    const token = createToken(user._id);
-
-    res.status(201).json({
-      email: user.email,
-      name: user.name,
-      token,
-      message: "Registration successful", 
-    });
-  } catch (error) {
-    // Catches validation errors (e.g., email already in use)
-    res.status(400).json({ error: error.message });
-  }
-};
-*/
-
-/**
  * @desc User Login Controller. Validates credentials and issues a JWT.
  * @route POST /api/users/login
  * @access Public
@@ -96,6 +70,21 @@ const loginUser = async (req, res) => {
     console.error(`[AUTH ERROR] Login failed for ${email}: ${error.message}`);
     res.status(400).json({ error: error.message });
   }
+};
+
+
+/**
+ * @desc Fetches the authenticated user's ID. 
+ * This is primarily for testing the JWT authentication flow.
+ * @route GET /api/users/profile
+ * @access Private
+ */
+const getProfile = async (req, res) => {
+    // req.user is populated by the requireAuth middleware
+    res.status(200).json({
+        message: "Secret access granted! Profile data retrieved.",
+        userId: req.user._id,
+    });
 };
 
 
@@ -277,6 +266,7 @@ const resetPassword = async (req, res) => {
 module.exports = {
   // registerUser, // Uncomment this to enable public registration
   loginUser,
+  getProfile,
   forgotPassword,
   resetPassword,
 };

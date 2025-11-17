@@ -20,7 +20,7 @@ const deleteCloudinaryImage = async (publicId) => {
  * @returns {Array} Array of processed technology IDs.
  */
 const processTechnologies = (technologies) => {
-    // KASUS 1: Input is Array (received from repeated form-data fields)
+    // CASE 1: Input is Array (received from repeated form-data fields)
     if (Array.isArray(technologies)) {
         // Clean quotes and trim spaces from each array element
         return technologies.map(id => {
@@ -31,7 +31,7 @@ const processTechnologies = (technologies) => {
         }).filter(id => id.length > 0);
     } 
     
-    // KASUS 2: Input is a single comma-separated string
+    // CASE 2: Input is a single comma-separated string
     if (typeof technologies === 'string') {
         // Clean brackets/quotes and split by comma
         let cleanedString = technologies.replace(/[\[\]\'\"]/g, ''); 
@@ -77,13 +77,11 @@ const createProject = async (req, res) => {
         // 2. Process technologies (will return a clean array of IDs)
         const processedTechnologies = processTechnologies(technologies);
 
-        // BUG FIX: Validasi Keberadaan Skill
+        // Validation: Check if all provided Skill IDs exist
         if (processedTechnologies.length > 0) {
-            // Check if all provided IDs exist in the Skill collection
             const existingSkills = await Skill.find({ '_id': { $in: processedTechnologies } });
             
             if (existingSkills.length !== processedTechnologies.length) {
-                // If the count doesn't match, one or more IDs are invalid or non-existent
                 throw new Error('One or more technology IDs provided do not exist.');
             }
         }
@@ -112,7 +110,8 @@ const createProject = async (req, res) => {
         if (result && result.public_id) {
              deleteCloudinaryImage(result.public_id);
         }
-        res.status(400).json({ error: 'Project creation failed', details: error.message });
+        // PRO ENHANCEMENT: Return a generic validation error message
+        res.status(400).json({ error: 'Project creation failed due to invalid data.' });
     }
 };
 
@@ -135,7 +134,8 @@ const getProjects = async (req, res) => {
             
         res.status(200).json(projects);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        // PRO ENHANCEMENT: Use a general server error message
+        res.status(500).json({ error: 'Server failed to retrieve projects.' });
     }
 };
 
@@ -156,13 +156,18 @@ const getProject = async (req, res) => {
         return res.status(404).json({ error: 'No such project' });
     }
 
-    const project = await Project.findById(id).populate('technologies', 'name');
+    try {
+        const project = await Project.findById(id).populate('technologies', 'name');
 
-    if (!project) {
-        return res.status(404).json({ error: 'No such project' });
+        if (!project) {
+            return res.status(404).json({ error: 'No such project' });
+        }
+
+        res.status(200).json(project);
+    } catch (error) {
+        // Catch any potential DB/server error during findById
+        res.status(500).json({ error: 'Server failed to retrieve project.' });
     }
-
-    res.status(200).json(project);
 };
 
 
@@ -183,20 +188,26 @@ const deleteProject = async (req, res) => {
         return res.status(404).json({ error: 'No such project' });
     }
 
-    // Find and delete: ensure project ID and user ID match for authorization
-    const project = await Project.findOneAndDelete({ _id: id, user: userId });
+    try {
+        // Find and delete: ensure project ID and user ID match for authorization
+        const project = await Project.findOneAndDelete({ _id: id, user: userId });
 
-    if (!project) {
-        return res.status(404).json({ error: 'No such project or not authorized to delete' });
+        if (!project) {
+            return res.status(404).json({ error: 'No such project or not authorized to delete' });
+        }
+
+        // Delete the associated image from Cloudinary
+        await deleteCloudinaryImage(project.imagePublicId);
+
+        res.status(200).json({ 
+            message: 'Project deleted successfully!', 
+            project 
+        });
+    } catch (error) {
+        // Catch server-side error during deletion (e.g., Cloudinary API failure)
+        console.error('Project deletion failed:', error.message);
+        res.status(500).json({ error: 'Server failed to delete project.' });
     }
-
-    // Delete the associated image from Cloudinary
-    await deleteCloudinaryImage(project.imagePublicId);
-
-    res.status(200).json({ 
-        message: 'Project deleted successfully!', 
-        project 
-    });
 };
 
 
@@ -225,7 +236,7 @@ const updateProject = async (req, res) => {
         if (updateBody.technologies) {
              const processedTechnologies = processTechnologies(updateBody.technologies);
              
-             // BUG FIX: Validasi Keberadaan Skill
+             // Validation: Check if all provided Skill IDs exist
              if (processedTechnologies.length > 0) {
                  const existingSkills = await Skill.find({ '_id': { $in: processedTechnologies } });
                  if (existingSkills.length !== processedTechnologies.length) {
@@ -278,7 +289,8 @@ const updateProject = async (req, res) => {
         if (result && result.public_id) {
              await deleteCloudinaryImage(result.public_id);
         }
-        res.status(400).json({ error: 'Project update failed', details: error.message });
+        // PRO ENHANCEMENT: Return a generic validation error message
+        res.status(400).json({ error: 'Project update failed due to invalid data.' });
     }
 };
 
