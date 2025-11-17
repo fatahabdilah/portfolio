@@ -624,7 +624,7 @@
       "post": {
         "tags": ["Users"],
         "summary": "Initiate the password reset flow",
-        "description": "Sends a password reset link to the user's email address if the account exists. For security reasons, this endpoint always returns a success message, regardless of whether the email was found in the database.",
+        "description": "Sends a password reset link to the user's email address if the account exists. For security reasons, this endpoint always returns a success message, regardless of whether the email was found in the database. The reset link token is **valid for 1 hour**.",
         "security": [],
         "requestBody": {
           "content": {
@@ -715,7 +715,8 @@
       "patch": {
         "tags": ["Users"],
         "summary": "Finalizes the password reset",
-        "description": "Resets user's password using the token provided in the URL.",
+        "description": "Resets user's password using the token provided in the URL. The token is consumed immediately upon successful reset and automatically expires after 1 hour if unused.",
+        "security": [],
         "parameters": [
           {
             "name": "token",

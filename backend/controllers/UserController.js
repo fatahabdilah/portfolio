@@ -1,4 +1,5 @@
 const User = require("../models/UserModel");
+const PasswordResetToken = require("../models/PasswordResetTokenModel"); // IMPORT BARU
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const bcrypt = require("bcrypt");
@@ -137,11 +138,17 @@ const forgotPassword = async (req, res) => {
       finalTokenToSend = tokenToStoreInDB;
     }
 
-    // Save token hash/string and expiration time to database
-    user.resetPasswordToken = tokenToStoreInDB;
-    user.resetPasswordExpires = Date.now() + expirationTime; 
-    await user.save();
+    // 1. DELETE any existing token for this user to prevent clutter
+    await PasswordResetToken.deleteMany({ userId: user._id });
 
+    // 2. CREATE the new token document
+    const expiresAt = new Date(Date.now() + expirationTime);
+    await PasswordResetToken.create({
+        userId: user._id,
+        token: tokenToStoreInDB,
+        expiresAt: expiresAt,
+    });
+    
     // --- Email Content Preparation ---
     const frontendURL = process.env.FRONTEND_URL;
     const resetURL = `${frontendURL}/reset-password/${finalTokenToSend}`; 
@@ -230,28 +237,38 @@ const resetPassword = async (req, res) => {
   }
 
   try {
-    // 1. Find user by token (hashed or raw) and ensure it hasn't expired
-    const user = await User.findOne({
-      resetPasswordToken: tokenToQueryDB,
-      resetPasswordExpires: { $gt: Date.now() }, 
+    // 1. Find the token document
+    const resetTokenDoc = await PasswordResetToken.findOne({
+      token: tokenToQueryDB,
+      expiresAt: { $gt: Date.now() }, // Check expiration time
     });
 
-    if (!user) {
+    if (!resetTokenDoc) {
       throw Error("Password reset token is invalid or has expired.");
+    }
+    
+    // 2. Find the user associated with the token
+    const user = await User.findById(resetTokenDoc.userId);
+
+    if (!user) {
+        // This case shouldn't happen if data integrity is maintained, but handles corrupted token links
+        throw Error("User not found for this reset token."); 
     }
 
     if (!password) {
       throw Error("New password must be provided.");
     }
 
-    // 2. Hash the new password and save
+    // 3. Hash the new password and save to the User model
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
     user.password = hashedPassword;
-    user.resetPasswordToken = undefined; // Clear the token fields
-    user.resetPasswordExpires = undefined;
     await user.save();
+    
+    // 4. Delete the token document (used token cannot be reused)
+    await PasswordResetToken.deleteOne({ _id: resetTokenDoc._id });
+
 
     res.status(200).json({
       message: "Password has been successfully reset",

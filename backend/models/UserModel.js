@@ -11,8 +11,6 @@ const Schema = mongoose.Schema;
  * @property {string} password - Hashed password for security.
  * @property {string} name - User's full name.
  * @property {string} role - User's access level ('user' or 'admin').
- * @property {string} resetPasswordToken - Token used for password reset flow.
- * @property {Date} resetPasswordExpires - Expiration date/time for the reset token.
  */
 const userSchema = new Schema(
   {
@@ -38,9 +36,8 @@ const userSchema = new Schema(
       default: "user", // Default access level for security
       required: true,
     },
-    // Fields for the password reset flow
-    resetPasswordToken: String,
-    resetPasswordExpires: Date,
+    // REMOVED: resetPasswordToken and resetPasswordExpires 
+    // These fields are now handled by PasswordResetTokenModel
   },
   { 
     // Mongoose timestamps for tracking creation and updates
