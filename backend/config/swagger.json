@@ -3,7 +3,7 @@
   "info": {
     "title": "My Portfolio API",
     "version": "1.0.0",
-    "description": "The official REST API for Fatah Abdilah's portfolio application. This API manages projects, technologies, and user authentication.",
+    "description": "The official REST API for Fatah Abdilah's portfolio application. This API manages projects, technologies, blogs, and user authentication.",
     "contact": {
       "name": "Fatah Abdilah",
       "email": "fatah.abdilah@example.com",
@@ -101,6 +101,60 @@
           }
         }
       },
+      "Blog": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string",
+            "example": "60d0fe4f5311236168a109ce"
+          },
+          "title": {
+            "type": "string",
+            "example": "The Power of Serverless Functions"
+          },
+          "content": {
+            "type": "string",
+            "description": "Full blog content (often excluded in list view).",
+            "example": "## Introduction\nThis article discusses..."
+          },
+          "thumbnailUrl": {
+            "type": "string",
+            "format": "uri",
+            "description": "URL of the blog post's thumbnail.",
+            "example": "https://res.cloudinary.com/demo/image/upload/v1624582000/blog_thumbnail.jpg"
+          },
+          "user": {
+            "type": "string",
+            "description": "ID of the admin user who authored the post.",
+            "example": "60d0fe4f5311236168a109c0"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "BlogListItem": {
+        "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Blog"
+          },
+          {
+            "properties": {
+              "content": {
+                "type": "string",
+                "description": "Content is usually excluded in the list view for performance.",
+                "example": "null"
+              }
+            }
+          }
+        ]
+      },
       "Error": {
         "type": "object",
         "properties": {
@@ -166,6 +220,10 @@
     {
       "name": "Technologies",
       "description": "Everything about the technologies and skills used."
+    },
+    {
+      "name": "Blogs",
+      "description": "Management and display of blog posts/articles."
     },
     {
       "name": "Users",
@@ -611,6 +669,225 @@
           },
           "404": {
             "description": "Not Found. A technology with the specified ID does not exist or the user is not authorized to delete it.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/blogs": {
+      "get": {
+        "tags": ["Blogs"],
+        "summary": "Fetch all blog posts",
+        "description": "Retrieves a list of all blog posts for public display. The full 'content' field is typically excluded in this list view for performance.",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "A list of blog posts was successfully retrieved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/BlogListItem" }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Blogs"],
+        "summary": "Create a new blog post",
+        "description": "Creates a new blog entry. Requires Admin authentication. Must be `multipart/form-data` to handle the thumbnail image upload.",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string"
+                  },
+                  "content": {
+                    "type": "string"
+                  },
+                  "thumbnail": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "The main thumbnail image file (max 5MB)."
+                  }
+                },
+                "required": ["title", "content", "thumbnail"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The blog post was created successfully.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Blog" }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request. Validation failed (e.g., duplicate title) or image upload issue.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          }
+        }
+      }
+    },
+    "/api/blogs/{id}": {
+      "get": {
+        "tags": ["Blogs"],
+        "summary": "Fetch a single blog post",
+        "description": "Retrieves a specific blog post by ID, including the full content.",
+        "security": [],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The MongoDB ObjectID of the blog post."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The requested blog post was found and returned.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Blog" }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found. A blog post with the specified ID does not exist.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Blogs"],
+        "summary": "Delete a blog post",
+        "description": "Permanently removes a blog post and its thumbnail. Requires authentication.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The MongoDB ObjectID of the blog post to delete."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The blog post was deleted successfully.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SuccessMessage" }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "description": "Not Found. The post does not exist or the user is not authorized.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": ["Blogs"],
+        "summary": "Update an existing blog post",
+        "description": "Updates fields of an existing blog post. Requires authentication. Must be `multipart/form-data` if the thumbnail is being updated.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The MongoDB ObjectID of the blog post to update."
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string"
+                  },
+                  "content": {
+                    "type": "string"
+                  },
+                  "thumbnail": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Optional new thumbnail file to replace the old one."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The blog post was updated successfully.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Blog" }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request. Input validation failed.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "description": "Not Found. The post does not exist or the user is not authorized.",
             "content": {
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/Error" }

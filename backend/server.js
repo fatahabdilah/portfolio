@@ -14,15 +14,17 @@ require("swagger-ui-dist");
 // Load all models here to ensure Mongoose is aware of them
 // before routes or controllers (which import other models) are executed.
 require("./models/UserModel"); 
-require("./models/ProjectModel"); // Must be loaded before TechnologyModel
+require("./models/ProjectModel");
 require("./models/TechnologyModel"); 
 require("./models/PasswordResetTokenModel"); 
+require("./models/BlogModel"); // NEW: Load Blog Model
 
 
 // Import Routes
 const userRoutes = require("./routes/userRoutes");
 const projectRoutes = require("./routes/projectRoutes");
-const technologyRoutes = require("./routes/technologyRoutes"); // Updated import name
+const technologyRoutes = require("./routes/technologyRoutes");
+const blogRoutes = require("./routes/blogRoutes"); // NEW: Import Blog Routes
 
 // Initialize the Express application
 const app = express();
@@ -100,14 +102,14 @@ app.get("/", (req, res) => {
 // Primary API Routes
 app.use("/api/users", userRoutes);
 app.use("/api/projects", projectRoutes);
-app.use("/api/technologies", technologyRoutes); // Updated route path
+app.use("/api/technologies", technologyRoutes); 
+app.use("/api/blogs", blogRoutes); // NEW: Register Blog Routes
 
 // -------------------------------------------------------------
 // | 5. DATABASE CONNECTION & SERVER INITIALIZATION            |
 // -------------------------------------------------------------
 
 const connectDBAndStartServer = async () => {
-  // REMOVED: Redundant model loading inside the function
   
   if (!mongoose.connection.readyState) {
     try {
