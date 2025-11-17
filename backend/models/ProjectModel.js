@@ -7,7 +7,7 @@ const Schema = mongoose.Schema;
  * @typedef Project
  * @property {string} title - The title of the project.
  * @property {string} description - A detailed description of the project.
- * @property {Array<ObjectId>} technologies - References to the Skill model.
+ * @property {Array<ObjectId>} technologies - References to the Technology model.
  * @property {string} imageUrl - Secure URL for the main image (hosted on Cloudinary).
  * @property {string} imagePublicId - Cloudinary Public ID for asset management.
  * @property {string} demoUrl - Optional URL for the live demo.
@@ -29,11 +29,11 @@ const projectSchema = new Schema({
         required: [true, 'Project description is required'],
     },
     
-    // Array of Technologies (References to Skill Model)
-    // Ensures technologies are validated as an array of ObjectIds linked to Skill documents.
+    // Array of Technologies (References to Technology Model)
+    // Ensures technologies are validated as an array of ObjectIds linked to Technology documents.
     technologies: [{ 
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Skill', // References the 'Skill' collection
+        ref: 'Technology', // ✅ Fixed reference name
     }],
     
     // Main Image URL (Cloudinary storage link)
