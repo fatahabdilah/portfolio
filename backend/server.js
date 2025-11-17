@@ -8,12 +8,13 @@ const cors = require("cors");
 const path = require("path");
 const swaggerUi = require("swagger-ui-express");
 const swaggerDocument = require("./config/swagger.json");
-// REMOVED: require("swagger-ui-dist"); (Tidak diperlukan karena menggunakan CDN)
-
+require("swagger-ui-dist");
 
 // --- PRO ENHANCEMENT: LOAD ALL MODELS EARLY ---
+// Load all models here to ensure Mongoose is aware of them
+// before routes or controllers (which import other models) are executed.
 require("./models/UserModel"); 
-require("./models/ProjectModel"); 
+require("./models/ProjectModel"); // Must be loaded before TechnologyModel
 require("./models/TechnologyModel"); 
 require("./models/PasswordResetTokenModel"); 
 
@@ -21,7 +22,7 @@ require("./models/PasswordResetTokenModel");
 // Import Routes
 const userRoutes = require("./routes/userRoutes");
 const projectRoutes = require("./routes/projectRoutes");
-const technologyRoutes = require("./routes/technologyRoutes"); 
+const technologyRoutes = require("./routes/technologyRoutes"); // Updated import name
 
 // Initialize the Express application
 const app = express();
@@ -44,18 +45,20 @@ app.use(
 app.use(express.json());
 
 // -------------------------------------------------------------
-// | 3. SWAGGER DOCUMENTATION SETUP (USING CDN)                |
+// | 3. SWAGGER DOCUMENTATION SETUP                            |
 // -------------------------------------------------------------
 
-// CDN URL untuk aset Swagger (gunakan versi stabil)
-// Karena Anda menggunakan swagger-ui-express versi 5.x, kita akan menggunakan CDN yang sesuai.
-const CDN_URL_PREFIX = "https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.30.1";
+// Definisikan path untuk aset statis Swagger.
+const swaggerUiAssetPath = "/docs-assets";
 
-
-// REMOVED: app.use(swaggerUiAssetPath, express.static(...))
+// Sajikan direktori 'public' yang berisi aset Swagger yang sudah disalin.
+app.use(
+  swaggerUiAssetPath,
+  express.static(path.join(__dirname, "public", "docs-assets"))
+);
 
 app.use("/docs", swaggerUi.serve, (req, res) => {
-  // Buat salinan dokumen untuk setiap permintaan.
+  // Buat salinan dokumen untuk setiap permintaan agar aman dari modifikasi.
   const swaggerDoc = JSON.parse(JSON.stringify(swaggerDocument));
 
   // Tentukan URL server dinamis.
@@ -66,21 +69,9 @@ app.use("/docs", swaggerUi.serve, (req, res) => {
         : `http://localhost:${PORT}`;
   swaggerDoc.servers = [{ url: serverUrl }];
 
-  // 💡 Konfigurasi CDN: Gunakan URL dari CDN untuk memuat aset utama.
+  // Beri tahu Swagger UI di mana menemukan aset statisnya.
   const swaggerUiOptions = {
-    // Tentukan URL CDN untuk file CSS utama
-    customCssUrl: `${CDN_URL_PREFIX}/swagger-ui.css`,
-    // Tentukan URL CDN untuk file JavaScript utama
-    customJs: `${CDN_URL_PREFIX}/swagger-ui-bundle.js`,
-    // Tentukan URL CDN untuk file JavaScript tambahan (jika ada)
-    customJsFavicon: `${CDN_URL_PREFIX}/favicon-32x32.png`,
-    
-    // Konfigurasi ini memberitahu Swagger UI untuk memuat asetnya dari URL eksternal
-    // daripada dari folder lokal yang dilayani Express.
-    swaggerOptions: {
-        // Jika Anda perlu memuat file YAML/JSON eksternal (bukan yang disajikan Express)
-        // url: 'https://petstore.swagger.io/v2/swagger.json'
-    }
+    customCssUrl: `${swaggerUiAssetPath}/swagger-ui.css`,
   };
 
   const ui = swaggerUi.setup(swaggerDoc, swaggerUiOptions);
@@ -109,16 +100,19 @@ app.get("/", (req, res) => {
 // Primary API Routes
 app.use("/api/users", userRoutes);
 app.use("/api/projects", projectRoutes);
-app.use("/api/technologies", technologyRoutes); 
+app.use("/api/technologies", technologyRoutes); // Updated route path
 
 // -------------------------------------------------------------
 // | 5. DATABASE CONNECTION & SERVER INITIALIZATION            |
 // -------------------------------------------------------------
 
 const connectDBAndStartServer = async () => {
+  // REMOVED: Redundant model loading inside the function
+  
   if (!mongoose.connection.readyState) {
     try {
       await mongoose.connect(MONGO_URI, {
+        // 💡 Solusi Timeout: Menetapkan batas waktu koneksi server.
         serverSelectionTimeoutMS: 10000, 
       });
       console.log("✅ MongoDB connected successfully!");

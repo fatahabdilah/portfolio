@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node -r dotenv/config server.js dotenv_config_path=.env.development",
     "dev": "nodemon -r dotenv/config server.js dotenv_config_path=.env.development",
-    "vercel-build": "echo \"Building complete. Swagger assets loaded via CDN.\"",
+    "vercel-build": "mkdir -p public/docs-assets && cp -r node_modules/swagger-ui-dist/* public/docs-assets/",
     "seed": "node -r dotenv/config scripts/seed.js dotenv_config_path=.env.development",
     "test": "echo \"Error: No tests specified\" && exit 1"
   },
