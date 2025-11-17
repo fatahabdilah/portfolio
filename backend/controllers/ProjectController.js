@@ -1,7 +1,7 @@
 const Project = require('../models/ProjectModel');
 const cloudinary = require('../config/cloudinary.config');
 const mongoose = require('mongoose');
-const Skill = require('../models/SkillModel'); 
+const Technology = require('../models/TechnologyModel'); // Updated import
 
 /**
  * @desc Helper: Deletes an image from Cloudinary using its Public ID.
@@ -77,11 +77,12 @@ const createProject = async (req, res) => {
         // 2. Process technologies (will return a clean array of IDs)
         const processedTechnologies = processTechnologies(technologies);
 
-        // Validation: Check if all provided Skill IDs exist
+        // Validation: Check if all provided Technology IDs exist
         if (processedTechnologies.length > 0) {
-            const existingSkills = await Skill.find({ '_id': { $in: processedTechnologies } });
+            // Updated model name: Technology
+            const existingTechnologies = await Technology.find({ '_id': { $in: processedTechnologies } });
             
-            if (existingSkills.length !== processedTechnologies.length) {
+            if (existingTechnologies.length !== processedTechnologies.length) {
                 throw new Error('One or more technology IDs provided do not exist.');
             }
         }
@@ -90,7 +91,7 @@ const createProject = async (req, res) => {
         const project = await Project.create({
             title,
             description,
-            technologies: processedTechnologies, // Array of Skill Object IDs
+            technologies: processedTechnologies, // Array of Technology Object IDs
             imageUrl: result.secure_url,
             imagePublicId: result.public_id,
             demoUrl,
@@ -236,10 +237,11 @@ const updateProject = async (req, res) => {
         if (updateBody.technologies) {
              const processedTechnologies = processTechnologies(updateBody.technologies);
              
-             // Validation: Check if all provided Skill IDs exist
+             // Validation: Check if all provided Technology IDs exist
              if (processedTechnologies.length > 0) {
-                 const existingSkills = await Skill.find({ '_id': { $in: processedTechnologies } });
-                 if (existingSkills.length !== processedTechnologies.length) {
+                 // Updated model name: Technology
+                 const existingTechnologies = await Technology.find({ '_id': { $in: processedTechnologies } });
+                 if (existingTechnologies.length !== processedTechnologies.length) {
                      throw new Error('One or more technology IDs provided do not exist.');
                  }
              }

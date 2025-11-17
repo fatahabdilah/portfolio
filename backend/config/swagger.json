@@ -3,7 +3,7 @@
   "info": {
     "title": "My Portfolio API",
     "version": "1.0.0",
-    "description": "The official REST API for Fatah Abdilah's portfolio application. This API manages projects, skills, and user authentication.",
+    "description": "The official REST API for Fatah Abdilah's portfolio application. This API manages projects, technologies, and user authentication.",
     "contact": {
       "name": "Fatah Abdilah",
       "email": "fatah.abdilah@example.com",
@@ -50,9 +50,9 @@
           },
           "technologies": {
             "type": "array",
-            "description": "An array of Skill objects associated with the project.",
+            "description": "An array of Technology objects associated with the project.",
             "items": {
-              "$ref": "#/components/schemas/Skill"
+              "$ref": "#/components/schemas/Technology"
             },
             "example": [
               {
@@ -80,7 +80,7 @@
           }
         }
       },
-      "Skill": {
+      "Technology": {
         "type": "object",
         "properties": {
           "_id": {
@@ -164,8 +164,8 @@
       "description": "Everything about your Projects"
     },
     {
-      "name": "Skills",
-      "description": "Everything about your Skills"
+      "name": "Technologies",
+      "description": "Everything about the technologies and skills used."
     },
     {
       "name": "Users",
@@ -219,7 +219,7 @@
                   },
                   "technologies": {
                     "type": "string",
-                    "description": "Comma-separated list of Skill Object IDs."
+                    "description": "Comma-separated list of Technology Object IDs."
                   },
                   "projectImage": {
                     "type": "string",
@@ -364,7 +364,7 @@
                   },
                   "technologies": {
                     "type": "string",
-                    "description": "Comma-separated list of Skill Object IDs."
+                    "description": "Comma-separated list of Technology Object IDs."
                   },
                   "projectImage": {
                     "type": "string",
@@ -413,19 +413,19 @@
         }
       }
     },
-    "/api/skills": {
+    "/api/technologies": {
       "get": {
-        "tags": ["Skills"],
-        "summary": "Fetch all available skills (Private)",
-        "description": "Retrieves a list of all skills from the database, sorted alphabetically. Requires authentication.",
+        "tags": ["Technologies"],
+        "summary": "Fetch all available technologies (Private)",
+        "description": "Retrieves a list of all technologies from the database, sorted alphabetically. Requires authentication.",
         "responses": {
           "200": {
-            "description": "A list of all skills was successfully retrieved.",
+            "description": "A list of all technologies was successfully retrieved.",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "array",
-                  "items": { "$ref": "#/components/schemas/Skill" }
+                  "items": { "$ref": "#/components/schemas/Technology" }
                 }
               }
             }
@@ -444,9 +444,9 @@
         }
       },
       "post": {
-        "tags": ["Skills"],
-        "summary": "Create a new skill entry",
-        "description": "Adds a new skill to the database. Requires authentication.",
+        "tags": ["Technologies"],
+        "summary": "Create a new technology entry",
+        "description": "Adds a new technology to the database. Requires authentication.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -465,15 +465,15 @@
         },
         "responses": {
           "201": {
-            "description": "The skill was created successfully.",
+            "description": "The technology was created successfully.",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/Skill" }
+                "schema": { "$ref": "#/components/schemas/Technology" }
               }
             }
           },
           "400": {
-            "description": "Bad Request. The skill may already exist or the name is invalid.",
+            "description": "Bad Request. The technology may already exist or the name is invalid.",
             "content": {
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/Error" }
@@ -486,11 +486,11 @@
         }
       }
     },
-    "/api/skills/{id}": {
+    "/api/technologies/{id}": {
       "get": {
-        "tags": ["Skills"],
-        "summary": "Fetch a single skill by ID (Private)",
-        "description": "Retrieves a specific skill using its unique MongoDB ObjectID. Requires authentication.",
+        "tags": ["Technologies"],
+        "summary": "Fetch a single technology by ID (Private)",
+        "description": "Retrieves a specific technology using its unique MongoDB ObjectID. Requires authentication.",
         "parameters": [
           {
             "name": "id",
@@ -499,20 +499,20 @@
             "schema": {
               "type": "string"
             },
-            "description": "The MongoDB ObjectID of the skill to retrieve."
+            "description": "The MongoDB ObjectID of the technology to retrieve."
           }
         ],
         "responses": {
           "200": {
-            "description": "The requested skill was found and returned.",
+            "description": "The requested technology was found and returned.",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/Skill" }
+                "schema": { "$ref": "#/components/schemas/Technology" }
               }
             }
           },
           "404": {
-            "description": "Not Found. A skill with the specified ID does not exist.",
+            "description": "Not Found. A technology with the specified ID does not exist.",
             "content": {
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/Error" }
@@ -522,9 +522,9 @@
         }
       },
       "patch": {
-        "tags": ["Skills"],
-        "summary": "Update a skill's name",
-        "description": "Updates the name of an existing skill. Requires authentication.",
+        "tags": ["Technologies"],
+        "summary": "Update a technology's name",
+        "description": "Updates the name of an existing technology. Requires authentication.",
         "parameters": [
           {
             "name": "id",
@@ -533,7 +533,7 @@
             "schema": {
               "type": "string"
             },
-            "description": "The MongoDB ObjectID of the skill to update."
+            "description": "The MongoDB ObjectID of the technology to update."
           }
         ],
         "requestBody": {
@@ -554,15 +554,15 @@
         },
         "responses": {
           "200": {
-            "description": "The skill was updated successfully.",
+            "description": "The technology was updated successfully.",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/Skill" }
+                "schema": { "$ref": "#/components/schemas/Technology" }
               }
             }
           },
           "400": {
-            "description": "Bad Request. The skill name may already exist or is invalid.",
+            "description": "Bad Request. The technology name may already exist or is invalid.",
             "content": {
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/Error" }
@@ -573,7 +573,7 @@
             "$ref": "#/components/responses/UnauthorizedError"
           },
           "404": {
-            "description": "Not Found. A skill with the specified ID does not exist or the user is not authorized to update it.",
+            "description": "Not Found. A technology with the specified ID does not exist or the user is not authorized to update it.",
             "content": {
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/Error" }
@@ -583,9 +583,9 @@
         }
       },
       "delete": {
-        "tags": ["Skills"],
-        "summary": "Delete a skill",
-        "description": "Permanently removes a skill from the database. Deletion automatically removes references from all related projects (cascade delete). Requires authentication.",
+        "tags": ["Technologies"],
+        "summary": "Delete a technology",
+        "description": "Permanently removes a technology from the database. Deletion automatically removes references from all related projects (cascade delete). Requires authentication.",
         "parameters": [
           {
             "name": "id",
@@ -594,12 +594,12 @@
             "schema": {
               "type": "string"
             },
-            "description": "The MongoDB ObjectID of the skill to delete."
+            "description": "The MongoDB ObjectID of the technology to delete."
           }
         ],
         "responses": {
           "200": {
-            "description": "The skill was deleted successfully.",
+            "description": "The technology was deleted successfully.",
             "content": {
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/SuccessMessage" }
@@ -610,7 +610,7 @@
             "$ref": "#/components/responses/UnauthorizedError"
           },
           "404": {
-            "description": "Not Found. A skill with the specified ID does not exist or the user is not authorized to delete it.",
+            "description": "Not Found. A technology with the specified ID does not exist or the user is not authorized to delete it.",
             "content": {
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/Error" }
