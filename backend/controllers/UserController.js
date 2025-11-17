@@ -1,5 +1,5 @@
 const User = require("../models/UserModel");
-const PasswordResetToken = require("../models/PasswordResetTokenModel"); // IMPORT BARU
+const PasswordResetToken = require("../models/PasswordResetTokenModel");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const bcrypt = require("bcrypt");
@@ -93,9 +93,7 @@ const getProfile = async (req, res) => {
 // | 2. PASSWORD RESET FLOW: FORGOT PASSWORD                           |
 // ---------------------------------------------------------------------
 
-// TOGGLE: Choose the security method for the reset token
-// const USE_JWT_RESET = true; // Use this line for secure JWT token reset
-const USE_JWT_RESET = false; // Use this line for simple Crypto Random String reset
+// REMOVED: USE_JWT_RESET toggle. Only using Crypto Random String method.
 
 
 /**
@@ -116,27 +114,12 @@ const forgotPassword = async (req, res) => {
       });
     }
 
-    let finalTokenToSend;
-    let tokenToStoreInDB;
+    // --- Token Generation (Crypto Random String Method Only) ---
+    // The raw token sent to the user is also the token hashed/stored in the DB (for simplicity)
+    const finalTokenToSend = crypto.randomBytes(20).toString("hex");
+    const tokenToStoreInDB = finalTokenToSend; 
+    
     const expirationTime = 3600000; // 1 hour in milliseconds
-
-    if (USE_JWT_RESET) {
-      // [METHOD A: JWT + Hashing - Recommended]
-      const resetTokenJWT = jwt.sign(
-        { _id: user._id },
-        process.env.RESET_SECRET,
-        { expiresIn: "1h" }
-      );
-      tokenToStoreInDB = crypto
-        .createHash("sha256")
-        .update(resetTokenJWT)
-        .digest("hex");
-      finalTokenToSend = resetTokenJWT;
-    } else {
-      // [METHOD B: Crypto Random String]
-      tokenToStoreInDB = crypto.randomBytes(20).toString("hex");
-      finalTokenToSend = tokenToStoreInDB;
-    }
 
     // 1. DELETE any existing token for this user to prevent clutter
     await PasswordResetToken.deleteMany({ userId: user._id });
@@ -225,19 +208,11 @@ const resetPassword = async (req, res) => {
   const { token } = req.params;
   const { password } = req.body;
   
-  let tokenToQueryDB;
-
-  if (USE_JWT_RESET) {
-    // [METHOD A: JWT + Hashing]
-    // Hash the token from the URL to match the hash stored in the DB
-    tokenToQueryDB = crypto.createHash("sha256").update(token).digest("hex");
-  } else {
-    // [METHOD B: Crypto Random String]
-    tokenToQueryDB = token; // Use the raw string from the URL
-  }
+  // Only using the raw token from the URL for the query
+  const tokenToQueryDB = token; 
 
   try {
-    // 1. Find the token document
+    // 1. Find the token document (checks expiration automatically)
     const resetTokenDoc = await PasswordResetToken.findOne({
       token: tokenToQueryDB,
       expiresAt: { $gt: Date.now() }, // Check expiration time
@@ -251,7 +226,6 @@ const resetPassword = async (req, res) => {
     const user = await User.findById(resetTokenDoc.userId);
 
     if (!user) {
-        // This case shouldn't happen if data integrity is maintained, but handles corrupted token links
         throw Error("User not found for this reset token."); 
     }
 

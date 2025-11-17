@@ -6,9 +6,8 @@ const Schema = mongoose.Schema;
 /**
  * @typedef PasswordResetToken
  * @property {ObjectId} userId - Reference to the User who requested the password reset.
- * @property {string} token - The hashed token string stored in the database.
- * @property {Date} expiresAt - The timestamp when this token becomes invalid.
- * @property {Date} createdAt - The timestamp when this document was created.
+ * @property {string} token - The raw token string stored in the database.
+ * @property {Date} expiresAt - The timestamp when this token becomes invalid (used for TTL).
  */
 const PasswordResetTokenSchema = new Schema({
     // Foreign Key: Reference to the User Model
@@ -18,7 +17,7 @@ const PasswordResetTokenSchema = new Schema({
         required: true,
     },
     
-    // The hashed token used for comparison (not the raw token sent in the email)
+    // The raw token string (Crypto Random String)
     token: {
         type: String,
         required: true,
@@ -28,20 +27,14 @@ const PasswordResetTokenSchema = new Schema({
     expiresAt: {
         type: Date,
         required: true,
+        // PRO ENHANCEMENT: Create a TTL index on this field 
+        // to automatically delete the document when the time is reached.
+        index: { expires: 0 }, 
     },
     
-    // Auto-delete mechanism (TTL Index)
-    // The index definition will be added in server initialization or separate script.
-    // However, defining `expiresAt` with the intent for TTL index is crucial.
-    createdAt: {
-        type: Date,
-        default: Date.now,
-        // PRO ENHANCEMENT: Create a TTL (Time-To-Live) index on this field 
-        // to automatically delete the document after a specified time.
-        index: { expires: '3600s' }, // Token is valid for 1 hour (3600 seconds)
-    }
+    // REMOVED: createdAt field because it is now redundant with expiresAt for TTL indexing.
 }, { 
-    // Disable automatic timestamps since we manually control createdAt and expiresAt
+    // Disable automatic timestamps since we only need the custom 'expiresAt' field
     timestamps: false 
 });
 
