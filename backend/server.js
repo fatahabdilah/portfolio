@@ -10,21 +10,12 @@ const swaggerUi = require("swagger-ui-express");
 const swaggerDocument = require("./config/swagger.json");
 require("swagger-ui-dist");
 
-// --- PRO ENHANCEMENT: LOAD ALL MODELS EARLY ---
-// Load all models here to ensure Mongoose is aware of them
-// before routes or controllers (which import other models) are executed.
-require("./models/UserModel"); 
-require("./models/ProjectModel");
-require("./models/TechnologyModel"); 
-require("./models/PasswordResetTokenModel"); 
-require("./models/BlogModel"); // NEW: Load Blog Model
-
-
 // Import Routes
+// Routes will implicitly load controllers, and controllers will load models.
 const userRoutes = require("./routes/userRoutes");
 const projectRoutes = require("./routes/projectRoutes");
 const technologyRoutes = require("./routes/technologyRoutes");
-const blogRoutes = require("./routes/blogRoutes"); // NEW: Import Blog Routes
+const blogRoutes = require("./routes/blogRoutes");
 
 // Initialize the Express application
 const app = express();
@@ -103,14 +94,22 @@ app.get("/", (req, res) => {
 app.use("/api/users", userRoutes);
 app.use("/api/projects", projectRoutes);
 app.use("/api/technologies", technologyRoutes); 
-app.use("/api/blogs", blogRoutes); // NEW: Register Blog Routes
+app.use("/api/blogs", blogRoutes);
 
 // -------------------------------------------------------------
 // | 5. DATABASE CONNECTION & SERVER INITIALIZATION            |
 // -------------------------------------------------------------
 
 const connectDBAndStartServer = async () => {
-  
+  // PRO FIX: Load all Mongoose models ONLY before connecting to DB.
+  // This prevents 'OverwriteModelError' during nodemon restarts 
+  // while ensuring cross-model references (e.g., cascade delete) work correctly.
+  require("./models/UserModel"); 
+  require("./models/ProjectModel");
+  require("./models/TechnologyModel"); 
+  require("./models/PasswordResetTokenModel"); 
+  require("./models/BlogModel");
+
   if (!mongoose.connection.readyState) {
     try {
       await mongoose.connect(MONGO_URI, {
