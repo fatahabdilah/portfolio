@@ -44,11 +44,6 @@
             "type": "string",
             "example": "E-commerce Platform"
           },
-          "slug": {
-            "type": "string",
-            "description": "The URL-friendly slug generated from the title.",
-            "example": "e-commerce-platform"
-          },
           "content": {
             "type": "string",
             "description": "The full detailed content/description of the project.",
@@ -125,11 +120,6 @@
           "title": {
             "type": "string",
             "example": "The Power of Serverless Functions"
-          },
-          "slug": {
-            "type": "string",
-            "description": "The URL-friendly slug generated from the title.",
-            "example": "the-power-of-serverless-functions"
           },
           "content": {
             "type": "string",
@@ -380,21 +370,21 @@
         }
       }
     },
-    "/api/projects/{slugOrId}": {
+    "/api/projects/{id}": {
       "get": {
         "tags": ["Projects"],
-        "summary": "Fetch a single project by its SLUG or ID",
-        "description": "Retrieves a specific project using its **slug** (for public access) or its MongoDB **ObjectID** (for internal/admin use). Includes the full `content`.",
+        "summary": "Fetch a single project by its ID",
+        "description": "Retrieves a specific project using its MongoDB **ObjectID**.",
         "security": [],
         "parameters": [
           {
-            "name": "slugOrId",
+            "name": "id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "string"
             },
-            "description": "The SLUG (e.g., 'my-awesome-project') or the MongoDB ObjectID of the project to retrieve."
+            "description": "The MongoDB ObjectID of the project to retrieve."
           }
         ],
         "responses": {
@@ -407,7 +397,7 @@
             }
           },
           "404": {
-            "description": "Not Found. A project with the specified slug or ID does not exist.",
+            "description": "Not Found. A project with the specified ID does not exist.",
             "content": {
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/Error" }
@@ -415,9 +405,7 @@
             }
           }
         }
-      }
-    },
-    "/api/projects/{id}": {
+      },
       "delete": {
         "tags": ["Projects"],
         "summary": "Delete a project (Admin Only)",
@@ -458,7 +446,7 @@
       "patch": {
         "tags": ["Projects"],
         "summary": "Update an existing project (Admin Only)",
-        "description": "Updates one or more fields of an existing project. Requires authentication. The request must be `multipart/form-data` if an image is being updated. Uses ObjectID. If the `title` is updated, the `slug` will be automatically re-generated.",
+        "description": "Updates one or more fields of an existing project. Requires authentication. The request must be `multipart/form-data` if an image is being updated. Uses ObjectID.",
         "parameters": [
           {
             "name": "id",
@@ -477,8 +465,7 @@
                 "type": "object",
                 "properties": {
                   "title": {
-                    "type": "string",
-                    "description": "If updated, the slug will be automatically re-generated."
+                    "type": "string"
                   },
                   "content": {
                     "type": "string",
@@ -514,7 +501,7 @@
             }
           },
           "400": {
-            "description": "Bad Request. Input validation failed or the new title results in a duplicate slug.",
+            "description": "Bad Request. Input validation failed or the new title results in a duplicate name.",
             "content": {
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/Error" }
@@ -827,7 +814,7 @@
             }
           },
           "400": {
-            "description": "Bad Request. Validation failed (e.g., duplicate title/slug) or image upload issue.",
+            "description": "Bad Request. Validation failed (e.g., duplicate title) or image upload issue.",
             "content": {
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/Error" }
@@ -840,21 +827,21 @@
         }
       }
     },
-    "/api/blogs/{slugOrId}": {
+    "/api/blogs/{id}": {
       "get": {
         "tags": ["Blogs"],
-        "summary": "Fetch a single blog post by its SLUG or ID",
-        "description": "Retrieves a specific blog post using its **slug** (for public access) or its MongoDB **ObjectID** (for internal/admin use), including the full content.",
+        "summary": "Fetch a single blog post by its ID",
+        "description": "Retrieves a specific blog post using its **ObjectID**, including the full content.",
         "security": [],
         "parameters": [
           {
-            "name": "slugOrId",
+            "name": "id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "string"
             },
-            "description": "The SLUG (e.g., 'latest-tech-trends') or the MongoDB ObjectID of the blog post."
+            "description": "The MongoDB ObjectID of the blog post."
           }
         ],
         "responses": {
@@ -867,7 +854,7 @@
             }
           },
           "404": {
-            "description": "Not Found. A blog post with the specified slug or ID does not exist.",
+            "description": "Not Found. A blog post with the specified ID does not exist.",
             "content": {
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/Error" }
@@ -875,9 +862,7 @@
             }
           }
         }
-      }
-    },
-    "/api/blogs/{id}": {
+      },
       "delete": {
         "tags": ["Blogs"],
         "summary": "Delete a blog post (Admin Only)",
@@ -918,7 +903,7 @@
       "patch": {
         "tags": ["Blogs"],
         "summary": "Update an existing blog post (Admin Only)",
-        "description": "Updates fields of an existing blog post. Requires authentication. Must be `multipart/form-data` if the thumbnail is being updated. Uses ObjectID. If the `title` is updated, the `slug` will be automatically re-generated.",
+        "description": "Updates fields of an existing blog post. Requires authentication. Must be `multipart/form-data` if the thumbnail is being updated. Uses ObjectID.",
         "parameters": [
           {
             "name": "id",
@@ -962,7 +947,7 @@
             }
           },
           "400": {
-            "description": "Bad Request. Input validation failed or the new title results in a duplicate slug.",
+            "description": "Bad Request. Input validation failed or the new title results in a duplicate name.",
             "content": {
               "application/json": {
                 "schema": { "$ref": "#/components/schemas/Error" }

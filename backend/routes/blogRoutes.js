@@ -4,7 +4,7 @@ const express = require('express');
 const { 
     createBlog, 
     getBlogs, 
-    getBlog, // Updated to handle slug/id
+    getBlog, 
     deleteBlog, 
     updateBlog 
 } = require('../controllers/BlogController');
@@ -23,21 +23,21 @@ const blogThumbnailUpload = createUploadMiddleware('thumbnail');
 
 /**
  * @route GET /api/blogs
- * @desc Fetch all blog posts for public display.
+ * @desc Fetch all blog posts for public display (with pagination/search). Includes full content.
  * @access Public
  * @returns {array<object>} 200 - An array of Blog objects (without full content).
  */
 router.get('/', getBlogs);
 
 /**
- * @route GET /api/blogs/:slugOrId
- * @desc Fetch a single blog post by its SLUG (public) or ID (admin internal), including full content.
- * @access Public/Private (depending on the caller)
- * @param {string} slugOrId - The slug (for public) or ObjectID (for admin) of the blog post.
+ * @route GET /api/blogs/:id
+ * @desc Fetch a single blog post by its ID, including full content.
+ * @access Public
+ * @param {string} id - The MongoDB ObjectID of the blog post.
  * @returns {object} 200 - The requested Blog object.
  * @returns {object} 404 - { error: "No such blog post found." }
  */
-router.get('/:slugOrId', getBlog); // 💡 PERUBAHAN: Menggunakan :slugOrId
+router.get('/:id', getBlog); // 💡 PERUBAHAN: Kembali ke :id
 
 
 // -----------------------------------------------------------
@@ -78,7 +78,7 @@ router.post('/',
  * @param {string} id - The MongoDB ObjectID of the blog post to delete.
  * @returns {object} 200 - { message: "Blog post deleted successfully!" }
  */
-router.delete('/:id', deleteBlog); // Tetap menggunakan :id untuk operasi Admin
+router.delete('/:id', deleteBlog);
 
 /**
  * @route PATCH /api/blogs/:id
@@ -91,7 +91,7 @@ router.delete('/:id', deleteBlog); // Tetap menggunakan :id untuk operasi Admin
  * @body {file} [thumbnail] - Optional new image file to replace the old one.
  * @returns {object} 200 - The updated Blog object.
  */
-router.patch('/:id', // Tetap menggunakan :id untuk operasi Admin
+router.patch('/:id', 
     blogThumbnailUpload, 
     updateBlog
 ); 

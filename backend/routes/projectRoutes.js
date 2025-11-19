@@ -4,7 +4,7 @@ const express = require('express');
 const { 
     createProject, 
     getProjects, 
-    getProject, // Updated to handle slug/id
+    getProject, 
     deleteProject, 
     updateProject 
 } = require('../controllers/ProjectController');
@@ -23,7 +23,7 @@ const projectImageUpload = createUploadMiddleware('projectImage');
 
 /**
  * @route GET /api/projects
- * @desc Fetch all projects for display on the public portfolio. Populates technology names.
+ * @desc Fetch all projects for display on the public portfolio (with pagination/search). Includes full content.
  * @access Public
  * @returns {array<object>} 200 - An array of Project objects.
  * @returns {object} 500 - { error: "..." }
@@ -31,14 +31,14 @@ const projectImageUpload = createUploadMiddleware('projectImage');
 router.get('/', getProjects);
 
 /**
- * @route GET /api/projects/:slugOrId
- * @desc Fetch a single project by its SLUG (public) or ID (admin internal).
- * @access Public/Private (depending on the caller)
- * @param {string} slugOrId - The slug (for public) or ObjectID (for admin) of the project.
+ * @route GET /api/projects/:id
+ * @desc Fetch a single project by its ID, populating technology names.
+ * @access Public
+ * @param {string} id - The MongoDB ObjectID of the project.
  * @returns {object} 200 - The requested Project object.
  * @returns {object} 404 - { error: "No such project" }
  */
-router.get('/:slugOrId', getProject); // 💡 PERUBAHAN: Menggunakan :slugOrId
+router.get('/:id', getProject); // 💡 PERUBAHAN: Kembali ke :id
 
 
 // -----------------------------------------------------------
@@ -61,7 +61,7 @@ router.use(requireAuth);
  * @access Private (Requires Admin Token)
  * @header {string} Authorization - Bearer <JWT Token>
  * @body {string} title - The project title (required).
- * @body {string} description - The project description (required).
+ * @body {string} content - The project content (required).
  * @body {string} technologies - Comma-separated list of Skill Object IDs (required).
  * @body {file} projectImage - The main image file (required, max 5MB).
  * @returns {object} 201 - The newly created Project object.
@@ -83,7 +83,7 @@ router.post('/',
  * @returns {object} 401 - { error: "Request is unauthorized" }
  * @returns {object} 404 - { error: "No such project or not authorized to delete" }
  */
-router.delete('/:id', deleteProject); // Tetap menggunakan :id untuk operasi Admin
+router.delete('/:id', deleteProject);
 
 /**
  * @route PATCH /api/projects/:id
@@ -99,7 +99,7 @@ router.delete('/:id', deleteProject); // Tetap menggunakan :id untuk operasi Adm
  * @returns {object} 401 - { error: "Request is unauthorized" }
  * @returns {object} 404 - { error: "No such project or not authorized to update" }
  */
-router.patch('/:id', // Tetap menggunakan :id untuk operasi Admin
+router.patch('/:id', 
     projectImageUpload, 
     updateProject
 ); 

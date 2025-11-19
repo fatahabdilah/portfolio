@@ -4,24 +4,8 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 /**
- * Helper function to generate a URL-friendly slug from a string.
- * @param {string} text 
- * @returns {string} The generated slug.
- */
-const slugify = (text) => {
-    return text
-        .toString()
-        .toLowerCase()
-        .trim()
-        .replace(/[^a-z0-9\s-]/g, '') // Remove non-alphanumeric chars
-        .replace(/[\s-]+/g, '-')      // Collapse whitespace and hyphens
-        .replace(/^-+|-+$/g, '');     // Remove leading/trailing hyphens
-};
-
-/**
  * @typedef Project
  * @property {string} title - The title of the project.
- * @property {string} slug - The URL-friendly identifier generated from the title (Unique).
  * @property {string} content - The detailed content/description of the project. 
  * @property {Array<ObjectId>} technologies - References to the Technology model.
  * @property {string} imageUrl - Secure URL for the main image (hosted on Cloudinary).
@@ -39,15 +23,7 @@ const projectSchema = new Schema({
         trim: true,
     },
     
-    // Project Slug (Required, Unique, Indexed)
-    slug: {
-        type: String,
-        required: true,
-        unique: true,
-        index: true,
-    },
-    
-    // Project Content (NEW: Replaces description)
+    // Project Content (Replaces description)
     content: {
         type: String,
         required: [true, 'Project content is required'],
@@ -94,28 +70,6 @@ const projectSchema = new Schema({
     timestamps: true 
 });
 
-
-// -------------------------------------------------------------
-// | Mongoose Middleware: Generate Unique Slug                 |
-// -------------------------------------------------------------
-
-/**
- * @desc Pre-save hook to generate and ensure a unique slug before saving.
- */
-projectSchema.pre('save', async function(next) {
-    if (this.isModified('title') || this.isNew) {
-        let baseSlug = slugify(this.title);
-        let slug = baseSlug;
-        let count = 0;
-        
-        // Loop to check for uniqueness
-        while (await mongoose.models.Project.findOne({ slug: slug, _id: { $ne: this._id } })) {
-            count++;
-            slug = `${baseSlug}-${count}`;
-        }
-        this.slug = slug;
-    }
-    next();
-});
+// Catatan: Slug helper function dan pre('save') hook DIBATALKAN.
 
 module.exports = mongoose.model('Project', projectSchema);

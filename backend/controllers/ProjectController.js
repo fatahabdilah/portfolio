@@ -56,14 +56,20 @@ const processTechnologies = (technologies) => {
  * @access Private (Requires Admin Token)
  */
 const createProject = async (req, res) => {
-    // 💡 PERUBAHAN: Menggunakan 'content'
+    // Menggunakan 'content'
     const { title, content, technologies, demoUrl, repoUrl } = req.body;
     const userId = req.user._id;
     let result;
 
+    // --- Validasi Data Awal ---
+    if (!title || !content) {
+        return res.status(400).json({ error: 'Validation failed: Title and content are required.' });
+    }
+    
     if (!req.file) {
         return res.status(400).json({ error: 'Image upload failed. No file provided.' });
     }
+    // ---------------------------
     
     try {
         // 1. Upload image to Cloudinary from memory buffer
@@ -83,22 +89,22 @@ const createProject = async (req, res) => {
             const existingTechnologies = await Technology.find({ '_id': { $in: processedTechnologies } });
             
             if (existingTechnologies.length !== processedTechnologies.length) {
-                // Rollback image upload if technology validation fails
                 await deleteCloudinaryImage(result.public_id);
                 throw new Error('One or more technology IDs provided do not exist.');
             }
         }
         
-        // 3. Create new Project document in MongoDB (Slug is generated automatically by pre-save hook)
+        // 3. Create new Project document 
+        // Menggunakan Project.create() karena tidak ada lagi hook pre('save') untuk slug.
         const project = await Project.create({
             title,
-            content, // 💡 PERUBAHAN: Menggunakan 'content'
-            technologies: processedTechnologies, // Array of Technology Object IDs
+            content,
+            technologies: processedTechnologies,
             imageUrl: result.secure_url,
             imagePublicId: result.public_id,
             demoUrl,
             repoUrl,
-            user: userId, // Link to the authenticated Admin user
+            user: userId,
         });
         
         res.status(201).json({ 
@@ -109,13 +115,19 @@ const createProject = async (req, res) => {
     } catch (error) {
         console.error('Project creation failed:', error.message); 
         
-        // Rollback: Delete the uploaded image if DB save fails (including validation error)
+        // Rollback: Delete the uploaded image if DB save fails
         if (result && result.public_id) {
              await deleteCloudinaryImage(result.public_id);
         }
         
-        if (error.code === 11000) { // Handle slug/title uniqueness error (which is also handled by pre-save)
+        if (error.code === 11000) { 
              return res.status(400).json({ error: `Project title '${title}' is too similar to an existing project.` });
+        }
+        
+        // Handle Mongoose Validation Error
+        if (error.name === 'ValidationError') {
+            // Karena tidak ada slug, error validation biasanya terkait required fields lain
+            return res.status(400).json({ error: `Project validation failed: ${error.message}` });
         }
         
         res.status(400).json({ error: 'Project creation failed due to invalid data.' });
@@ -124,7 +136,7 @@ const createProject = async (req, res) => {
 
 
 // ---------------------------------------------------------------------
-// | 2. READ All Projects (GET) - Pagination, Search, & FULL Content   |
+// | 2. READ All Projects (GET) - Pagination & Search                  |
 // ---------------------------------------------------------------------
 
 /**
@@ -165,7 +177,6 @@ const getProjects = async (req, res) => {
         const projects = await Project.find(query)
             .populate('technologies', 'name') 
             .sort({ createdAt: -1 })
-            // 💡 PERUBAHAN: Menghapus .select('-content') agar konten penuh disertakan
             .skip(skip)
             .limit(limitNumber);
             
@@ -183,36 +194,33 @@ const getProjects = async (req, res) => {
 
 
 // ---------------------------------------------------------------------
-// | 3. READ Single Project (GET)                                      |
+// | 3. READ Single Project (GET) - Kembali ke ID                      |
 // ---------------------------------------------------------------------
 
 /**
- * @desc Fetches a single project by SLUG or ID.
- * The route uses SLUG for public access but accepts ID for internal/admin use (via separate route definition).
- * @route GET /api/projects/:slugOrId
+ * @desc Fetches a single project by ID.
+ * @route GET /api/projects/:id
  * @access Public / Private
  */
 const getProject = async (req, res) => {
-    const { slugOrId } = req.params;
+    const { id } = req.params; // 💡 PERUBAHAN: Kembali ke :id
 
-    let project;
-
-    // 1. Check if the parameter is a valid MongoDB ID (Used for internal Admin access)
-    if (mongoose.Types.ObjectId.isValid(slugOrId)) {
-        project = await Project.findById(slugOrId).populate('technologies', 'name');
-    }
-
-    // 2. If not found by ID or invalid ID, search by slug (Used for public access)
-    if (!project) {
-        // Use findOne({ slug: ... }) to ensure we find the correct document
-        project = await Project.findOne({ slug: slugOrId }).populate('technologies', 'name');
-    }
-
-    if (!project) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
         return res.status(404).json({ error: 'No such project' });
     }
 
-    res.status(200).json(project);
+    try {
+        // Mencari berdasarkan ID
+        const project = await Project.findById(id).populate('technologies', 'name');
+
+        if (!project) {
+            return res.status(404).json({ error: 'No such project' });
+        }
+
+        res.status(200).json(project);
+    } catch (error) {
+        res.status(500).json({ error: 'Server failed to retrieve project.' });
+    }
 };
 
 
@@ -270,7 +278,6 @@ const updateProject = async (req, res) => {
     const userId = req.user._id;
     let result;
     
-    // 💡 PERUBAHAN: body mungkin berisi 'content'
     let updateBody = { ...req.body }; 
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -314,42 +321,21 @@ const updateProject = async (req, res) => {
             await deleteCloudinaryImage(oldProject.imagePublicId);
         }
 
-        // --- Perform the update using Find and Save to trigger pre('save') slug generation hook ---
-        const projectToUpdate = await Project.findById(id);
-        if (!projectToUpdate) {
+        // Perform the update
+        const project = await Project.findOneAndUpdate(
+            { _id: id, user: userId }, 
+            { $set: updateBody }, 
+            { new: true, runValidators: true }
+        ).populate('technologies', 'name');
+        
+        if (!project) {
             // Rollback image upload if project not found
             if (result && result.public_id) { await deleteCloudinaryImage(result.public_id); }
             return res.status(404).json({ error: 'No such project or not authorized to update' });
         }
 
-        let isTitleModified = false;
-        for (const key in updateBody) {
-            if (projectToUpdate.schema.paths[key]) {
-                projectToUpdate[key] = updateBody[key];
-                if (key === 'title') {
-                    isTitleModified = true;
-                }
-            }
-        }
-        
-        const updatedProject = await projectToUpdate.save();
 
-        // If title wasn't modified, and no file uploaded, use findOneAndUpdate for efficiency on simple field changes
-        if (!isTitleModified && !req.file) {
-             const finalProject = await Project.findOneAndUpdate(
-                { _id: id, user: userId }, 
-                { $set: updateBody }, 
-                { new: true, runValidators: true }
-            ).populate('technologies', 'name');
-            
-            if (!finalProject) {
-                return res.status(404).json({ error: 'No such project or not authorized to update' });
-            }
-            return res.status(200).json({ message: 'Project updated successfully!', project: finalProject });
-        }
-
-
-        res.status(200).json({ message: 'Project updated successfully!', project: await updatedProject.populate('technologies', 'name') });
+        res.status(200).json({ message: 'Project updated successfully!', project });
 
 
     } catch (error) {
@@ -360,8 +346,13 @@ const updateProject = async (req, res) => {
              await deleteCloudinaryImage(result.public_id);
         }
         
-        if (error.code === 11000) { // Handle slug uniqueness error
-             return res.status(400).json({ error: 'Project title results in a slug that already exists.' });
+        if (error.code === 11000) { // Handle uniqueness error (e.g., title)
+             return res.status(400).json({ error: 'Project title already exists.' });
+        }
+
+        // Handle Mongoose Validation Error
+        if (error.name === 'ValidationError') {
+            return res.status(400).json({ error: `Project validation failed: ${error.message}` });
         }
 
         res.status(400).json({ error: 'Project update failed due to invalid data.' });
