@@ -4,8 +4,24 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 /**
+ * Helper function to generate a URL-friendly slug from a string.
+ * @param {string} text 
+ * @returns {string} The generated slug.
+ */
+const slugify = (text) => {
+    return text
+        .toString()
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9\s-]/g, '') // Remove non-alphanumeric chars
+        .replace(/[\s-]+/g, '-')      // Collapse whitespace and hyphens
+        .replace(/^-+|-+$/g, '');     // Remove leading/trailing hyphens
+};
+
+/**
  * @typedef Project
  * @property {string} title - The title of the project.
+ * @property {string} slug - The URL-friendly identifier generated from the title (Unique).
  * @property {string} description - A detailed description of the project.
  * @property {Array<ObjectId>} technologies - References to the Technology model.
  * @property {string} imageUrl - Secure URL for the main image (hosted on Cloudinary).
@@ -23,6 +39,14 @@ const projectSchema = new Schema({
         trim: true,
     },
     
+    // Project Slug (NEW: Required, Unique, Indexed)
+    slug: {
+        type: String,
+        required: true,
+        unique: true,
+        index: true,
+    },
+    
     // Project Description (Required)
     description: {
         type: String,
@@ -30,10 +54,9 @@ const projectSchema = new Schema({
     },
     
     // Array of Technologies (References to Technology Model)
-    // Ensures technologies are validated as an array of ObjectIds linked to Technology documents.
     technologies: [{ 
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Technology', // ✅ Fixed reference name
+        ref: 'Technology', // References the 'Technology' collection
     }],
     
     // Main Image URL (Cloudinary storage link)
@@ -69,6 +92,30 @@ const projectSchema = new Schema({
 }, { 
     // Mongoose timestamps for tracking creation and updates
     timestamps: true 
+});
+
+
+// -------------------------------------------------------------
+// | Mongoose Middleware: Generate Unique Slug                 |
+// -------------------------------------------------------------
+
+/**
+ * @desc Pre-save hook to generate and ensure a unique slug before saving.
+ */
+projectSchema.pre('save', async function(next) {
+    if (this.isModified('title') || this.isNew) {
+        let baseSlug = slugify(this.title);
+        let slug = baseSlug;
+        let count = 0;
+        
+        // Loop to check for uniqueness
+        while (await mongoose.models.Project.findOne({ slug: slug, _id: { $ne: this._id } })) {
+            count++;
+            slug = `${baseSlug}-${count}`;
+        }
+        this.slug = slug;
+    }
+    next();
 });
 
 module.exports = mongoose.model('Project', projectSchema);

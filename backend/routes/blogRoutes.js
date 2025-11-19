@@ -4,13 +4,12 @@ const express = require('express');
 const { 
     createBlog, 
     getBlogs, 
-    getBlog, 
+    getBlog, // Updated to handle slug/id
     deleteBlog, 
     updateBlog 
 } = require('../controllers/BlogController');
 const requireAuth = require('../middleware/requireAuth'); // JWT Authentication Middleware
-// 💡 PERUBAHAN: Sekarang mengimpor fungsi factory
-const createUploadMiddleware = require('../middleware/uploadMiddleware'); 
+const createUploadMiddleware = require('../middleware/uploadMiddleware'); // Multer Upload Middleware
 
 const router = express.Router();
 
@@ -31,14 +30,14 @@ const blogThumbnailUpload = createUploadMiddleware('thumbnail');
 router.get('/', getBlogs);
 
 /**
- * @route GET /api/blogs/:id
- * @desc Fetch a single blog post by its ID, including full content.
- * @access Public
- * @param {string} id - The MongoDB ObjectID of the blog post.
+ * @route GET /api/blogs/:slugOrId
+ * @desc Fetch a single blog post by its SLUG (public) or ID (admin internal), including full content.
+ * @access Public/Private (depending on the caller)
+ * @param {string} slugOrId - The slug (for public) or ObjectID (for admin) of the blog post.
  * @returns {object} 200 - The requested Blog object.
  * @returns {object} 404 - { error: "No such blog post found." }
  */
-router.get('/:id', getBlog);
+router.get('/:slugOrId', getBlog); // 💡 PERUBAHAN: Menggunakan :slugOrId
 
 
 // -----------------------------------------------------------
@@ -67,7 +66,7 @@ router.use(requireAuth);
  * @returns {object} 400 - { error: "Validation failed" } or { error: "Image upload failed" }
  */
 router.post('/', 
-    blogThumbnailUpload, // 💡 PERUBAHAN
+    blogThumbnailUpload, 
     createBlog
 );
 
@@ -79,7 +78,7 @@ router.post('/',
  * @param {string} id - The MongoDB ObjectID of the blog post to delete.
  * @returns {object} 200 - { message: "Blog post deleted successfully!" }
  */
-router.delete('/:id', deleteBlog);
+router.delete('/:id', deleteBlog); // Tetap menggunakan :id untuk operasi Admin
 
 /**
  * @route PATCH /api/blogs/:id
@@ -92,8 +91,8 @@ router.delete('/:id', deleteBlog);
  * @body {file} [thumbnail] - Optional new image file to replace the old one.
  * @returns {object} 200 - The updated Blog object.
  */
-router.patch('/:id', 
-    blogThumbnailUpload, // 💡 PERUBAHAN
+router.patch('/:id', // Tetap menggunakan :id untuk operasi Admin
+    blogThumbnailUpload, 
     updateBlog
 ); 
 

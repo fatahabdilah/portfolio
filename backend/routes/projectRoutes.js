@@ -4,13 +4,12 @@ const express = require('express');
 const { 
     createProject, 
     getProjects, 
-    getProject, 
+    getProject, // Updated to handle slug/id
     deleteProject, 
     updateProject 
 } = require('../controllers/ProjectController');
 const requireAuth = require('../middleware/requireAuth'); // JWT Authentication Middleware
-// 💡 PERUBAHAN: Sekarang mengimpor fungsi factory
-const createUploadMiddleware = require('../middleware/uploadMiddleware'); 
+const createUploadMiddleware = require('../middleware/uploadMiddleware'); // Multer Upload Middleware
 
 const router = express.Router();
 
@@ -32,14 +31,14 @@ const projectImageUpload = createUploadMiddleware('projectImage');
 router.get('/', getProjects);
 
 /**
- * @route GET /api/projects/:id
- * @desc Fetch a single project by its ID, populating technology names.
- * @access Public
- * @param {string} id - The MongoDB ObjectID of the project.
+ * @route GET /api/projects/:slugOrId
+ * @desc Fetch a single project by its SLUG (public) or ID (admin internal).
+ * @access Public/Private (depending on the caller)
+ * @param {string} slugOrId - The slug (for public) or ObjectID (for admin) of the project.
  * @returns {object} 200 - The requested Project object.
  * @returns {object} 404 - { error: "No such project" }
  */
-router.get('/:id', getProject);
+router.get('/:slugOrId', getProject); // 💡 PERUBAHAN: Menggunakan :slugOrId
 
 
 // -----------------------------------------------------------
@@ -70,7 +69,7 @@ router.use(requireAuth);
  * @returns {object} 401 - { error: "Request is unauthorized" }
  */
 router.post('/', 
-    projectImageUpload, // 💡 PERUBAHAN
+    projectImageUpload, 
     createProject
 );
 
@@ -84,7 +83,7 @@ router.post('/',
  * @returns {object} 401 - { error: "Request is unauthorized" }
  * @returns {object} 404 - { error: "No such project or not authorized to delete" }
  */
-router.delete('/:id', deleteProject);
+router.delete('/:id', deleteProject); // Tetap menggunakan :id untuk operasi Admin
 
 /**
  * @route PATCH /api/projects/:id
@@ -100,8 +99,8 @@ router.delete('/:id', deleteProject);
  * @returns {object} 401 - { error: "Request is unauthorized" }
  * @returns {object} 404 - { error: "No such project or not authorized to update" }
  */
-router.patch('/:id', 
-    projectImageUpload, // 💡 PERUBAHAN
+router.patch('/:id', // Tetap menggunakan :id untuk operasi Admin
+    projectImageUpload, 
     updateProject
 ); 
 
