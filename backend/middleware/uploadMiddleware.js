@@ -1,9 +1,8 @@
-// backend/middleware/upload.middleware.js
+// backend/middleware/uploadMiddleware.js
 
 const multer = require('multer');
 
 // Configuration: Store files in memory buffer instead of disk.
-// This is the standard method when immediately processing and uploading to services like Cloudinary.
 const storage = multer.memoryStorage();
 
 /**
@@ -33,10 +32,14 @@ const upload = multer({
 });
 
 /**
- * @desc Main middleware export: Configured to handle a single file upload.
- * The file will be available under req.file in the controller.
- * @type {Function}
+ * @desc Exports a factory function that creates a Multer middleware
+ * configured to handle a single file upload using the specified field name.
+ * * @param {string} fieldName - The name of the file field in the form-data (e.g., 'projectImage', 'thumbnail').
+ * @returns {Function} Multer middleware function (upload.single(fieldName)).
  */
-const uploadImageMiddleware = upload.single('projectImage');
+const createUploadMiddleware = (fieldName) => {
+    return upload.single(fieldName);
+};
 
-module.exports = uploadImageMiddleware;
+// Ekspor fungsi factory, bukan middleware instan
+module.exports = createUploadMiddleware;

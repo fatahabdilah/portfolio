@@ -9,9 +9,14 @@ const {
     updateBlog 
 } = require('../controllers/BlogController');
 const requireAuth = require('../middleware/requireAuth'); // JWT Authentication Middleware
-const uploadImageMiddleware = require('../middleware/uploadMiddleware'); // Multer Upload Middleware
+// 💡 PERUBAHAN: Sekarang mengimpor fungsi factory
+const createUploadMiddleware = require('../middleware/uploadMiddleware'); 
 
 const router = express.Router();
+
+// Tentukan middleware unggahan untuk blog (field: 'thumbnail')
+const blogThumbnailUpload = createUploadMiddleware('thumbnail');
+
 
 // -----------------------------------------------------------
 // | PUBLIC READ ROUTES (No Authentication Needed)             |
@@ -62,7 +67,7 @@ router.use(requireAuth);
  * @returns {object} 400 - { error: "Validation failed" } or { error: "Image upload failed" }
  */
 router.post('/', 
-    uploadImageMiddleware, 
+    blogThumbnailUpload, // 💡 PERUBAHAN
     createBlog
 );
 
@@ -88,7 +93,7 @@ router.delete('/:id', deleteBlog);
  * @returns {object} 200 - The updated Blog object.
  */
 router.patch('/:id', 
-    uploadImageMiddleware, 
+    blogThumbnailUpload, // 💡 PERUBAHAN
     updateBlog
 ); 
 

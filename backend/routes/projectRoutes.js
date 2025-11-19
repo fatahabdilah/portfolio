@@ -9,9 +9,14 @@ const {
     updateProject 
 } = require('../controllers/ProjectController');
 const requireAuth = require('../middleware/requireAuth'); // JWT Authentication Middleware
-const uploadImageMiddleware = require('../middleware/uploadMiddleware'); // Multer Upload Middleware
+// 💡 PERUBAHAN: Sekarang mengimpor fungsi factory
+const createUploadMiddleware = require('../middleware/uploadMiddleware'); 
 
 const router = express.Router();
+
+// Tentukan middleware unggahan untuk proyek (field: 'projectImage')
+const projectImageUpload = createUploadMiddleware('projectImage');
+
 
 // -----------------------------------------------------------
 // | PUBLIC READ ROUTES (No Authentication Needed)             |
@@ -65,7 +70,7 @@ router.use(requireAuth);
  * @returns {object} 401 - { error: "Request is unauthorized" }
  */
 router.post('/', 
-    uploadImageMiddleware, 
+    projectImageUpload, // 💡 PERUBAHAN
     createProject
 );
 
@@ -96,7 +101,7 @@ router.delete('/:id', deleteProject);
  * @returns {object} 404 - { error: "No such project or not authorized to update" }
  */
 router.patch('/:id', 
-    uploadImageMiddleware, 
+    projectImageUpload, // 💡 PERUBAHAN
     updateProject
 ); 
 
