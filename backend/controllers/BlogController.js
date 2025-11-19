@@ -43,7 +43,7 @@ const createBlog = async (req, res) => {
             }
         );
         
-        // 2. Create new Blog document in MongoDB
+        // 2. Create new Blog document in MongoDB (Slug is generated automatically by pre-save hook)
         const blog = await Blog.create({
             title,
             content,
@@ -62,11 +62,12 @@ const createBlog = async (req, res) => {
         
         // Rollback: Delete the uploaded image if DB save fails
         if (result && result.public_id) {
-             deleteCloudinaryImage(result.public_id);
+             await deleteCloudinaryImage(result.public_id);
         }
-        // Handle duplicate title or validation error
+        
+        // Handle duplicate title or slug/validation error
         if (error.code === 11000) {
-             return res.status(400).json({ error: `Blog post with title '${title}' already exists.` });
+             return res.status(400).json({ error: `Blog post title is not unique or results in an existing slug.` });
         }
         res.status(400).json({ error: 'Blog creation failed due to invalid data.' });
     }
@@ -74,23 +75,51 @@ const createBlog = async (req, res) => {
 
 
 // ---------------------------------------------------------------------
-// | 2. READ All Blogs (GET)                                           |
+// | 2. READ All Blogs (GET) - ADDED PAGINATION & SEARCH               |
 // ---------------------------------------------------------------------
 
 /**
- * @desc Fetches all blog posts.
- * @route GET /api/blogs
+ * @desc Fetches all blog posts with optional pagination and search.
+ * @route GET /api/blogs?page=1&limit=10&search=keyword
  * @access Public
  */
 const getBlogs = async (req, res) => {
     try {
-        // Fetch all blogs, showing the newest first
-        const blogs = await Blog.find({})
+        const { page = 1, limit = 10, search } = req.query;
+        const pageNumber = parseInt(page);
+        const limitNumber = parseInt(limit);
+        const skip = (pageNumber - 1) * limitNumber;
+
+        let query = {};
+
+        // 1. Search Filter (by title or content snippet)
+        if (search) {
+            query.$or = [
+                { title: { $regex: search, $options: 'i' } },
+                // Only search title, as content is excluded from list view
+                // For demonstration, we include content in search query for backend efficiency
+                { content: { $regex: search, $options: 'i' } },
+            ];
+        }
+
+        // Get total count matching the query (for pagination metadata)
+        const totalBlogs = await Blog.countDocuments(query);
+
+        // Fetch paginated blogs, showing the newest first
+        const blogs = await Blog.find(query)
             .sort({ createdAt: -1 })
-            .select('-content'); // Exclude content for list view (optional optimization)
+            .select('-content') // Exclude content for list view
+            .skip(skip)
+            .limit(limitNumber);
             
-        res.status(200).json(blogs);
+        res.status(200).json({
+            data: blogs,
+            currentPage: pageNumber,
+            totalPages: Math.ceil(totalBlogs / limitNumber),
+            totalItems: totalBlogs
+        });
     } catch (error) {
+        console.error('Blog retrieval failed:', error.message);
         res.status(500).json({ error: 'Server failed to retrieve blog posts.' });
     }
 };
@@ -101,28 +130,32 @@ const getBlogs = async (req, res) => {
 // ---------------------------------------------------------------------
 
 /**
- * @desc Fetches a single blog post by ID.
- * @route GET /api/blogs/:id
- * @access Public
+ * @desc Fetches a single blog post by SLUG or ID.
+ * The route uses SLUG for public access but accepts ID for internal/admin use (via separate route definition).
+ * @route GET /api/blogs/:slugOrId
+ * @access Public / Private
  */
 const getBlog = async (req, res) => {
-    const { id } = req.params;
+    const { slugOrId } = req.params;
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
+    let blog;
+
+    // 1. Check if the parameter is a valid MongoDB ID (Used for internal Admin access)
+    if (mongoose.Types.ObjectId.isValid(slugOrId)) {
+        blog = await Blog.findById(slugOrId);
+    }
+    
+    // 2. If not found by ID or invalid ID, search by slug (Used for public access)
+    if (!blog) {
+         // Use findOne({ slug: ... }) to ensure we find the correct document
+        blog = await Blog.findOne({ slug: slugOrId });
+    }
+
+    if (!blog) {
         return res.status(404).json({ error: 'No such blog post found.' });
     }
 
-    try {
-        const blog = await Blog.findById(id);
-
-        if (!blog) {
-            return res.status(404).json({ error: 'No such blog post found.' });
-        }
-
-        res.status(200).json(blog);
-    } catch (error) {
-        res.status(500).json({ error: 'Server failed to retrieve blog post.' });
-    }
+    res.status(200).json(blog);
 };
 
 
@@ -186,6 +219,7 @@ const updateBlog = async (req, res) => {
     }
 
     try {
+        
         // --- Logic: Handling Image Update (if req.file exists) ---
         if (req.file) {
             const oldBlog = await Blog.findById(id);
@@ -208,31 +242,36 @@ const updateBlog = async (req, res) => {
             await deleteCloudinaryImage(oldBlog.thumbnailPublicId);
         }
 
-        // Perform the update
-        // We use findOneAndUpdate with runValidators: true for title uniqueness check
-        const blog = await Blog.findOneAndUpdate(
-            { _id: id, user: userId }, 
-            { $set: updateBody }, 
-            { new: true, runValidators: true }
-        );
-
-
-        if (!blog) {
+        // --- Perform the update using Find and Save to trigger pre('save') slug generation hook ---
+        const blogToUpdate = await Blog.findById(id);
+        if (!blogToUpdate) {
+             // Rollback image upload if blog not found
+            if (result && result.public_id) { await deleteCloudinaryImage(result.public_id); }
             return res.status(404).json({ error: 'No such blog post or not authorized to update.' });
         }
 
-        res.status(200).json({ message: 'Blog post updated successfully!', blog });
+        // Manually update fields
+        for (const key in updateBody) {
+            if (blogToUpdate.schema.paths[key]) {
+                blogToUpdate[key] = updateBody[key];
+            }
+        }
+        
+        // The pre('save') hook in BlogModel.js will handle slug re-generation if the title was modified.
+        const updatedBlog = await blogToUpdate.save();
+
+        res.status(200).json({ message: 'Blog post updated successfully!', blog: updatedBlog });
 
     } catch (error) {
         console.error('Blog update failed:', error.message);
         
-        // Rollback: Delete the newly uploaded image if Mongoose update fails
+        // Rollback: Delete the newly uploaded image if Mongoose update/save fails
         if (result && result.public_id) {
              await deleteCloudinaryImage(result.public_id);
         }
-        // Handle duplicate title or validation error
+        // Handle duplicate title or slug/validation error
         if (error.code === 11000) {
-             return res.status(400).json({ error: `Blog post with title '${updateBody.title}' already exists.` });
+             return res.status(400).json({ error: `Blog post title is not unique or results in an existing slug.` });
         }
         res.status(400).json({ error: 'Blog update failed due to invalid data.' });
     }

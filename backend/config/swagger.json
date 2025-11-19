@@ -31,8 +31,7 @@
         "scheme": "bearer",
         "bearerFormat": "JWT"
       }
-    }
-    ,
+    },
     "schemas": {
       "Project": {
         "type": "object",
@@ -149,6 +148,30 @@
           }
         }
       },
+      "PaginatedProjectList": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Project" }
+          },
+          "currentPage": { "type": "integer", "example": 1 },
+          "totalPages": { "type": "integer", "example": 5 },
+          "totalItems": { "type": "integer", "example": 45 }
+        }
+      },
+      "PaginatedBlogList": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/BlogListItem" }
+          },
+          "currentPage": { "type": "integer", "example": 1 },
+          "totalPages": { "type": "integer", "example": 3 },
+          "totalItems": { "type": "integer", "example": 28 }
+        }
+      },
       "BlogListItem": {
         "type": "object",
         "allOf": [
@@ -245,18 +268,45 @@
     "/api/projects": {
       "get": {
         "tags": ["Projects"],
-        "summary": "Fetch all projects",
-        "description": "Retrieves a list of all project entries from the database. This endpoint is public and does not require authentication.",
+        "summary": "Fetch all projects with Pagination and Search/Filter",
+        "description": "Retrieves a paginated list of all project entries. Can be filtered by search query (title/description) and technology IDs.",
         "security": [],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "default": 1 },
+            "description": "Page number to retrieve."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "default": 10 },
+            "description": "Number of items per page."
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" },
+            "description": "Search keyword for filtering by project title or description."
+          },
+          {
+            "name": "tech",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" },
+            "description": "Comma-separated list of Technology Object IDs to filter by (e.g., 'id1,id2,id3')."
+          }
+        ],
         "responses": {
           "200": {
-            "description": "A list of all projects was successfully retrieved.",
+            "description": "A paginated list of projects was successfully retrieved.",
             "content": {
               "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": { "$ref": "#/components/schemas/Project" }
-                }
+                "schema": { "$ref": "#/components/schemas/PaginatedProjectList" }
               }
             }
           },
@@ -409,7 +459,7 @@
       "patch": {
         "tags": ["Projects"],
         "summary": "Update an existing project (Admin Only)",
-        "description": "Updates one or more fields of an existing project. Requires authentication. The request must be `multipart/form-data` if an image is being updated. Uses ObjectID.",
+        "description": "Updates one or more fields of an existing project. Requires authentication. The request must be `multipart/form-data` if an image is being updated. Uses ObjectID. If the `title` is updated, the `slug` will be automatically re-generated.",
         "parameters": [
           {
             "name": "id",
@@ -695,18 +745,38 @@
     "/api/blogs": {
       "get": {
         "tags": ["Blogs"],
-        "summary": "Fetch all blog posts",
-        "description": "Retrieves a list of all blog posts for public display. The full 'content' field is typically excluded in this list view for performance.",
+        "summary": "Fetch all blog posts with Pagination and Search",
+        "description": "Retrieves a paginated list of all blog posts for public display. Can be filtered by search query (title/content). The full 'content' field is typically excluded in this list view.",
         "security": [],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "default": 1 },
+            "description": "Page number to retrieve."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "integer", "default": 10 },
+            "description": "Number of items per page."
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" },
+            "description": "Search keyword for filtering by blog title or content."
+          }
+        ],
         "responses": {
           "200": {
-            "description": "A list of blog posts was successfully retrieved.",
+            "description": "A paginated list of blog posts was successfully retrieved.",
             "content": {
               "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": { "$ref": "#/components/schemas/BlogListItem" }
-                }
+                "schema": { "$ref": "#/components/schemas/PaginatedBlogList" }
               }
             }
           },
