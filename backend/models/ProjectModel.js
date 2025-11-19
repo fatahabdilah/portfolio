@@ -22,7 +22,7 @@ const slugify = (text) => {
  * @typedef Project
  * @property {string} title - The title of the project.
  * @property {string} slug - The URL-friendly identifier generated from the title (Unique).
- * @property {string} description - A detailed description of the project.
+ * @property {string} content - The detailed content/description of the project. 
  * @property {Array<ObjectId>} technologies - References to the Technology model.
  * @property {string} imageUrl - Secure URL for the main image (hosted on Cloudinary).
  * @property {string} imagePublicId - Cloudinary Public ID for asset management.
@@ -39,7 +39,7 @@ const projectSchema = new Schema({
         trim: true,
     },
     
-    // Project Slug (NEW: Required, Unique, Indexed)
+    // Project Slug (Required, Unique, Indexed)
     slug: {
         type: String,
         required: true,
@@ -47,10 +47,10 @@ const projectSchema = new Schema({
         index: true,
     },
     
-    // Project Description (Required)
-    description: {
+    // Project Content (NEW: Replaces description)
+    content: {
         type: String,
-        required: [true, 'Project description is required'],
+        required: [true, 'Project content is required'],
     },
     
     // Array of Technologies (References to Technology Model)

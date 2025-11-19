@@ -56,7 +56,8 @@ const processTechnologies = (technologies) => {
  * @access Private (Requires Admin Token)
  */
 const createProject = async (req, res) => {
-    const { title, description, technologies, demoUrl, repoUrl } = req.body;
+    // 💡 PERUBAHAN: Menggunakan 'content'
+    const { title, content, technologies, demoUrl, repoUrl } = req.body;
     const userId = req.user._id;
     let result;
 
@@ -91,7 +92,7 @@ const createProject = async (req, res) => {
         // 3. Create new Project document in MongoDB (Slug is generated automatically by pre-save hook)
         const project = await Project.create({
             title,
-            description,
+            content, // 💡 PERUBAHAN: Menggunakan 'content'
             technologies: processedTechnologies, // Array of Technology Object IDs
             imageUrl: result.secure_url,
             imagePublicId: result.public_id,
@@ -140,11 +141,11 @@ const getProjects = async (req, res) => {
 
         let query = {};
 
-        // 1. Search Filter (by title or description)
+        // 1. Search Filter (by title or content)
         if (search) {
             query.$or = [
                 { title: { $regex: search, $options: 'i' } },
-                { description: { $regex: search, $options: 'i' } },
+                { content: { $regex: search, $options: 'i' } }, // 💡 PERUBAHAN: Mencari di 'content'
             ];
         }
 
@@ -164,6 +165,7 @@ const getProjects = async (req, res) => {
         const projects = await Project.find(query)
             .populate('technologies', 'name') 
             .sort({ createdAt: -1 })
+            .select('-content') // 💡 PENTING: Mengecualikan 'content' dari list view
             .skip(skip)
             .limit(limitNumber);
             
@@ -268,7 +270,8 @@ const updateProject = async (req, res) => {
     const userId = req.user._id;
     let result;
     
-    let updateBody = { ...req.body };
+    // 💡 PERUBAHAN: body mungkin berisi 'content'
+    let updateBody = { ...req.body }; 
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
         return res.status(404).json({ error: 'No such project' });
@@ -331,7 +334,7 @@ const updateProject = async (req, res) => {
         
         const updatedProject = await projectToUpdate.save();
 
-        // If title wasn't modified, but we still need to apply other updates using findOneAndUpdate's flexibility:
+        // If title wasn't modified, and no file uploaded, use findOneAndUpdate for efficiency on simple field changes
         if (!isTitleModified && !req.file) {
              const finalProject = await Project.findOneAndUpdate(
                 { _id: id, user: userId }, 

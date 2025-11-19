@@ -49,9 +49,10 @@
             "description": "The URL-friendly slug generated from the title.",
             "example": "e-commerce-platform"
           },
-          "description": {
+          "content": {
             "type": "string",
-            "example": "A full-featured e-commerce website built with the MERN stack."
+            "description": "The full detailed content/description of the project.",
+            "example": "This project involved building a full-featured e-commerce platform..."
           },
           "technologies": {
             "type": "array",
@@ -75,6 +76,14 @@
             "format": "uri",
             "example": "https://res.cloudinary.com/demo/image/upload/v1624582000/sample.jpg"
           },
+          "demoUrl": {
+            "type": "string",
+            "example": "https://demo.example.com"
+          },
+          "repoUrl": {
+            "type": "string",
+            "example": "https://github.com/user/repo"
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time"
@@ -84,6 +93,31 @@
             "format": "date-time"
           }
         }
+      },
+      "ProjectListItem": {
+        "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Project"
+          },
+          {
+            "properties": {
+              "content": {
+                "type": "string",
+                "description": "The full content is excluded in the list view for performance.",
+                "example": "null"
+              },
+              "demoUrl": {
+                "type": "string",
+                "description": "Optional: May be null in list view."
+              },
+              "repoUrl": {
+                "type": "string",
+                "description": "Optional: May be null in list view."
+              }
+            }
+          }
+        ]
       },
       "Technology": {
         "type": "object",
@@ -153,7 +187,7 @@
         "properties": {
           "data": {
             "type": "array",
-            "items": { "$ref": "#/components/schemas/Project" }
+            "items": { "$ref": "#/components/schemas/ProjectListItem" }
           },
           "currentPage": { "type": "integer", "example": 1 },
           "totalPages": { "type": "integer", "example": 5 },
@@ -269,7 +303,7 @@
       "get": {
         "tags": ["Projects"],
         "summary": "Fetch all projects with Pagination and Search/Filter",
-        "description": "Retrieves a paginated list of all project entries. Can be filtered by search query (title/description) and technology IDs.",
+        "description": "Retrieves a paginated list of all project entries. Can be filtered by search query (title/content) and technology IDs. The full project `content` is excluded from the list view.",
         "security": [],
         "parameters": [
           {
@@ -291,7 +325,7 @@
             "in": "query",
             "required": false,
             "schema": { "type": "string" },
-            "description": "Search keyword for filtering by project title or description."
+            "description": "Search keyword for filtering by project title or content."
           },
           {
             "name": "tech",
@@ -333,8 +367,9 @@
                   "title": {
                     "type": "string"
                   },
-                  "description": {
-                    "type": "string"
+                  "content": {
+                    "type": "string",
+                    "description": "The detailed content/description of the project."
                   },
                   "technologies": {
                     "type": "string",
@@ -343,9 +378,15 @@
                   "projectImage": {
                     "type": "string",
                     "format": "binary"
+                  },
+                  "demoUrl": {
+                    "type": "string"
+                  },
+                  "repoUrl": {
+                    "type": "string"
                   }
                 },
-                "required": ["title", "description", "technologies", "projectImage"]
+                "required": ["title", "content", "technologies", "projectImage"]
               }
             }
           }
@@ -385,7 +426,7 @@
       "get": {
         "tags": ["Projects"],
         "summary": "Fetch a single project by its SLUG or ID",
-        "description": "Retrieves a specific project using its **slug** (for public access) or its MongoDB **ObjectID** (for internal/admin use).",
+        "description": "Retrieves a specific project using its **slug** (for public access) or its MongoDB **ObjectID** (for internal/admin use). Includes the full `content`.",
         "security": [],
         "parameters": [
           {
@@ -481,8 +522,9 @@
                     "type": "string",
                     "description": "If updated, the slug will be automatically re-generated."
                   },
-                  "description": {
-                    "type": "string"
+                  "content": {
+                    "type": "string",
+                    "description": "The detailed content/description of the project."
                   },
                   "technologies": {
                     "type": "string",
