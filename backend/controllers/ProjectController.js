@@ -124,11 +124,11 @@ const createProject = async (req, res) => {
 
 
 // ---------------------------------------------------------------------
-// | 2. READ All Projects (GET) - ADDED PAGINATION & SEARCH            |
+// | 2. READ All Projects (GET) - Pagination, Search, & FULL Content   |
 // ---------------------------------------------------------------------
 
 /**
- * @desc Fetches all projects with optional pagination, search, and technology filtering.
+ * @desc Fetches all projects with optional pagination, search, and technology filtering. Includes full content.
  * @route GET /api/projects?page=1&limit=10&search=keyword&tech=id1,id2
  * @access Public (Intended for Portfolio Viewers)
  */
@@ -145,7 +145,7 @@ const getProjects = async (req, res) => {
         if (search) {
             query.$or = [
                 { title: { $regex: search, $options: 'i' } },
-                { content: { $regex: search, $options: 'i' } }, // 💡 PERUBAHAN: Mencari di 'content'
+                { content: { $regex: search, $options: 'i' } },
             ];
         }
 
@@ -165,7 +165,7 @@ const getProjects = async (req, res) => {
         const projects = await Project.find(query)
             .populate('technologies', 'name') 
             .sort({ createdAt: -1 })
-            .select('-content') // 💡 PENTING: Mengecualikan 'content' dari list view
+            // 💡 PERUBAHAN: Menghapus .select('-content') agar konten penuh disertakan
             .skip(skip)
             .limit(limitNumber);
             

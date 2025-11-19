@@ -94,31 +94,6 @@
           }
         }
       },
-      "ProjectListItem": {
-        "type": "object",
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/Project"
-          },
-          {
-            "properties": {
-              "content": {
-                "type": "string",
-                "description": "The full content is excluded in the list view for performance.",
-                "example": "null"
-              },
-              "demoUrl": {
-                "type": "string",
-                "description": "Optional: May be null in list view."
-              },
-              "repoUrl": {
-                "type": "string",
-                "description": "Optional: May be null in list view."
-              }
-            }
-          }
-        ]
-      },
       "Technology": {
         "type": "object",
         "properties": {
@@ -158,7 +133,7 @@
           },
           "content": {
             "type": "string",
-            "description": "Full blog content (often excluded in list view).",
+            "description": "Full blog content.",
             "example": "## Introduction\nThis article discusses..."
           },
           "thumbnailUrl": {
@@ -187,7 +162,7 @@
         "properties": {
           "data": {
             "type": "array",
-            "items": { "$ref": "#/components/schemas/ProjectListItem" }
+            "items": { "$ref": "#/components/schemas/Project" }
           },
           "currentPage": { "type": "integer", "example": 1 },
           "totalPages": { "type": "integer", "example": 5 },
@@ -199,29 +174,12 @@
         "properties": {
           "data": {
             "type": "array",
-            "items": { "$ref": "#/components/schemas/BlogListItem" }
+            "items": { "$ref": "#/components/schemas/Blog" }
           },
           "currentPage": { "type": "integer", "example": 1 },
           "totalPages": { "type": "integer", "example": 3 },
           "totalItems": { "type": "integer", "example": 28 }
         }
-      },
-      "BlogListItem": {
-        "type": "object",
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/Blog"
-          },
-          {
-            "properties": {
-              "content": {
-                "type": "string",
-                "description": "Content is usually excluded in the list view for performance.",
-                "example": "null"
-              }
-            }
-          }
-        ]
       },
       "Error": {
         "type": "object",
@@ -302,8 +260,8 @@
     "/api/projects": {
       "get": {
         "tags": ["Projects"],
-        "summary": "Fetch all projects with Pagination and Search/Filter",
-        "description": "Retrieves a paginated list of all project entries. Can be filtered by search query (title/content) and technology IDs. The full project `content` is excluded from the list view.",
+        "summary": "Fetch all projects with Pagination and Search/Filter (Includes Full Content)",
+        "description": "Retrieves a paginated list of all project entries. Includes the full project `content`. Can be filtered by search query (title/content) and technology IDs.",
         "security": [],
         "parameters": [
           {
@@ -787,8 +745,8 @@
     "/api/blogs": {
       "get": {
         "tags": ["Blogs"],
-        "summary": "Fetch all blog posts with Pagination and Search",
-        "description": "Retrieves a paginated list of all blog posts for public display. Can be filtered by search query (title/content). The full 'content' field is typically excluded in this list view.",
+        "summary": "Fetch all blog posts with Pagination and Search (Includes Full Content)",
+        "description": "Retrieves a paginated list of all blog posts for public display, including the full `content`. Can be filtered by search query (title/content).",
         "security": [],
         "parameters": [
           {

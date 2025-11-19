@@ -75,11 +75,11 @@ const createBlog = async (req, res) => {
 
 
 // ---------------------------------------------------------------------
-// | 2. READ All Blogs (GET) - ADDED PAGINATION & SEARCH               |
+// | 2. READ All Blogs (GET) - Pagination, Search, & FULL Content      |
 // ---------------------------------------------------------------------
 
 /**
- * @desc Fetches all blog posts with optional pagination and search.
+ * @desc Fetches all blog posts with optional pagination and search. Includes full content.
  * @route GET /api/blogs?page=1&limit=10&search=keyword
  * @access Public
  */
@@ -96,8 +96,6 @@ const getBlogs = async (req, res) => {
         if (search) {
             query.$or = [
                 { title: { $regex: search, $options: 'i' } },
-                // Only search title, as content is excluded from list view
-                // For demonstration, we include content in search query for backend efficiency
                 { content: { $regex: search, $options: 'i' } },
             ];
         }
@@ -108,7 +106,7 @@ const getBlogs = async (req, res) => {
         // Fetch paginated blogs, showing the newest first
         const blogs = await Blog.find(query)
             .sort({ createdAt: -1 })
-            .select('-content') // Exclude content for list view
+            // 💡 PERUBAHAN: Menghapus .select('-content') agar konten penuh disertakan
             .skip(skip)
             .limit(limitNumber);
             
