@@ -3,29 +3,39 @@
 
 :root {
   --bg-main: #fcfcfc;
-  --text-main: #0f172a;
-  --nav-bg: rgba(255, 255, 255, 0.6);
+  --text-main: #475569;
+  --text-bold: #020617;      /* Hitam untuk F, A, dan Nama */
+  --text-brand: #020617;     /* Diubah jadi Hitam juga (Monochrome) */
+  --nav-bg: rgba(255, 255, 255, 0.7);
+  --nav-border: rgba(15, 23, 42, 0.1);
+  --toggle-icon: #4b5563;
 }
 
 :root[data-theme='dark'] {
-  --bg-main: #09090b;
-  --text-main: #f8fafc;
-  --nav-bg: rgba(9, 9, 11, 0.4);
+  --bg-main: #121214;
+  --text-main: #94a3b8;
+  --text-bold: #ffffff;      /* Putih untuk F, A, dan Nama */
+  --text-brand: #ffffff;     /* Diubah jadi Putih juga (Monochrome) */
+  --nav-bg: rgba(18, 18, 20, 0.6);
+  --nav-border: rgba(255, 255, 255, 0.1);
+  --toggle-icon: #94a3b8;
 }
 
 body {
   margin: 0;
   background-color: var(--bg-main);
   color: var(--text-main);
-  overflow-y: scroll;
 }
 
-/* Memisahkan Header agar tidak ikut nge-bug saat portal lewat */
 header {
   view-transition-name: main-header;
 }
 
-/* Konfigurasi View Transition Root (Konten & Background) */
+/* Layering agar tidak tembus pandang */
+::view-transition-group(main-header) {
+  z-index: 10000;
+}
+
 ::view-transition-old(root),
 ::view-transition-new(root) {
   animation: none;
@@ -33,13 +43,8 @@ header {
 }
 
 ::view-transition-new(root) {
-  z-index: 1;
+  z-index: 9999;
   animation: 800ms cubic-bezier(0.4, 0, 0.2, 1) both circle-expand;
-}
-
-/* Mengatur agar Header tidak berkedip saat transisi */
-::view-transition-group(main-header) {
-  z-index: 100;
 }
 
 @keyframes circle-expand {

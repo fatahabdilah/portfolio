@@ -1,34 +1,29 @@
 import React from 'react';
 
 const Footer = () => {
-  const currentYear = new Date().getFullYear();
-
   return (
-    <footer className="w-full py-12 mt-auto border-t transition-colors duration-500" 
-            style={{ 
-              backgroundColor: 'var(--footer-bg)', 
-              borderColor: 'var(--footer-border)' 
-            }}>
-      <div className="max-w-5xl mx-auto px-8">
-        <div className="flex flex-col md:flex-row justify-between items-center gap-8">
-          
-          <div className="text-center md:text-left">
-            <h3 className="text-lg font-bold tracking-tight text-[var(--text-main)]">Fatah Abdilah</h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 font-medium">
-              Fullstack Developer & UI Enthusiast.
-            </p>
-          </div>
-          
-          <div className="flex flex-col items-center md:items-end gap-3">
-            <div className="flex gap-8">
-               <a href="#" className="text-xs font-bold text-slate-400 hover:text-blue-600 transition-colors uppercase tracking-[0.2em]">Github</a>
-               <a href="#" className="text-xs font-bold text-slate-400 hover:text-blue-600 transition-colors uppercase tracking-[0.2em]">Linkedin</a>
-            </div>
-            <p className="text-[10px] uppercase tracking-[0.3em] text-slate-300 dark:text-slate-700 font-bold mt-2">
-              &copy; {currentYear} — Handcrafted with Care
-            </p>
-          </div>
+    <footer className="w-full max-w-5xl mx-auto px-8 py-12 border-t border-slate-200 dark:border-white/5">
+      <div className="flex flex-col md:flex-row justify-between items-center gap-8">
+        <div className="flex flex-col items-center md:items-start">
+          <span className="text-xl font-black tracking-tighter mb-2" style={{ color: 'var(--text-bold)' }}>
+            F<span className="text-blue-600">A</span>
+          </span>
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] opacity-50" style={{ color: 'var(--text-main)' }}>
+            © 2024 Fatah Abdilah. All rights reserved.
+          </p>
+        </div>
 
+        <div className="flex items-center gap-8">
+          {['Github', 'LinkedIn', 'Instagram'].map((social) => (
+            <a 
+              key={social}
+              href={`#${social.toLowerCase()}`}
+              className="text-[10px] font-bold uppercase tracking-[0.2em] transition-all hover:text-blue-600 opacity-60 hover:opacity-100"
+              style={{ color: 'var(--text-main)' }}
+            >
+              {social}
+            </a>
+          ))}
         </div>
       </div>
     </footer>
