@@ -2,42 +2,47 @@
 @import "tailwindcss";
 
 :root {
-  --bg-main: #ffffff;
-  --text-main: #111827;
+  --bg-main: #fcfcfc;
+  --text-main: #0f172a;
+  --nav-bg: rgba(255, 255, 255, 0.6);
 }
 
 :root[data-theme='dark'] {
-  --bg-main: #0a0a0a;
-  --text-main: #f9fafb;
+  --bg-main: #09090b;
+  --text-main: #f8fafc;
+  --nav-bg: rgba(9, 9, 11, 0.4);
 }
 
 body {
   margin: 0;
   background-color: var(--bg-main);
   color: var(--text-main);
+  overflow-y: scroll;
 }
 
-/* Mengatur transisi View Transition agar berbentuk lingkaran */
+/* Memisahkan Header agar tidak ikut nge-bug saat portal lewat */
+header {
+  view-transition-name: main-header;
+}
+
+/* Konfigurasi View Transition Root (Konten & Background) */
 ::view-transition-old(root),
 ::view-transition-new(root) {
   animation: none;
   mix-blend-mode: normal;
 }
 
-::view-transition-old(root) {
-  z-index: 1;
-}
 ::view-transition-new(root) {
-  z-index: 2;
-  /* Lingkaran mulai dari 0 dan membesar */
+  z-index: 1;
   animation: 800ms cubic-bezier(0.4, 0, 0.2, 1) both circle-expand;
 }
 
+/* Mengatur agar Header tidak berkedip saat transisi */
+::view-transition-group(main-header) {
+  z-index: 100;
+}
+
 @keyframes circle-expand {
-  from {
-    clip-path: circle(0% at var(--x) var(--y));
-  }
-  to {
-    clip-path: circle(150% at var(--x) var(--y));
-  }
+  from { clip-path: circle(0% at var(--x) var(--y)); }
+  to { clip-path: circle(150% at var(--x) var(--y)); }
 }

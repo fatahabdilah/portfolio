@@ -4,31 +4,27 @@ import Footer from './components/Footer';
 
 function App() {
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen relative overflow-hidden">
       <Header />
       
-      <main className="flex-grow pt-40 pb-20 px-8 w-full max-w-5xl mx-auto flex flex-col items-center">
-        <section className="w-full">
-          <div className="flex flex-col items-center text-center mb-16">
-            <h1 className="text-7xl md:text-9xl font-black tracking-tighter leading-none dark:text-white">
-              PORT<span className="text-blue-600">FOLIO</span>
-            </h1>
-            <p className="mt-8 text-xl text-gray-500 dark:text-gray-400 max-w-2xl leading-relaxed">
-              Efek portal ini merubah seluruh komponen (teks, background, card) 
-              secara instan di dalam lingkaran yang membesar.
-            </p>
-          </div>
-
-          {/* Card Contoh untuk Melihat Efek Scanner */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="p-8 rounded-3xl bg-blue-600 text-white shadow-2xl shadow-blue-500/20">
-                <h3 className="text-2xl font-bold mb-2">Project 0{i}</h3>
-                <p className="opacity-80">Melihat perubahan warna teks dan komponen di dalam portal.</p>
-              </div>
-            ))}
-          </div>
+      {/* Konten Utama dengan Z-index di bawah Header */}
+      <main className="flex-grow pt-44 pb-24 px-8 w-full max-w-5xl mx-auto flex flex-col items-center relative z-10">
+        <section className="text-center mb-24">
+          <h1 className="text-6xl md:text-8xl font-black tracking-tighter leading-[0.85] dark:text-white mb-10">
+            Digital <br /> 
+            <span className="text-blue-600 italic">Architect.</span>
+          </h1>
+          <p className="text-lg md:text-xl text-slate-500 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed">
+            Fix: <strong>View Transition Isolation</strong> memisahkan layer Header dan Konten 
+            sehingga transparansi blur tidak pecah saat Portal Lingkaran lewat.
+          </p>
         </section>
+
+        {/* Bento Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
+          <div className="md:col-span-2 h-80 rounded-[2.5rem] bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-10 transition-colors duration-500"></div>
+          <div className="h-80 rounded-[2.5rem] bg-blue-600 p-10 shadow-2xl shadow-blue-600/20"></div>
+        </div>
       </main>
 
       <Footer />
