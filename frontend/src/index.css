@@ -1,41 +1,49 @@
-/* src/index.css */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&display=swap');
 @import "tailwindcss";
 
 :root {
+  /* Coordinates for Portal Effect */
+  --x: 0px;
+  --y: 0px;
+
+  /* Colors - Light Mode */
   --bg-main: #fcfcfc;
-  --text-main: #475569;
-  --text-bold: #020617;      /* Hitam untuk F, A, dan Nama */
-  --text-brand: #020617;     /* Diubah jadi Hitam juga (Monochrome) */
-  --nav-bg: rgba(255, 255, 255, 0.7);
-  --nav-border: rgba(15, 23, 42, 0.1);
-  --toggle-icon: #4b5563;
+  --bg-nav: rgba(255, 255, 255, 0.75);
+  --border-nav: rgba(15, 23, 42, 0.08);
+  --text-main: #64748b;
+  --text-bold: #0f172a;
+  --accent: #2563eb;
+  --toggle-icon: #475569;
+
+  /* Typography */
+  --font-logo: 'Playfair Display', serif;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, sans-serif;
+  
+  /* Config */
+  --nav-height: 64px;
+  --transition-speed: 700ms;
 }
 
 :root[data-theme='dark'] {
-  --bg-main: #121214;
+  --bg-main: #0a0a0b;
+  --bg-nav: rgba(18, 18, 20, 0.7);
+  --border-nav: rgba(255, 255, 255, 0.08);
   --text-main: #94a3b8;
-  --text-bold: #ffffff;      /* Putih untuk F, A, dan Nama */
-  --text-brand: #ffffff;     /* Diubah jadi Putih juga (Monochrome) */
-  --nav-bg: rgba(18, 18, 20, 0.6);
-  --nav-border: rgba(255, 255, 255, 0.1);
+  --text-bold: #f8fafc;
   --toggle-icon: #94a3b8;
 }
 
 body {
   margin: 0;
+  font-family: var(--font-sans);
   background-color: var(--bg-main);
   color: var(--text-main);
+  transition: background-color 0.4s ease;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
 }
 
-header {
-  view-transition-name: main-header;
-}
-
-/* Layering agar tidak tembus pandang */
-::view-transition-group(main-header) {
-  z-index: 10000;
-}
-
+/* View Transition API Core */
 ::view-transition-old(root),
 ::view-transition-new(root) {
   animation: none;
@@ -51,3 +59,6 @@ header {
   from { clip-path: circle(0% at var(--x) var(--y)); }
   to { clip-path: circle(150% at var(--x) var(--y)); }
 }
+
+header { view-transition-name: main-header; }
+::view-transition-group(main-header) { z-index: 10000; }

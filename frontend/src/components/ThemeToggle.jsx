@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Sun, Moon } from 'lucide-react';
 
 const ThemeToggle = () => {
-  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
+  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
 
   useEffect(() => {
-    const root = window.document.documentElement;
+    const root = document.documentElement;
     if (theme === 'dark') {
       root.setAttribute('data-theme', 'dark');
       root.classList.add('dark');
@@ -18,20 +18,17 @@ const ThemeToggle = () => {
 
   const toggleTheme = (e) => {
     const nextTheme = theme === 'light' ? 'dark' : 'light';
-    
-    // Fallback jika browser tidak mendukung View Transition API
+
     if (!document.startViewTransition) {
       setTheme(nextTheme);
       return;
     }
 
-    // Mengambil koordinat klik untuk titik pusat portal lingkaran
     const x = e.clientX;
     const y = e.clientY;
     document.documentElement.style.setProperty('--x', `${x}px`);
     document.documentElement.style.setProperty('--y', `${y}px`);
 
-    // Memulai animasi View Transition
     document.startViewTransition(() => {
       setTheme(nextTheme);
     });
@@ -40,25 +37,13 @@ const ThemeToggle = () => {
   return (
     <button 
       onClick={toggleTheme}
-      className="fixed bottom-10 right-10 z-[999] p-4 bg-white dark:bg-zinc-800 border border-slate-200 dark:border-white/10 rounded-[2rem] shadow-2xl hover:scale-110 active:scale-95 transition-all cursor-pointer group flex items-center justify-center"
+      className="fixed bottom-10 right-10 z-[9999] p-4 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-white/10 rounded-full shadow-2xl hover:scale-110 active:scale-95 transition-all group pointer-events-auto flex items-center justify-center"
       aria-label="Toggle Theme"
     >
       {theme === 'light' ? (
-        /* Ikon Bulan: Menggunakan variabel --toggle-icon dari CSS */
-        <Moon 
-          size={22} 
-          strokeWidth={2.5}
-          className="group-hover:text-blue-600 transition-colors duration-300"
-          style={{ color: 'var(--toggle-icon)', stroke: 'currentColor', fill: 'none' }}
-        />
+        <Moon size={20} style={{ color: 'var(--toggle-icon)' }} className="group-hover:text-blue-600 transition-colors duration-300" />
       ) : (
-        /* Ikon Matahari: Menggunakan variabel --toggle-icon dari CSS */
-        <Sun 
-          size={22} 
-          strokeWidth={2.5}
-          className="group-hover:text-yellow-400 transition-colors duration-300"
-          style={{ color: 'var(--toggle-icon)', stroke: 'currentColor', fill: 'none' }}
-        />
+        <Sun size={20} style={{ color: 'var(--toggle-icon)' }} className="group-hover:text-yellow-400 transition-colors duration-300" />
       )}
     </button>
   );
