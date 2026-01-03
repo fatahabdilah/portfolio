@@ -2,35 +2,29 @@
 @import "tailwindcss";
 
 :root {
-  /* Coordinates for Portal Effect */
   --x: 0px;
   --y: 0px;
 
-  /* Colors - Light Mode */
-  --bg-main: #fcfcfc;
-  --bg-nav: rgba(255, 255, 255, 0.75);
-  --border-nav: rgba(15, 23, 42, 0.08);
-  --text-main: #64748b;
-  --text-bold: #0f172a;
-  --accent: #2563eb;
-  --toggle-icon: #475569;
-
-  /* Typography */
+  /* Colors - Light Mode (High Contrast) */
+  --bg-main: #ffffff;
+  --bg-nav: rgba(255, 255, 255, 0.85);
+  --border-nav: rgba(0, 0, 0, 0.08);
+  --text-main: #334155; /* Slate 700 - Sangat Jelas */
+  --text-bold: #0f172a; /* Slate 900 */
+  --accent: #2563eb;    /* Blue 600 */
+  
   --font-logo: 'Playfair Display', serif;
   --font-sans: ui-sans-serif, system-ui, -apple-system, sans-serif;
-  
-  /* Config */
-  --nav-height: 64px;
   --transition-speed: 700ms;
 }
 
 :root[data-theme='dark'] {
-  --bg-main: #0a0a0b;
-  --bg-nav: rgba(18, 18, 20, 0.7);
+  /* Colors - Dark Mode */
+  --bg-main: #050505;
+  --bg-nav: rgba(10, 10, 12, 0.8);
   --border-nav: rgba(255, 255, 255, 0.08);
-  --text-main: #94a3b8;
-  --text-bold: #f8fafc;
-  --toggle-icon: #94a3b8;
+  --text-main: #94a3b8; /* Slate 400 */
+  --text-bold: #f8fafc; /* Slate 100 */
 }
 
 body {
@@ -38,12 +32,12 @@ body {
   font-family: var(--font-sans);
   background-color: var(--bg-main);
   color: var(--text-main);
-  transition: background-color 0.4s ease;
+  transition: background-color 0.5s ease, color 0.5s ease;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
 }
 
-/* View Transition API Core */
+/* View Transition API */
 ::view-transition-old(root),
 ::view-transition-new(root) {
   animation: none;
