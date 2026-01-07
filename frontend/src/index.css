@@ -1,12 +1,21 @@
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&display=swap');
 @import "tailwindcss";
 
+html {
+  /* Membuat scroll otomatis halus untuk link anchor (#) */
+  scroll-behavior: smooth;
+}
+
 :root {
   --bg-main: #ffffff;
   --bg-nav: rgba(255, 255, 255, 0.7); 
   --border-nav: rgba(0, 0, 0, 0.05);
   --text-main: #334155; 
   --text-bold: #0f172a; 
+  
+  /* Tambahkan ini untuk mode terang */
+  --cloud-brightness: brightness(0.9); 
+  
   --font-logo: 'Playfair Display', serif;
   --font-sans: ui-sans-serif, system-ui, -apple-system, sans-serif;
   --nav-height: 64px;
@@ -18,21 +27,12 @@
   --border-nav: rgba(255, 255, 255, 0.1);
   --text-main: #94a3b8; 
   --text-bold: #f8fafc; 
+
+  /* Tambahkan ini untuk mode gelap */
+  --cloud-brightness: brightness(0.7); 
 }
 
-body {
-  margin: 0;
-  font-family: var(--font-sans);
-  background-color: var(--bg-main);
-  /* Transisi halus untuk semua elemen saat ganti tema */
-  transition: background-color 0.5s ease, color 0.5s ease;
-}
-
-/* Memastikan transisi warna tetap halus tanpa View Transition API */
-* {
-  transition: background-color 0.5s ease, border-color 0.5s ease;
-}
-
-html {
-  scroll-behavior: smooth;
+/* Tambahkan transisi filter di sini agar ganti kecerahan awan terasa smooth */
+img {
+  transition: filter 0.5s ease;
 }
