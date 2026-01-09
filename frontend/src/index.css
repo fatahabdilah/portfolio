@@ -5,34 +5,35 @@ html {
   /* Membuat scroll otomatis halus untuk link anchor (#) */
   scroll-behavior: smooth;
 }
-
 :root {
   --bg-main: #ffffff;
   --bg-nav: rgba(255, 255, 255, 0.7); 
   --border-nav: rgba(0, 0, 0, 0.05);
   --text-main: #334155; 
   --text-bold: #0f172a; 
-  
-  /* Tambahkan ini untuk mode terang */
   --cloud-brightness: brightness(0.9); 
-  
   --font-logo: 'Playfair Display', serif;
   --font-sans: ui-sans-serif, system-ui, -apple-system, sans-serif;
   --nav-height: 64px;
 }
 
 :root[data-theme='dark'] {
-  --bg-main: #050505;
-  --bg-nav: rgba(15, 15, 18, 0.7); 
+  /* Diubah dari #050505 ke #0a0a0c agar tidak terlalu pekat */
+  --bg-main: #0a0a0c;
+  --bg-nav: rgba(10, 10, 12, 0.7); 
   --border-nav: rgba(255, 255, 255, 0.1);
   --text-main: #94a3b8; 
   --text-bold: #f8fafc; 
-
-  /* Tambahkan ini untuk mode gelap */
   --cloud-brightness: brightness(0.7); 
 }
 
-/* Tambahkan transisi filter di sini agar ganti kecerahan awan terasa smooth */
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background-color: var(--bg-main);
+  transition: background-color 0.5s ease, color 0.5s ease;
+}
+
 img {
   transition: filter 0.5s ease;
 }

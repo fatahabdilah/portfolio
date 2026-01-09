@@ -17,6 +17,7 @@ function App() {
   const zoomRef = useRef(null);
   const projectSectionRef = useRef(null);
   const blogSectionRef = useRef(null);
+  const contactSectionRef = useRef(null);
 
   useEffect(() => {
     if (window.location.hash) {
@@ -56,7 +57,6 @@ function App() {
   const yV4 = useTransform(scrollYProgress, [0, 1], ["0%", "-150%"]);
   const yV5 = useTransform(scrollYProgress, [0, 1], ["0%", "-220%"]);
 
-  // About Scroll Logic
   const { scrollYProgress: aboutScroll } = useScroll({
     target: imageRef,
     offset: ["start end", "end start"]
@@ -75,7 +75,9 @@ function App() {
   const bgBrightnessScroll = useTransform(zoomScroll, [0.2, 0.5], [1, 0.6]);
   const brightnessStyle = useTransform(bgBrightnessScroll, (v) => `brightness(${v})`);
 
+  // --- FIX BLUR EXPERIENCE (Dibuat tajam lebih lama) ---
   const opacityExperience = useTransform(zoomScroll, [0.3, 0.45], [0, 1]);
+  const blurExperience = useTransform(zoomScroll, [0.3, 0.4, 0.8, 0.95], ["blur(12px)", "blur(0px)", "blur(0px)", "blur(12px)"]);
   const yExperienceContent = useTransform(zoomScroll, [0.3, 0.9], [150, -800]); 
   const pointerEvents = useTransform(zoomScroll, [0.4, 0.41], ["none", "auto"]);
 
@@ -89,15 +91,27 @@ function App() {
   const xProjectsRow1 = useTransform(projectScroll, [0.2, 1], ["0%", "-35%"]);
   const xProjectsRow2 = useTransform(projectScroll, [0.2, 1], ["-35%", "0%"]);
 
-  // Blog Scroll Logic
   const { scrollYProgress: blogScroll } = useScroll({
     target: blogSectionRef,
     offset: ["start end", "end start"]
   });
 
   const blogTitleY = useTransform(blogScroll, [0, 1], [0, -100]);
+  const blurBlogTitle = useTransform(blogScroll, [0, 0.3, 0.7, 1], ["blur(12px)", "blur(0px)", "blur(0px)", "blur(12px)"]);
   const blogListY = useTransform(blogScroll, [0, 1], [150, -350]); 
+  const paginationY = useTransform(blogScroll, [0.2, 1], [130, -250]);
   const yBlogBg = useTransform(blogScroll, [0, 1], ["-10%", "10%"]);
+
+  const { scrollYProgress: contactScroll } = useScroll({
+    target: contactSectionRef,
+    offset: ["start end", "end start"] // Offset diubah agar menangkap pergerakan lebih luas
+  });
+  
+  // --- FIX BLUR CONTACT (Dipastikan terlihat) ---
+  const yContactListScroll = useTransform(contactScroll, [0.1, 0.9], [600, -1200]);
+  const blurContact = useTransform(contactScroll, [0, 0.3, 0.7, 1], ["blur(18px)", "blur(0px)", "blur(0px)", "blur(18px)"]);
+  const yContactImageSticky = useTransform(contactScroll, [0, 1], [40, -40]); 
+  const opacityContact = useTransform(contactScroll, [0, 0.1, 0.9, 1], [0, 1, 1, 0]);
 
   const experiences = [
     { title: "Frontend Developer", company: "Tech Solutions", year: "2024", image: "/images/collage/sculpture1.png", detail: "Developing high-performance web applications using React and Framer Motion." },
@@ -139,7 +153,7 @@ function App() {
     transition: { duration: d, repeat: Infinity, ease: "easeInOut" }
   });
 
-  const gpuStyle = { willChange: "transform", translateZ: 0, backfaceVisibility: "hidden" };
+  const gpuStyle = { willChange: "transform, filter", translateZ: 0, backfaceVisibility: "hidden" };
 
   return (
     <>
@@ -148,7 +162,10 @@ function App() {
       </AnimatePresence>
 
       <Header onHomeClick={scrollToTop} onLogoClick={handleLogoClick} />
-      <ThemeToggle isLoading={isLoading} />
+      
+      <div className="fixed bottom-10 right-10 z-[10001] flex flex-col gap-4 items-center">
+        <ThemeToggle isLoading={isLoading} />
+      </div>
 
       <div className="main-content" onMouseMove={handleMouseMove}>
         <motion.div
@@ -183,7 +200,6 @@ function App() {
             
             {/* HERO */}
             <section id="home" className="relative h-[100vh] flex items-center justify-center px-8 overflow-hidden">
-              {/* Home elements... */}
               <div className="absolute inset-0 pointer-events-none select-none">
                 <motion.div style={{ ...gpuStyle, y: yV1 }} className="absolute left-[22%] top-[12%] w-[12vw] z-20">
                   <motion.img {...smoothFloat(11)} src="/images/collage/flower1.png" className="w-full" />
@@ -223,21 +239,11 @@ function App() {
               </motion.div>
             </section>
 
-            {/* --- SECTION ABOUT --- */}
+            {/* ABOUT */}
             <section id="about" className="relative py-32 px-8 w-full min-h-screen overflow-hidden flex items-center justify-center">
-              {/* Gambar Awan - Brightness menggunakan CSS Variable agar responsif terhadap ganti tema */}
-              <motion.div 
-                style={{ y: yAboutBg }}
-                className="absolute inset-0 z-0 pointer-events-none"
-              >
-                <img 
-                  src="/images/bgcloude.jpg" 
-                  alt="Cloud Background"
-                  className="w-full h-[120%] object-cover transition-all duration-700"
-                  style={{ filter: 'var(--cloud-brightness)' }} 
-                />
+              <motion.div style={{ y: yAboutBg }} className="absolute inset-0 z-0 pointer-events-none">
+                <img src="/images/bgcloude.jpg" alt="Cloud Background" className="w-full h-[120%] object-cover transition-all duration-700" style={{ filter: 'var(--cloud-brightness)' }} />
               </motion.div>
-              
               <div className="relative z-10 flex flex-col md:flex-row items-center justify-center gap-16 md:gap-28 max-w-5xl mx-auto">
                 <div ref={imageRef} className="shrink-0 relative">
                   <motion.div style={{ filter: filterStyle, rotate: rotateValue }} className="relative w-[20vw] min-w-[280px] aspect-[3/4] flex items-center justify-center overflow-hidden">
@@ -252,7 +258,7 @@ function App() {
                     <span className="text-[10px] font-black uppercase tracking-[0.5em] mb-4 block opacity-40" style={{ color: 'var(--text-bold)' }}>About — I</span>
                     <h2 className="text-4xl md:text-6xl font-bold opacity-80" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>The Essence.</h2>
                   </div>
-                  <div className="flex flex-col gap-8 text-lg md:text-xl leading-[1.8] font-light tracking-tight" style={{ color: 'var(--text-main)' }}>
+                  <div className="flex flex-col gap-8 text-lg md:text-xl leading-[1.8] font-light tracking-tight" style={{ color: 'var(--text-bold)' }}>
                     <p>I am a Computer Science student focused on Web and Android development, building end-to-end digital solutions.</p>
                     <p>Passionate about creating fluid animations and minimal interfaces that bridge the gap between design and technology.</p>
                   </div>
@@ -273,26 +279,32 @@ function App() {
                       <img src="/images/frame-landscape.png" alt="Frame" className="absolute w-full h-full object-contain scale-[1.15]" />
                     </motion.div>
                   </div>
-                  <motion.div style={{ opacity: opacityExperience, y: yExperienceContent, pointerEvents: pointerEvents }} className="relative z-20 w-full max-w-5xl px-8 pt-[45vh] pb-[25vh]">
-                    <div className="text-center mb-16">
+                  <motion.div 
+                    style={{ 
+                      opacity: opacityExperience, 
+                      y: yExperienceContent, 
+                      pointerEvents: pointerEvents,
+                      filter: blurExperience 
+                    }} 
+                    className="relative z-20 w-full max-w-5xl px-8 pt-[45vh] pb-[25vh]"
+                  >
+                    <div className="text-center mb-24">
                       <span className="text-[10px] font-black uppercase tracking-[0.5em] mb-4 block opacity-60" style={{ color: 'var(--bg-main)' }}>Experience — II</span>
                       <h2 className="text-5xl md:text-8xl font-bold opacity-80" style={{ fontFamily: 'var(--font-logo)', color: 'var(--bg-main)' }}>The Journey</h2>
                     </div>
-                    <div className="flex flex-col border-t border-[var(--bg-main)]/20">
+                    <div className="relative flex flex-col gap-12 before:absolute before:left-4 md:before:left-1/2 before:top-0 before:h-full before:w-[1px] before:bg-[var(--bg-main)] before:opacity-20 before:z-0">
                       {experiences.map((exp, index) => (
-                        <div key={index} onMouseEnter={() => setHoveredIndex(index)} onMouseLeave={() => setHoveredIndex(null)} className="group relative flex flex-col md:flex-row items-start md:items-center justify-between py-10 border-b border-[var(--bg-main)]/20 cursor-pointer transition-all duration-300 hover:px-6">
-                          <div className="flex flex-col gap-2">
-                            <span className="text-[10px] font-bold uppercase tracking-widest opacity-30" style={{ color: 'var(--bg-main)' }}>{exp.year}</span>
-                            <h3 className="text-2xl md:text-5xl font-medium transition-all duration-500 group-hover:italic opacity-80" style={{ color: 'var(--bg-main)' }}>{exp.title}</h3>
+                        <div key={index} onMouseEnter={() => setHoveredIndex(index)} onMouseLeave={() => setHoveredIndex(null)} className={`flex flex-col md:flex-row items-start md:items-center justify-between w-full relative z-10 ${index % 2 === 0 ? 'md:flex-row-reverse' : ''}`}>
+                          <div className="absolute left-4 md:left-1/2 -translate-x-1/2 w-3 h-3 rounded-full shadow-[0_0_15px_rgba(255,255,255,0.5)] border-4 border-[var(--bg-main)]/30 group-hover:scale-150 transition-all duration-300" style={{ backgroundColor: 'var(--bg-main)' }} />
+                          <div className={`w-full md:w-[45%] pl-12 md:pl-0 ${index % 2 === 0 ? 'md:text-left' : 'md:text-right'}`}>
+                            <span className="text-[10px] font-bold tracking-widest mb-2 block opacity-50" style={{ color: 'var(--bg-main)' }}>{exp.year}</span>
+                            <h3 className="text-2xl md:text-4xl font-medium mb-3 group-hover:italic transition-all duration-500" style={{ color: 'var(--bg-main)' }}>{exp.title}</h3>
+                            <p className="text-sm opacity-60 max-w-sm ml-0 mr-auto" style={{ color: 'var(--bg-main)', marginInline: index % 2 === 0 ? '0 auto' : 'auto 0' }}>{exp.detail}</p>
                           </div>
-                          <div className="flex flex-col md:items-end mt-4 md:mt-0 gap-1">
-                            <span className="text-xl opacity-60" style={{ color: 'var(--bg-main)' }}>{exp.company}</span>
-                            <p className="text-sm max-w-sm md:text-right opacity-30" style={{ color: 'var(--bg-main)' }}>{exp.detail}</p>
-                          </div>
+                          <div className={`hidden md:block w-[45%] text-xl font-bold opacity-40 uppercase tracking-tighter ${index % 2 === 0 ? 'text-right' : 'text-left'}`} style={{ color: 'var(--bg-main)' }}>{exp.company}</div>
                         </div>
                       ))}
                     </div>
-                    <div className="h-[15vh] w-full" />
                   </motion.div>
                 </div>
               </section>
@@ -301,22 +313,22 @@ function App() {
               <div id="projects" className="absolute top-[600vh] left-0 w-full h-1 pointer-events-none z-[100]" />
               <section ref={projectSectionRef} className="relative h-[400vh] bg-[var(--bg-main)] z-10 -mt-[150vh]">
                 <div className="sticky top-0 h-screen w-full flex flex-col items-center justify-center overflow-hidden">
-                  <motion.div style={{ y: yProjectTitle, opacity: opacityProjectTitle }} className="w-full text-center pt-[18vh] mb-[4vh]">
+                  <motion.div style={{ y: yProjectTitle, opacity: opacityProjectTitle }} className="w-full text-center pt-[24vh] mb-[4vh]">
                     <span className="text-[10px] font-black uppercase tracking-[0.5em] mb-2 block opacity-40" style={{ color: 'var(--text-bold)' }}>Project — III</span>
                     <h2 className="text-4xl md:text-7xl font-medium tracking-tighter whitespace-nowrap" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>Curated <span className="opacity-40 italic">Portfolio.</span></h2>
                   </motion.div>
-                  <div className="flex flex-col gap-[3vh] w-full flex-grow justify-center pb-[8vh]">
-                    <motion.div style={{ x: xProjectsRow1 }} className="flex gap-[4vh] px-8">
+                  <div className="flex flex-col gap-[2vh] w-full flex-grow justify-center pb-[8vh]">
+                    <motion.div style={{ x: xProjectsRow1 }} className="flex gap-[2vh] px-8">
                       {[...projectsRow1, ...projectsRow1].map((proj, i) => (
-                        <div key={i} className="shrink-0 h-[28vh] aspect-video group relative overflow-hidden rounded-3xl border border-[var(--border-main)]">
+                        <div key={i} className="shrink-0 h-[30vh] aspect-[3/2] group relative overflow-hidden rounded-3xl border border-[var(--border-main)]">
                           <img src={proj.image} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" alt={proj.title} />
                           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-6"><h4 className="text-white text-xl font-medium">{proj.title}</h4></div>
                         </div>
                       ))}
                     </motion.div>
-                    <motion.div style={{ x: xProjectsRow2 }} className="flex gap-[4vh] px-8">
+                    <motion.div style={{ x: xProjectsRow2 }} className="flex gap-[2vh] px-8">
                       {[...projectsRow2, ...projectsRow2].map((proj, i) => (
-                        <div key={i} className="shrink-0 h-[28vh] aspect-video group relative overflow-hidden rounded-3xl border border-[var(--border-main)]">
+                        <div key={i} className="shrink-0 h-[30vh] aspect-[3/2] group relative overflow-hidden rounded-3xl border border-[var(--border-main)]">
                           <img src={proj.image} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" alt={proj.title} />
                           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-6"><h4 className="text-white text-xl font-medium">{proj.title}</h4></div>
                         </div>
@@ -326,55 +338,40 @@ function App() {
                 </div>
               </section>
 
-              {/* --- SECTION BLOG --- */}
+              {/* BLOG */}
               <section ref={blogSectionRef} className="relative z-30 min-h-screen overflow-hidden flex flex-col justify-center">
-                {/* Gambar Awan - Brightness menggunakan CSS Variable */}
-                <motion.div 
-                  style={{ y: yBlogBg }}
-                  className="absolute inset-0 z-0 pointer-events-none"
-                >
-                  <img 
-                    src="/images/bgcloude.jpg" 
-                    alt="Cloud Background"
-                    className="w-full h-[120%] object-cover transition-all duration-500"
-                    style={{ filter: 'var(--cloud-brightness)' }}
-                  />
+                <motion.div style={{ y: yBlogBg }} className="absolute inset-0 z-0 pointer-events-none">
+                  <img src="/images/bgcloude.jpg" alt="Cloud Background" className="w-full h-[120%] object-cover transition-all duration-500" style={{ filter: 'var(--cloud-brightness)' }} />
                 </motion.div>
-
                 <div className="max-w-7xl mx-auto relative w-full pt-16 flex flex-col items-center z-10">
                   <div id="blog" className="absolute left-0 w-full h-1 pointer-events-none" />
-                  
                   <motion.div 
-                    style={{ y: blogTitleY }}
+                    style={{ 
+                      y: blogTitleY,
+                      filter: blurBlogTitle
+                    }} 
                     className="text-center mb-0 z-10 pointer-events-none sticky top-40"
                   >
                     <span className="text-[10px] font-black uppercase tracking-[0.5em] block opacity-40" style={{ color: 'var(--text-bold)' }}>Blog — IV</span>
                     <h2 className="text-5xl md:text-[10vw] font-bold leading-none" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>Insights.</h2>
                   </motion.div>
-
-                  <motion.div 
-                    style={{ y: blogListY }}
-                    className="relative z-20 mt-50 grid grid-cols-1 md:grid-cols-3 gap-8 mb-4 items-stretch w-full"
-                  >
+                  <motion.div style={{ y: blogListY }} className="relative z-20 mt-45 grid grid-cols-1 md:grid-cols-3 gap-8 mb-4 items-stretch w-full">
                     <AnimatePresence mode="wait">
                       {currentBlogs.map((blog, i) => (
                         <motion.div key={blog.title} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.5, delay: i * 0.1 }} className="group flex flex-col gap-4">
-                          <div className="relative aspect-video overflow-hidden rounded-3xl border border-[var(--border-main)] bg-zinc-900/5 shadow-xl">
+                          <div className="relative aspect-[3/2] overflow-hidden rounded-3xl border border-[var(--border-main)] bg-zinc-900/5 shadow-xl">
                             <img src={blog.image} className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110" alt={blog.title} />
-                            <div className="absolute top-4 left-4">
-                                <span className="px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-[10px] font-bold uppercase tracking-widest text-white">{blog.category}</span>
-                            </div>
+                            <div className="absolute top-4 left-4"><span className="px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-[10px] font-bold uppercase tracking-widest text-white">{blog.category}</span></div>
                           </div>
                           <div className="flex flex-col gap-1 px-2">
-                            <span className="text-[10px] font-medium opacity-40 uppercase tracking-widest">{blog.date}</span>
+                            <span className="text-[10px] font-medium uppercase tracking-widest" style={{ color: 'var(--text-main)', opacity: 0.6 }}>{blog.date}</span>
                             <h3 className="text-xl font-medium leading-tight group-hover:italic transition-all duration-300" style={{ color: 'var(--text-bold)' }}>{blog.title}</h3>
                           </div>
                         </motion.div>
                       ))}
                     </AnimatePresence>
                   </motion.div>
-
-                  <div className="relative z-30 flex justify-center items-center gap-2 pt-0 -mt-18 w-full">
+                  <motion.div style={{ y: paginationY }} className="relative z-30 flex justify-center items-center gap-2 pt-0 -mt-18 w-full">
                     <button onClick={() => setCurrentPage(1)} disabled={currentPage === 1} className="w-8 h-8 rounded-full border border-[var(--border-main)] flex items-center justify-center opacity-70 hover:opacity-100 bg-[var(--text-bold)]/5 backdrop-blur-sm transition-all disabled:opacity-10 cursor-pointer text-[var(--text-bold)] text-[10px] font-bold">&lt;&lt;</button>
                     <button onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1} className="w-8 h-8 rounded-full border border-[var(--border-main)] flex items-center justify-center opacity-70 hover:opacity-100 bg-[var(--text-bold)]/5 backdrop-blur-sm transition-all disabled:opacity-10 cursor-pointer text-[var(--text-bold)] text-[10px] font-bold">&lt;</button>
                     <div className="flex gap-2 mx-2">
@@ -384,10 +381,80 @@ function App() {
                     </div>
                     <button onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages} className="w-8 h-8 rounded-full border border-[var(--border-main)] flex items-center justify-center opacity-70 hover:opacity-100 bg-[var(--text-bold)]/5 backdrop-blur-sm transition-all disabled:opacity-10 cursor-pointer text-[var(--text-bold)] text-[10px] font-bold">&gt;</button>
                     <button onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages} className="w-8 h-8 rounded-full border border border-[var(--border-main)] flex items-center justify-center opacity-70 hover:opacity-100 bg-[var(--text-bold)]/5 backdrop-blur-sm transition-all disabled:opacity-10 cursor-pointer text-[var(--text-bold)] text-[10px] font-bold">&gt;&gt;</button>
-                  </div>
+                  </motion.div>
                 </div>
               </section>
 
+              {/* CONTACT */}
+              <section ref={contactSectionRef} id="contact" className="relative z-40 bg-[var(--bg-main)] overflow-visible h-[150vh]">
+                <div className="sticky top-0 h-screen w-full flex items-center justify-center overflow-hidden">
+                  <div className="max-w-6xl w-full px-8 mx-auto flex flex-col h-full relative">
+                    <div className="absolute inset-0 flex items-center justify-center md:justify-start md:pl-10 z-0 pointer-events-none">
+                      <motion.div style={{ y: yContactImageSticky, opacity: opacityContact }} className="relative w-full max-w-md aspect-[4/3] rounded-2xl overflow-hidden">
+                        <img src="/images/collage/sculpture1.png" className="w-full h-full object-cover" alt="Contact Visual" />
+                      </motion.div>
+                    </div>
+
+                    <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
+                        <motion.div 
+                          style={{ 
+                            y: yContactListScroll, 
+                            opacity: opacityContact,
+                            filter: blurContact // Judul Contact Blur
+                          }}
+                          className="-translate-y-[15vh]" 
+                        >
+                            <h2 className="text-6xl md:text-[8vw] font-bold tracking-tighter leading-none text-center" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>
+                                Contact — V
+                            </h2>
+                        </motion.div>
+                    </div>
+
+                    <div className="relative w-full h-full flex items-center justify-center md:justify-end z-20">
+                      <motion.div 
+                        style={{ 
+                          y: yContactListScroll, 
+                          opacity: opacityContact,
+                          filter: blurContact // Teks List Contact Blur
+                        }} 
+                        className="flex flex-col gap-24 w-full max-w-xl md:-ml-20"
+                      >
+                        <div className="h-[105vh] pointer-events-none" />
+
+                        {/* Services Group */}
+                        <div className="flex flex-row gap-6 items-start">
+                          <span className="text-xl italic opacity-50 shrink-0 w-24 md:w-32" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>Services</span>
+                          <div className="flex flex-col gap-2">
+                            {['Custom Web Apps', 'Portfolio Design', 'Landingpage', 'UI UX'].map((item) => (
+                              <span key={item} className="text-3xl md:text-5xl font-medium tracking-tight" style={{ color: 'var(--text-bold)' }}>{item}</span>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Connect Group */}
+                        <div className="flex flex-row gap-6 items-start">
+                          <span className="text-xl italic opacity-50 shrink-0 w-24 md:w-32" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>Connect</span>
+                          <div className="flex flex-col gap-2">
+                            <a href="mailto:fatahabdilahh@gmail.com" className="text-3xl md:text-5xl font-medium tracking-tight hover:italic transition-all duration-300" style={{ color: 'var(--text-bold)' }}>fatahabdilahh@gmail.com</a>
+                            <a href="https://www.linkedin.com/in/fatahabdilah/" target="_blank" rel="noopener noreferrer" className="text-3xl md:text-5xl font-medium tracking-tight hover:italic transition-all duration-300" style={{ color: 'var(--text-bold)' }}>LinkedIn</a>
+                            <a href="https://github.com/fatahabdilah" target="_blank" rel="noopener noreferrer" className="text-3xl md:text-5xl font-medium tracking-tight hover:italic transition-all duration-300" style={{ color: 'var(--text-bold)' }}>Github</a>
+                            <a href="https://www.instagram.com/fatahhhhhhhhhhhhhh" target="_blank" rel="noopener noreferrer" className="text-3xl md:text-5xl font-medium tracking-tight hover:italic transition-all duration-300" style={{ color: 'var(--text-bold)' }}>Instagram</a>
+                          </div>
+                        </div>
+
+                        {/* Location Group */}
+                        <div className="flex flex-row gap-6 items-start">
+                          <span className="text-xl italic opacity-50 shrink-0 w-24 md:w-32" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>Location</span>
+                          <div className="flex flex-col gap-2">
+                            <span className="text-3xl md:text-5xl font-medium tracking-tight" style={{ color: 'var(--text-bold)' }}>Tangerang City, Indonesia</span>
+                            <span className="text-3xl md:text-5xl font-medium tracking-tight opacity-40" style={{ color: 'var(--text-bold)' }}>Available Worldwide</span>
+                          </div>
+                        </div>
+                      </motion.div>
+                    </div>
+                  </div>
+                </div>
+              </section>
             </div>
           </main>
           <Footer />

@@ -1,32 +1,107 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { motion, useScroll, useTransform } from 'framer-motion';
 
 const Footer = () => {
+  const [time, setTime] = useState('');
+  const footerRef = useRef(null);
+
+  useEffect(() => {
+    const updateTime = () => {
+      const now = new Date();
+      // Menggunakan format toLocaleTimeString untuk presisi detik yang lebih terjamin
+      const timeString = now.toLocaleTimeString('en-US', {
+        timeZone: 'Asia/Jakarta',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true,
+      });
+      setTime(timeString);
+    };
+    
+    updateTime();
+    const interval = setInterval(updateTime, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const { scrollYProgress } = useScroll({
+    target: footerRef,
+    offset: ["start end", "end end"]
+  });
+
+  const yParallax = useTransform(scrollYProgress, [0, 1], [100, 0]);
+  const blurEffect = useTransform(scrollYProgress, [0.7, 1], ["blur(10px)", "blur(0px)"]);
+  const opacityEffect = useTransform(scrollYProgress, [0.7, 1], [0, 1]);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
-    <footer className="w-full max-w-5xl mx-auto px-8 py-20 mt-20 border-t border-slate-200 dark:border-white/5">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-12">
-        <div className="flex flex-col">
-          <span className="text-4xl mb-6 select-none" 
-                style={{ 
-                  color: 'var(--text-bold)', 
-                  fontFamily: 'var(--font-logo)',
-                  fontWeight: 600
-                }}>
-            FA.
-          </span>
-          <p className="text-[10px] font-bold uppercase tracking-[0.3em] opacity-40 leading-relaxed" style={{ color: 'var(--text-main)' }}>
-            © 2025 Fatah Abdilah. <br /> All rights reserved.
-          </p>
+    <footer 
+      ref={footerRef}
+      className="relative h-screen w-screen overflow-hidden flex flex-col bg-[var(--bg-main)]"
+    >
+      <motion.div 
+        style={{ y: useTransform(scrollYProgress, [0, 1], [-50, 0]) }}
+        className="absolute inset-0 z-0"
+      >
+        <img 
+          src="/images/bgcloude.jpg" 
+          alt="Cloud Background" 
+          className="w-full h-[110%] object-cover"
+          style={{ filter: 'var(--cloud-brightness)' }}
+        />
+      </motion.div>
+
+      <div className="flex-grow" />
+
+      <motion.div 
+        style={{ 
+          y: yParallax, 
+          filter: blurEffect, 
+          opacity: opacityEffect 
+        }}
+        className="relative z-10 w-full max-w-[95vw] md:max-w-[85vw] mx-auto mb-12"
+      >
+        <div className="w-full mb-2 text-center">
+          <h2 
+            className="text-[10vw] md:text-[11.5vw] font-bold leading-none tracking-[-0.04em] uppercase select-none"
+            style={{ 
+              fontFamily: 'var(--font-logo)',
+              color: 'var(--bg-main)',
+              mixBlendMode: 'difference'
+            }}
+          >
+            Fatah Abdilah
+          </h2>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-12 md:gap-20">
-          <div className="flex flex-col gap-4 text-[10px] font-black uppercase tracking-[0.2em]">
-            <span className="opacity-30">Socials</span>
-            {['Github', 'LinkedIn', 'Instagram'].map((s) => (
-              <a key={s} href="#" className="opacity-70 hover:opacity-100 transition-opacity" style={{ color: 'var(--text-bold)' }}>{s}</a>
-            ))}
+        <div 
+          className="w-full flex flex-row justify-between items-end text-[10px] md:text-[14px] font-medium uppercase tracking-[0.1em] md:tracking-[0.2em]"
+          style={{ 
+            color: 'var(--bg-main)',
+            mixBlendMode: 'difference'
+          }}
+        >
+          <div className="flex-1 text-left whitespace-nowrap uppercase">
+            JAKARTA — {time}
+          </div>
+
+          <div className="flex-1 text-center opacity-70 hidden md:block">
+            Fullstack Web Developer
+          </div>
+
+          <div className="flex-1 text-right">
+            <button 
+              onClick={scrollToTop}
+              className="hover:italic transition-all duration-300 cursor-pointer"
+            >
+              Back to Top ↑
+            </button>
           </div>
         </div>
-      </div>
+      </motion.div>
     </footer>
   );
 };
