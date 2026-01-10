@@ -8,7 +8,7 @@ const Footer = () => {
   useEffect(() => {
     const updateTime = () => {
       const now = new Date();
-      // Menggunakan format toLocaleTimeString untuk presisi detik yang lebih terjamin
+      // Memastikan detik muncul dengan format 2 digit
       const timeString = now.toLocaleTimeString('en-US', {
         timeZone: 'Asia/Jakarta',
         hour: '2-digit',
@@ -42,6 +42,7 @@ const Footer = () => {
       ref={footerRef}
       className="relative h-screen w-screen overflow-hidden flex flex-col bg-[var(--bg-main)]"
     >
+      {/* Background Cloud */}
       <motion.div 
         style={{ y: useTransform(scrollYProgress, [0, 1], [-50, 0]) }}
         className="absolute inset-0 z-0"
@@ -56,6 +57,7 @@ const Footer = () => {
 
       <div className="flex-grow" />
 
+      {/* Kontainer Teks Utama */}
       <motion.div 
         style={{ 
           y: yParallax, 
@@ -64,24 +66,24 @@ const Footer = () => {
         }}
         className="relative z-10 w-full max-w-[95vw] md:max-w-[85vw] mx-auto mb-12"
       >
+        {/* 1. Nama Utama - Warna diperbaiki ke var(--text-bold) */}
         <div className="w-full mb-2 text-center">
           <h2 
             className="text-[10vw] md:text-[11.5vw] font-bold leading-none tracking-[-0.04em] uppercase select-none"
             style={{ 
               fontFamily: 'var(--font-logo)',
-              color: 'var(--bg-main)',
-              mixBlendMode: 'difference'
+              color: 'var(--text-bold)', // Menggunakan warna teks utama agar kontras
             }}
           >
             Fatah Abdilah
           </h2>
         </div>
 
+        {/* 2 & 3. Baris Bawah - Warna diperbaiki ke var(--text-bold) */}
         <div 
           className="w-full flex flex-row justify-between items-end text-[10px] md:text-[14px] font-medium uppercase tracking-[0.1em] md:tracking-[0.2em]"
           style={{ 
-            color: 'var(--bg-main)',
-            mixBlendMode: 'difference'
+            color: 'var(--text-bold)', // Menggunakan warna teks utama agar kontras
           }}
         >
           <div className="flex-1 text-left whitespace-nowrap uppercase">

@@ -10,7 +10,7 @@ html {
   --bg-nav: rgba(255, 255, 255, 0.7); 
   --border-nav: rgba(0, 0, 0, 0.05);
   --text-main: #334155; 
-  --text-bold: #0f172a; 
+  --text-bold: #101010; 
   --cloud-brightness: brightness(0.9); 
   --font-logo: 'Playfair Display', serif;
   --font-sans: ui-sans-serif, system-ui, -apple-system, sans-serif;
@@ -24,7 +24,7 @@ html {
   --border-nav: rgba(255, 255, 255, 0.1);
   --text-main: #94a3b8; 
   --text-bold: #f8fafc; 
-  --cloud-brightness: brightness(0.7); 
+  --cloud-brightness: brightness(0.5); 
 }
 
 body {

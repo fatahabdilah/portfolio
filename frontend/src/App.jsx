@@ -8,6 +8,7 @@ import LoadingScreen from './components/LoadingScreen';
 function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [hoveredIndex, setHoveredIndex] = useState(null);
+  const [isDarkMode, setIsDarkMode] = useState(false);
   
   const [currentPage, setCurrentPage] = useState(1);
   const blogsPerPage = 3;
@@ -20,9 +21,19 @@ function App() {
   const contactSectionRef = useRef(null);
 
   useEffect(() => {
+    const checkTheme = () => {
+      const theme = document.documentElement.getAttribute('data-theme');
+      setIsDarkMode(theme === 'dark');
+    };
+    checkTheme();
+    
+    const observer = new MutationObserver(checkTheme);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    
     if (window.location.hash) {
       window.history.replaceState(null, "", window.location.pathname);
     }
+    return () => observer.disconnect();
   }, []);
 
   const handleLogoClick = () => {
@@ -70,14 +81,15 @@ function App() {
     offset: ["start start", "end start"]
   });
 
-  const frameScale = useTransform(zoomScroll, [0, 0.5], [1.1, 12]);
-  const bgScale = useTransform(zoomScroll, [0, 0.17, 0.5], [0.44, 1.4, 1.8]); 
-  const bgBrightnessScroll = useTransform(zoomScroll, [0.2, 0.5], [1, 0.6]);
+  const frameScale = useTransform(zoomScroll, [0, 0.5], [1, 10]);
+  const bgScale = useTransform(zoomScroll, [0, 0.2, 0.5], [0.4, 1.8, 2.1]); 
+  
+  const brightnessTheme = isDarkMode ? 0.8 : 1;
+  const bgBrightnessScroll = useTransform(zoomScroll, [0.2, 0.9], [brightnessTheme, brightnessTheme - 0.4]);
   const brightnessStyle = useTransform(bgBrightnessScroll, (v) => `brightness(${v})`);
 
-  // --- FIX BLUR EXPERIENCE (Dibuat tajam lebih lama) ---
   const opacityExperience = useTransform(zoomScroll, [0.3, 0.45], [0, 1]);
-  const blurExperience = useTransform(zoomScroll, [0.3, 0.4, 0.8, 0.95], ["blur(12px)", "blur(0px)", "blur(0px)", "blur(12px)"]);
+  const blurExperience = useTransform(zoomScroll, [0.3, 0.4, 0.85, 0.95], ["blur(12px)", "blur(0px)", "blur(0px)", "blur(12px)"]);
   const yExperienceContent = useTransform(zoomScroll, [0.3, 0.9], [150, -800]); 
   const pointerEvents = useTransform(zoomScroll, [0.4, 0.41], ["none", "auto"]);
 
@@ -104,12 +116,11 @@ function App() {
 
   const { scrollYProgress: contactScroll } = useScroll({
     target: contactSectionRef,
-    offset: ["start end", "end start"] // Offset diubah agar menangkap pergerakan lebih luas
+    offset: ["start end", "end start"]
   });
   
-  // --- FIX BLUR CONTACT (Dipastikan terlihat) ---
   const yContactListScroll = useTransform(contactScroll, [0.1, 0.9], [600, -1200]);
-  const blurContact = useTransform(contactScroll, [0, 0.3, 0.7, 1], ["blur(18px)", "blur(0px)", "blur(0px)", "blur(18px)"]);
+  const blurContact = useTransform(contactScroll, [0, 0.35, 0.65, 1], ["blur(18px)", "blur(0px)", "blur(0px)", "blur(18px)"]);
   const yContactImageSticky = useTransform(contactScroll, [0, 1], [40, -40]); 
   const opacityContact = useTransform(contactScroll, [0, 0.1, 0.9, 1], [0, 1, 1, 0]);
 
@@ -240,13 +251,13 @@ function App() {
             </section>
 
             {/* ABOUT */}
-            <section id="about" className="relative py-32 px-8 w-full min-h-screen overflow-hidden flex items-center justify-center">
+            <section id="about" className="relative  px-8 w-full min-h-screen overflow-hidden flex items-center justify-center">
               <motion.div style={{ y: yAboutBg }} className="absolute inset-0 z-0 pointer-events-none">
                 <img src="/images/bgcloude.jpg" alt="Cloud Background" className="w-full h-[120%] object-cover transition-all duration-700" style={{ filter: 'var(--cloud-brightness)' }} />
               </motion.div>
-              <div className="relative z-10 flex flex-col md:flex-row items-center justify-center gap-16 md:gap-28 max-w-5xl mx-auto">
+              <div className="relative z-10 flex flex-col md:flex-row items-center justify-center gap-4 md:gap-28 max-w-5xl mx-auto">
                 <div ref={imageRef} className="shrink-0 relative">
-                  <motion.div style={{ filter: filterStyle, rotate: rotateValue }} className="relative w-[20vw] min-w-[280px] aspect-[3/4] flex items-center justify-center overflow-hidden">
+                  <motion.div style={{ filter: filterStyle, rotate: rotateValue }} className="relative w-[200px] md:w-[320px] max-w-full aspect-[3/4] flex items-center justify-center overflow-hidden">
                     <div className="w-[58%] h-[58%] overflow-hidden rounded-full bg-zinc-800 transform translate-y-1">
                       <video src="/images/profile-video.mp4" className="w-full h-full object-cover" autoPlay loop muted playsInline />
                     </div>
@@ -254,11 +265,11 @@ function App() {
                   </motion.div>
                 </div>
                 <div className="flex flex-col justify-center text-left">
-                  <div className="mb-10">
+                  <div className="mb-6">
                     <span className="text-[10px] font-black uppercase tracking-[0.5em] mb-4 block opacity-40" style={{ color: 'var(--text-bold)' }}>About — I</span>
                     <h2 className="text-4xl md:text-6xl font-bold opacity-80" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>The Essence.</h2>
                   </div>
-                  <div className="flex flex-col gap-8 text-lg md:text-xl leading-[1.8] font-light tracking-tight" style={{ color: 'var(--text-bold)' }}>
+                  <div className="flex flex-col gap-4 text-lg md:text-xl leading-[1.8] font-light tracking-tight" style={{ color: 'var(--text-bold)' }}>
                     <p>I am a Computer Science student focused on Web and Android development, building end-to-end digital solutions.</p>
                     <p>Passionate about creating fluid animations and minimal interfaces that bridge the gap between design and technology.</p>
                   </div>
@@ -268,14 +279,14 @@ function App() {
 
             {/* EXPERIENCE */}
             <div className="relative overflow-visible">
-              <div id="experience" className="absolute top-[310vh] left-0 w-full h-1 pointer-events-none z-[100]" />
-              <section ref={zoomRef} className="relative h-[600vh] w-full z-20 bg-[var(--bg-main)] shadow-[0_40px_60px_-20px_rgba(0,0,0,0.3)]">
+              <div id="experience" className="absolute top-[220vh] left-0 w-full h-1 pointer-events-none z-[100]" />
+              <section ref={zoomRef} className="relative h-[450vh] w-full z-20 bg-[var(--bg-main)] shadow-[0_40px_60px_-20px_rgba(0,0,0,0.3)]">
                 <div className="sticky top-0 h-screen w-full flex flex-col items-center justify-start overflow-hidden bg-[var(--bg-main)]">
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <motion.div style={{ scale: bgScale, filter: brightnessStyle, ...gpuStyle, zIndex: 5 }} className="absolute w-[85vw] h-[70vh] md:w-[79.4vw] md:h-[123vh] overflow-hidden rounded-3xl">
+                    <motion.div style={{ scale: bgScale, filter: brightnessStyle, ...gpuStyle, zIndex: 5 }} className="absolute w-[150vw] aspect-[4/3] md:w-[75vw] overflow-hidden">
                       <img src="/images/bg-landscape.jpeg" alt="Landscape" className="w-full h-full object-cover" />
                     </motion.div>
-                    <motion.div style={{ scale: frameScale, ...gpuStyle, zIndex: 10 }} className="absolute w-[85vw] h-[70vh] md:w-[69vw] md:h-[80vh]">
+                    <motion.div style={{ scale: frameScale, ...gpuStyle, zIndex: 10 }} className="absolute w-[90vw]  md:w-[50vw]  aspect-[4/3]">
                       <img src="/images/frame-landscape.png" alt="Frame" className="absolute w-full h-full object-contain scale-[1.15]" />
                     </motion.div>
                   </div>
@@ -286,22 +297,22 @@ function App() {
                       pointerEvents: pointerEvents,
                       filter: blurExperience 
                     }} 
-                    className="relative z-20 w-full max-w-5xl px-8 pt-[45vh] pb-[25vh]"
+                    className="relative z-20 w-full max-w-5xl px-8 pt-[40vh] pb-[25vh]"
                   >
                     <div className="text-center mb-24">
-                      <span className="text-[10px] font-black uppercase tracking-[0.5em] mb-4 block opacity-60" style={{ color: 'var(--bg-main)' }}>Experience — II</span>
-                      <h2 className="text-5xl md:text-8xl font-bold opacity-80" style={{ fontFamily: 'var(--font-logo)', color: 'var(--bg-main)' }}>The Journey</h2>
+                      <span className="text-[10px] font-black uppercase tracking-[0.5em] mb-4 block opacity-80" style={{ color: 'var(--text-bold)' }}>Experience — II</span>
+                      <h2 className="text-5xl md:text-8xl font-bold" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>The Journey</h2>
                     </div>
-                    <div className="relative flex flex-col gap-12 before:absolute before:left-4 md:before:left-1/2 before:top-0 before:h-full before:w-[1px] before:bg-[var(--bg-main)] before:opacity-20 before:z-0">
+                    <div className="relative flex flex-col gap-12 before:absolute before:left-4 md:before:left-1/2 before:top-0 before:h-full before:w-[1px] before:bg-[var(--text-bold)] before:opacity-20 before:z-0">
                       {experiences.map((exp, index) => (
                         <div key={index} onMouseEnter={() => setHoveredIndex(index)} onMouseLeave={() => setHoveredIndex(null)} className={`flex flex-col md:flex-row items-start md:items-center justify-between w-full relative z-10 ${index % 2 === 0 ? 'md:flex-row-reverse' : ''}`}>
-                          <div className="absolute left-4 md:left-1/2 -translate-x-1/2 w-3 h-3 rounded-full shadow-[0_0_15px_rgba(255,255,255,0.5)] border-4 border-[var(--bg-main)]/30 group-hover:scale-150 transition-all duration-300" style={{ backgroundColor: 'var(--bg-main)' }} />
+                          <div className="absolute left-4 md:left-1/2 -translate-x-1/2 w-3 h-3 rounded-full shadow-[0_0_15px_rgba(0,0,0,0.1)] border-4 border-[var(--text-bold)]/30 group-hover:scale-150 transition-all duration-300" style={{ backgroundColor: 'var(--text-bold)' }} />
                           <div className={`w-full md:w-[45%] pl-12 md:pl-0 ${index % 2 === 0 ? 'md:text-left' : 'md:text-right'}`}>
-                            <span className="text-[10px] font-bold tracking-widest mb-2 block opacity-50" style={{ color: 'var(--bg-main)' }}>{exp.year}</span>
-                            <h3 className="text-2xl md:text-4xl font-medium mb-3 group-hover:italic transition-all duration-500" style={{ color: 'var(--bg-main)' }}>{exp.title}</h3>
-                            <p className="text-sm opacity-60 max-w-sm ml-0 mr-auto" style={{ color: 'var(--bg-main)', marginInline: index % 2 === 0 ? '0 auto' : 'auto 0' }}>{exp.detail}</p>
+                            <span className="text-[10px] font-bold tracking-widest mb-2 block opacity-80" style={{ color: 'var(--text-bold)' }}>{exp.year}</span>
+                            <h3 className="text-2xl md:text-4xl font-medium mb-3 group-hover:italic transition-all duration-500" style={{ color: 'var(--text-bold)' }}>{exp.title}</h3>
+                            <p className="text-sm opacity-80 max-w-sm ml-0 mr-auto" style={{ color: 'var(--text-bold)', marginInline: index % 2 === 0 ? '0 auto' : 'auto 0' }}>{exp.detail}</p>
                           </div>
-                          <div className={`hidden md:block w-[45%] text-xl font-bold opacity-40 uppercase tracking-tighter ${index % 2 === 0 ? 'text-right' : 'text-left'}`} style={{ color: 'var(--bg-main)' }}>{exp.company}</div>
+                          <div className={`hidden md:block w-[45%] text-xl font-bold opacity-80 uppercase tracking-tighter ${index % 2 === 0 ? 'text-right' : 'text-left'}`} style={{ color: 'var(--text-bold)' }}>{exp.company}</div>
                         </div>
                       ))}
                     </div>
@@ -355,22 +366,35 @@ function App() {
                     <span className="text-[10px] font-black uppercase tracking-[0.5em] block opacity-40" style={{ color: 'var(--text-bold)' }}>Blog — IV</span>
                     <h2 className="text-5xl md:text-[10vw] font-bold leading-none" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>Insights.</h2>
                   </motion.div>
-                  <motion.div style={{ y: blogListY }} className="relative z-20 mt-45 grid grid-cols-1 md:grid-cols-3 gap-8 mb-4 items-stretch w-full">
-                    <AnimatePresence mode="wait">
-                      {currentBlogs.map((blog, i) => (
-                        <motion.div key={blog.title} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.5, delay: i * 0.1 }} className="group flex flex-col gap-4">
-                          <div className="relative aspect-[3/2] overflow-hidden rounded-3xl border border-[var(--border-main)] bg-zinc-900/5 shadow-xl">
-                            <img src={blog.image} className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110" alt={blog.title} />
-                            <div className="absolute top-4 left-4"><span className="px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-[10px] font-bold uppercase tracking-widest text-white">{blog.category}</span></div>
-                          </div>
-                          <div className="flex flex-col gap-1 px-2">
-                            <span className="text-[10px] font-medium uppercase tracking-widest" style={{ color: 'var(--text-main)', opacity: 0.6 }}>{blog.date}</span>
-                            <h3 className="text-xl font-medium leading-tight group-hover:italic transition-all duration-300" style={{ color: 'var(--text-bold)' }}>{blog.title}</h3>
-                          </div>
+                  
+                  <div className="w-full min-h-[500px] flex items-stretch">
+                    <motion.div style={{ y: blogListY }} className="relative z-20 mt-45 grid grid-cols-1 md:grid-cols-3 gap-8 mb-4 items-stretch w-full">
+                      <AnimatePresence mode="wait">
+                        <motion.div 
+                          key={currentPage} 
+                          initial={{ opacity: 0, y: 20 }} 
+                          animate={{ opacity: 1, y: 0 }} 
+                          exit={{ opacity: 0, y: -20 }} 
+                          transition={{ duration: 0.5 }}
+                          className="col-span-1 md:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-8"
+                        >
+                          {currentBlogs.map((blog, i) => (
+                            <div key={blog.title} className="group flex flex-col gap-4">
+                              <div className="relative aspect-[3/2] overflow-hidden rounded-3xl border border-[var(--border-main)] bg-zinc-900/5 shadow-xl">
+                                <img src={blog.image} className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110" alt={blog.title} />
+                                <div className="absolute top-4 left-4"><span className="px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-[10px] font-bold uppercase tracking-widest text-white">{blog.category}</span></div>
+                              </div>
+                              <div className="flex flex-col gap-1 px-2">
+                                <span className="text-[10px] font-medium uppercase tracking-widest" style={{ color: 'var(--text-main)', opacity: 0.6 }}>{blog.date}</span>
+                                <h3 className="text-xl font-medium leading-tight group-hover:italic transition-all duration-300" style={{ color: 'var(--text-bold)' }}>{blog.title}</h3>
+                              </div>
+                            </div>
+                          ))}
                         </motion.div>
-                      ))}
-                    </AnimatePresence>
-                  </motion.div>
+                      </AnimatePresence>
+                    </motion.div>
+                  </div>
+
                   <motion.div style={{ y: paginationY }} className="relative z-30 flex justify-center items-center gap-2 pt-0 -mt-18 w-full">
                     <button onClick={() => setCurrentPage(1)} disabled={currentPage === 1} className="w-8 h-8 rounded-full border border-[var(--border-main)] flex items-center justify-center opacity-70 hover:opacity-100 bg-[var(--text-bold)]/5 backdrop-blur-sm transition-all disabled:opacity-10 cursor-pointer text-[var(--text-bold)] text-[10px] font-bold">&lt;&lt;</button>
                     <button onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1} className="w-8 h-8 rounded-full border border-[var(--border-main)] flex items-center justify-center opacity-70 hover:opacity-100 bg-[var(--text-bold)]/5 backdrop-blur-sm transition-all disabled:opacity-10 cursor-pointer text-[var(--text-bold)] text-[10px] font-bold">&lt;</button>
@@ -400,11 +424,11 @@ function App() {
                           style={{ 
                             y: yContactListScroll, 
                             opacity: opacityContact,
-                            filter: blurContact // Judul Contact Blur
+                            filter: blurContact
                           }}
                           className="-translate-y-[15vh]" 
                         >
-                            <h2 className="text-6xl md:text-[8vw] font-bold tracking-tighter leading-none text-center" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>
+                            <h2 className="text-6xl md:text-[clamp(4rem,8vw,10rem)] font-bold tracking-tighter leading-none text-center" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>
                                 Contact — V
                             </h2>
                         </motion.div>
@@ -415,13 +439,12 @@ function App() {
                         style={{ 
                           y: yContactListScroll, 
                           opacity: opacityContact,
-                          filter: blurContact // Teks List Contact Blur
+                          filter: blurContact
                         }} 
                         className="flex flex-col gap-24 w-full max-w-xl md:-ml-20"
                       >
                         <div className="h-[105vh] pointer-events-none" />
 
-                        {/* Services Group */}
                         <div className="flex flex-row gap-6 items-start">
                           <span className="text-xl italic opacity-50 shrink-0 w-24 md:w-32" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>Services</span>
                           <div className="flex flex-col gap-2">
@@ -431,7 +454,6 @@ function App() {
                           </div>
                         </div>
 
-                        {/* Connect Group */}
                         <div className="flex flex-row gap-6 items-start">
                           <span className="text-xl italic opacity-50 shrink-0 w-24 md:w-32" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>Connect</span>
                           <div className="flex flex-col gap-2">
@@ -442,7 +464,6 @@ function App() {
                           </div>
                         </div>
 
-                        {/* Location Group */}
                         <div className="flex flex-row gap-6 items-start">
                           <span className="text-xl italic opacity-50 shrink-0 w-24 md:w-32" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>Location</span>
                           <div className="flex flex-col gap-2">
