@@ -37,9 +37,7 @@ function App() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Logika jumlah blog per halaman (2 untuk mobile, 3 untuk desktop)
   const blogsPerPage = isMobile ? 2 : 3;
-  // ---------------------------
 
   useEffect(() => {
     const checkTheme = () => {
@@ -137,9 +135,10 @@ function App() {
   const yProjectTitle = useTransform(projectScroll, [0, 0.2], [50, 0]);
   const opacityProjectTitle = useTransform(projectScroll, [0, 0.2], [0, 1]);
 
-  const xProjectsRow1 = useTransform(projectScroll, [0, 1], [-movementDistance * 3, movementDistance * 3]);
-  const xProjectsRow2 = useTransform(projectScroll, [0, 1], [movementDistance * 3, -movementDistance * 3]);
+  const xProjectsRow1 = useTransform(projectScroll, [0, 1], [-movementDistance * 3, movementDistance * 2.5]);
+  const xProjectsRow2 = useTransform(projectScroll, [0, 1], [movementDistance * 3, -movementDistance * 2.5]);
 
+  // --- RESPONSIVE BLOG PARALLAX LOGIC ---
   const { scrollYProgress: blogScroll } = useScroll({
     target: blogSectionRef,
     offset: ["start end", "end start"]
@@ -148,8 +147,13 @@ function App() {
   const blogTitleY = useTransform(blogScroll, [0, 1], [0, -100]);
   const blurBlogTitle = useTransform(blogScroll, [0, 0.3, 0.7, 1], ["blur(12px)", "blur(0px)", "blur(0px)", "blur(12px)"]);
   
-  const blogListY = useTransform(blogScroll, [0, 1], [80, -250]); 
-  const paginationY = useTransform(blogScroll, [0.2, 1], [60, -150]);
+  // Perbaikan: Gunakan nilai dinamis berdasarkan isMobile
+  // Desktop membutuhkan offset 150, Mobile butuh nilai mendekati 0 karena layout bertumpuk
+  const blogContentY = useTransform(
+    blogScroll, 
+    [0.4, 1], 
+    [isMobile ? 50 : 0, -250] 
+  ); 
   const yBlogBg = useTransform(blogScroll, [0, 1], ["-10%", "10%"]);
 
   const { scrollYProgress: contactScroll } = useScroll({
@@ -370,7 +374,7 @@ function App() {
                 <motion.div style={{ y: yBlogBg }} className="absolute inset-0 z-0 pointer-events-none">
                   <img src="/images/bgcloude.jpg" alt="Cloud Background" className="w-full h-[120%] object-cover transition-all duration-500" style={{ filter: 'var(--cloud-brightness)' }} />
                 </motion.div>
-                <div className="max-w-7xl mx-auto relative w-full pt-16 flex flex-col items-center z-10 px-6">
+                <div className="max-w-7xl mx-auto relative w-full flex flex-col items-center z-10 px-6">
                   <div id="blog" className="absolute left-0 w-full h-1 pointer-events-none" />
                   <motion.div 
                     style={{ y: blogTitleY, filter: blurBlogTitle }} 
@@ -380,8 +384,9 @@ function App() {
                     <h2 className="text-5xl md:text-[10vw] font-bold leading-none" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>Insights.</h2>
                   </motion.div>
                   
-                  <div className="w-full min-h-[500px] flex items-stretch">
-                    <motion.div style={{ y: blogListY }} className="relative z-20 mt-45 md:mt-45 grid grid-cols-1 md:grid-cols-3 gap-8 md:mb-4 items-stretch w-full">
+                  {/* Container Sinkron dengan Padding Responsif */}
+                  <motion.div style={{ y: blogContentY }} className="w-full flex flex-col items-center pt-20 md:pt-32">
+                    <div className="relative z-20 grid grid-cols-1 md:grid-cols-3 gap-8 mb-12 items-stretch w-full">
                       <AnimatePresence mode="wait">
                         <motion.div 
                           key={currentPage} 
@@ -412,19 +417,19 @@ function App() {
                           ))}
                         </motion.div>
                       </AnimatePresence>
-                    </motion.div>
-                  </div>
-
-                  <motion.div style={{ y: paginationY }} className="relative z-30 flex justify-center items-center gap-2 -mt-8 md:-mt-18 w-full">
-                    <button onClick={() => setCurrentPage(1)} disabled={currentPage === 1} className="w-8 h-8 rounded-full border border-[var(--border-main)] flex items-center justify-center opacity-70 hover:opacity-100 bg-[var(--text-bold)]/5 backdrop-blur-sm transition-all disabled:opacity-10 cursor-pointer text-[var(--text-bold)] text-[10px] font-bold">&lt;&lt;</button>
-                    <button onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1} className="w-8 h-8 rounded-full border border-[var(--border-main)] flex items-center justify-center opacity-70 hover:opacity-100 bg-[var(--text-bold)]/5 backdrop-blur-sm transition-all disabled:opacity-10 cursor-pointer text-[var(--text-bold)] text-[10px] font-bold">&lt;</button>
-                    <div className="flex gap-2 mx-2">
-                      {Array.from({ length: totalPages }, (_, i) => i + 1).map(n => (
-                        <button key={n} onClick={() => setCurrentPage(n)} className={`w-10 h-10 rounded-full flex items-center justify-center text-[12px] font-bold transition-all cursor-pointer ${currentPage === n ? 'bg-[var(--text-bold)] text-[var(--bg-main)] shadow-lg' : 'border border-[var(--border-main)] opacity-70 hover:opacity-100 bg-[var(--text-bold)]/5 text-[var(--text-bold)]'}`}>{n}</button>
-                      ))}
                     </div>
-                    <button onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages} className="w-8 h-8 rounded-full border border-[var(--border-main)] flex items-center justify-center opacity-70 hover:opacity-100 bg-[var(--text-bold)]/5 backdrop-blur-sm transition-all disabled:opacity-10 cursor-pointer text-[var(--text-bold)] text-[10px] font-bold">&gt;</button>
-                    <button onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages} className="w-8 h-8 rounded-full border border-[var(--border-main)] flex items-center justify-center opacity-70 hover:opacity-100 bg-[var(--text-bold)]/5 backdrop-blur-sm transition-all disabled:opacity-10 cursor-pointer text-[var(--text-bold)] text-[10px] font-bold">&gt;&gt;</button>
+
+                    <div className="relative z-30 flex justify-center items-center gap-2 w-full">
+                      <button onClick={() => setCurrentPage(1)} disabled={currentPage === 1} className="w-8 h-8 rounded-full border border-[var(--border-main)] flex items-center justify-center opacity-70 hover:opacity-100 bg-[var(--text-bold)]/5 backdrop-blur-sm transition-all disabled:opacity-10 cursor-pointer text-[var(--text-bold)] text-[10px] font-bold">&lt;&lt;</button>
+                      <button onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1} className="w-8 h-8 rounded-full border border-[var(--border-main)] flex items-center justify-center opacity-70 hover:opacity-100 bg-[var(--text-bold)]/5 backdrop-blur-sm transition-all disabled:opacity-10 cursor-pointer text-[var(--text-bold)] text-[10px] font-bold">&lt;</button>
+                      <div className="flex gap-2 mx-2">
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map(n => (
+                          <button key={n} onClick={() => setCurrentPage(n)} className={`w-10 h-10 rounded-full flex items-center justify-center text-[12px] font-bold transition-all cursor-pointer ${currentPage === n ? 'bg-[var(--text-bold)] text-[var(--bg-main)] shadow-lg' : 'border border-[var(--border-main)] opacity-70 hover:opacity-100 bg-[var(--text-bold)]/5 text-[var(--text-bold)]'}`}>{n}</button>
+                        ))}
+                      </div>
+                      <button onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages} className="w-8 h-8 rounded-full border border-[var(--border-main)] flex items-center justify-center opacity-70 hover:opacity-100 bg-[var(--text-bold)]/5 backdrop-blur-sm transition-all disabled:opacity-10 cursor-pointer text-[var(--text-bold)] text-[10px] font-bold">&gt;</button>
+                      <button onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages} className="w-8 h-8 rounded-full border border-[var(--border-main)] flex items-center justify-center opacity-70 hover:opacity-100 bg-[var(--text-bold)]/5 backdrop-blur-sm transition-all disabled:opacity-10 cursor-pointer text-[var(--text-bold)] text-[10px] font-bold">&gt;&gt;</button>
+                    </div>
                   </motion.div>
                 </div>
               </section>

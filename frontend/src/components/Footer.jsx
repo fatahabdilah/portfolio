@@ -8,7 +8,6 @@ const Footer = () => {
   useEffect(() => {
     const updateTime = () => {
       const now = new Date();
-      // Memastikan detik muncul dengan format 2 digit
       const timeString = now.toLocaleTimeString('en-US', {
         timeZone: 'Asia/Jakarta',
         hour: '2-digit',
@@ -26,12 +25,15 @@ const Footer = () => {
 
   const { scrollYProgress } = useScroll({
     target: footerRef,
+    // Offset disesuaikan agar animasi selesai tepat saat bagian bawah footer menyentuh bawah layar
     offset: ["start end", "end end"]
   });
 
-  const yParallax = useTransform(scrollYProgress, [0, 1], [100, 0]);
-  const blurEffect = useTransform(scrollYProgress, [0.7, 1], ["blur(10px)", "blur(0px)"]);
-  const opacityEffect = useTransform(scrollYProgress, [0.7, 1], [0, 1]);
+  // Penyesuaian: Blur dan Opacity selesai lebih awal (di angka 0.9) 
+  // untuk memastikan teks tajam sempurna di berbagai ukuran layar.
+  const yParallax = useTransform(scrollYProgress, [0, 1], [80, 0]);
+  const blurEffect = useTransform(scrollYProgress, [0, 0.8, 0.9], ["blur(12px)", "blur(4px)", "blur(0px)"]);
+  const opacityEffect = useTransform(scrollYProgress, [0, 0.7, 0.9], [0, 0.5, 1]);
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -66,35 +68,38 @@ const Footer = () => {
         }}
         className="relative z-10 w-full max-w-[95vw] md:max-w-[85vw] mx-auto mb-12"
       >
-        {/* 1. Nama Utama - Warna diperbaiki ke var(--text-bold) */}
-        <div className="w-full mb-2 text-center">
+        {/* Nama Utama */}
+        <div className="w-full mb-6 md:mb-2 text-center">
           <h2 
             className="text-[10vw] md:text-[11.5vw] font-bold leading-none tracking-[-0.04em] uppercase select-none"
             style={{ 
               fontFamily: 'var(--font-logo)',
-              color: 'var(--text-bold)', // Menggunakan warna teks utama agar kontras
+              color: 'var(--text-bold)',
             }}
           >
             Fatah Abdilah
           </h2>
         </div>
 
-        {/* 2 & 3. Baris Bawah - Warna diperbaiki ke var(--text-bold) */}
+        {/* Baris Bawah - Rata Tengah di Mobile */}
         <div 
-          className="w-full flex flex-row justify-between items-end text-[10px] md:text-[14px] font-medium uppercase tracking-[0.1em] md:tracking-[0.2em]"
+          className="w-full flex flex-col md:flex-row justify-between items-center md:items-end gap-6 md:gap-0 text-[11px] md:text-[14px] font-medium uppercase tracking-[0.1em] md:tracking-[0.2em]"
           style={{ 
-            color: 'var(--text-bold)', // Menggunakan warna teks utama agar kontras
+            color: 'var(--text-bold)',
           }}
         >
-          <div className="flex-1 text-left whitespace-nowrap uppercase">
+          {/* Lokasi & Waktu - Order 2 di Mobile */}
+          <div className="flex-1 text-center md:text-left whitespace-nowrap uppercase order-2 md:order-1">
             JAKARTA — {time}
           </div>
 
-          <div className="flex-1 text-center opacity-70 hidden md:block">
+          {/* Role - Order 1 di Mobile agar paling atas */}
+          <div className="flex-1 text-center opacity-70 order-1 md:order-2">
             Fullstack Web Developer
           </div>
 
-          <div className="flex-1 text-right">
+          {/* Back to Top - Order 3 di Mobile */}
+          <div className="flex-1 text-center md:text-right order-3">
             <button 
               onClick={scrollToTop}
               className="hover:italic transition-all duration-300 cursor-pointer"
