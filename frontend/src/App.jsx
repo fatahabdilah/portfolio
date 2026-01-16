@@ -1,15 +1,12 @@
-import React, { useRef, useState, useEffect, useMemo } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { motion, useScroll, useTransform, AnimatePresence, useSpring, useMotionValue } from 'framer-motion';
 import Header from './components/Header';
 import Footer from './components/Footer';
-import ThemeToggle from './components/ThemeToggle';
 import LoadingScreen from './components/LoadingScreen';
 
 function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [hoveredIndex, setHoveredIndex] = useState(null);
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  
   const [currentPage, setCurrentPage] = useState(1);
   const [isMobile, setIsMobile] = useState(false);
 
@@ -20,7 +17,6 @@ function App() {
   const blogSectionRef = useRef(null);
   const contactSectionRef = useRef(null);
 
-  // --- KONFIGURASI RESPONSIVE ---
   const [movementDistance, setMovementDistance] = useState(500);
   const row1Ref = useRef(null);
   const row2Ref = useRef(null);
@@ -34,26 +30,15 @@ function App() {
 
     handleResize();
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  const blogsPerPage = isMobile ? 2 : 3;
-
-  useEffect(() => {
-    const checkTheme = () => {
-      const theme = document.documentElement.getAttribute('data-theme');
-      setIsDarkMode(theme === 'dark');
-    };
-    checkTheme();
-    
-    const observer = new MutationObserver(checkTheme);
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
     
     if (window.location.hash) {
       window.history.replaceState(null, "", window.location.pathname);
     }
-    return () => observer.disconnect();
+    
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  const blogsPerPage = isMobile ? 2 : 3;
 
   const handleLogoClick = () => {
     window.scrollTo({ top: 0, behavior: 'instant' });
@@ -103,8 +88,8 @@ function App() {
   const frameScale = useTransform(zoomScroll, [0, 0.5], [1, 10]);
   const bgScale = useTransform(zoomScroll, [0, 0.2, 0.5], [0.4, 1.8, 2.1]); 
   
-  const brightnessTheme = isDarkMode ? 0.8 : 1;
-  const bgBrightnessScroll = useTransform(zoomScroll, [0.2, 0.9], [brightnessTheme, brightnessTheme - 0.4]);
+  // Dikunci ke nilai kecerahan gelap (0.8)
+  const bgBrightnessScroll = useTransform(zoomScroll, [0.2, 0.9], [0.8, 0.4]);
   const brightnessStyle = useTransform(bgBrightnessScroll, (v) => `brightness(${v})`);
 
   const opacityExperience = useTransform(zoomScroll, [0.3, 0.45], [0, 1]);
@@ -112,19 +97,11 @@ function App() {
   const yExperienceContent = useTransform(zoomScroll, [0.3, 0.9], [150, -800]); 
   const pointerEvents = useTransform(zoomScroll, [0.4, 0.41], ["none", "auto"]);
 
-  // --- DATA PROJECTS ---
-  const projectsRow1 = [
-    { title: "Lumina Dashboard", category: "Web Design", image: "/images/collage/flower1.png" },
-    { title: "Aether Mobile", category: "Mobile App", image: "/images/collage/sculpture1.png" },
-    { title: "Chronos Portal", category: "E-Commerce", image: "/images/collage/flower2.png" },
-    { title: "Nova Identity", category: "Branding", image: "/images/collage/sculpture2.png" },
-  ];
-
-  const projectsRow2 = [
-    { title: "Zenith App", category: "Utility", image: "/images/collage/flower3.png" },
-    { title: "Vortex Web", category: "SaaS", image: "/images/collage/sculpture1.png" },
-    { title: "Solaris UI", category: "Design System", image: "/images/collage/flower1.png" },
-    { title: "Nebula Core", category: "Backend", image: "/images/collage/sculpture2.png" },
+  const experiences = [
+    { title: "Frontend Developer", company: "Tech Solutions", year: "2024", image: "/images/collage/sculpture1.png", detail: "Developing high-performance web applications using React and Framer Motion." },
+    { title: "UI/UX Designer", company: "Creative Agency", year: "2023", image: "/images/collage/flower1.png", detail: "Crafting intuitive user interfaces and aesthetic digital experiences." },
+    { title: "Mobile Specialist", company: "App Studio", year: "2023", image: "/images/collage/sculpture2.png", detail: "Building seamless Android solutions with a focus on smooth interactions." },
+    { title: "Web Enthusiast", company: "Freelance", year: "2022", image: "/images/collage/flower3.png", detail: "Exploring modern web technologies and building responsive layouts." }
   ];
 
   const { scrollYProgress: projectScroll } = useScroll({
@@ -138,7 +115,20 @@ function App() {
   const xProjectsRow1 = useTransform(projectScroll, [0, 1], [-movementDistance * 3, movementDistance * 2.5]);
   const xProjectsRow2 = useTransform(projectScroll, [0, 1], [movementDistance * 3, -movementDistance * 2.5]);
 
-  // --- RESPONSIVE BLOG PARALLAX LOGIC ---
+  const projectsRow1 = [
+    { title: "Lumina Dashboard", image: "/images/collage/flower1.png" },
+    { title: "Aether Mobile", image: "/images/collage/sculpture1.png" },
+    { title: "Chronos Portal", image: "/images/collage/flower2.png" },
+    { title: "Nova Identity", image: "/images/collage/sculpture2.png" },
+  ];
+
+  const projectsRow2 = [
+    { title: "Zenith App", image: "/images/collage/flower3.png" },
+    { title: "Vortex Web", image: "/images/collage/sculpture1.png" },
+    { title: "Solaris UI", image: "/images/collage/flower1.png" },
+    { title: "Nebula Core", image: "/images/collage/sculpture2.png" },
+  ];
+
   const { scrollYProgress: blogScroll } = useScroll({
     target: blogSectionRef,
     offset: ["start end", "end start"]
@@ -146,32 +136,8 @@ function App() {
 
   const blogTitleY = useTransform(blogScroll, [0, 1], [0, -100]);
   const blurBlogTitle = useTransform(blogScroll, [0, 0.3, 0.7, 1], ["blur(12px)", "blur(0px)", "blur(0px)", "blur(12px)"]);
-  
-  // Perbaikan: Gunakan nilai dinamis berdasarkan isMobile
-  // Desktop membutuhkan offset 150, Mobile butuh nilai mendekati 0 karena layout bertumpuk
-  const blogContentY = useTransform(
-    blogScroll, 
-    [0.4, 1], 
-    [isMobile ? 50 : 0, -250] 
-  ); 
+  const blogContentY = useTransform(blogScroll, [0.4, 1], [isMobile ? 50 : 0, -250]); 
   const yBlogBg = useTransform(blogScroll, [0, 1], ["-10%", "10%"]);
-
-  const { scrollYProgress: contactScroll } = useScroll({
-    target: contactSectionRef,
-    offset: ["start end", "end start"]
-  });
-  
-  const yContactListScroll = useTransform(contactScroll, [0.1, 0.9], [600, -1200]);
-  const blurContact = useTransform(contactScroll, [0, 0.35, 0.65, 1], ["blur(18px)", "blur(0px)", "blur(0px)", "blur(18px)"]);
-  const yContactImageSticky = useTransform(contactScroll, [0, 1], [40, -40]); 
-  const opacityContact = useTransform(contactScroll, [0, 0.1, 0.9, 1], [0, 1, 1, 0]);
-
-  const experiences = [
-    { title: "Frontend Developer", company: "Tech Solutions", year: "2024", image: "/images/collage/sculpture1.png", detail: "Developing high-performance web applications using React and Framer Motion." },
-    { title: "UI/UX Designer", company: "Creative Agency", year: "2023", image: "/images/collage/flower1.png", detail: "Crafting intuitive user interfaces and aesthetic digital experiences." },
-    { title: "Mobile Specialist", company: "App Studio", year: "2023", image: "/images/collage/sculpture2.png", detail: "Building seamless Android solutions with a focus on smooth interactions." },
-    { title: "Web Enthusiast", company: "Freelance", year: "2022", image: "/images/collage/flower3.png", detail: "Exploring modern web technologies and building responsive layouts." }
-  ];
 
   const allBlogs = [
     { title: "The Future of Web Animation", date: "Jan 12, 2024", category: "Design", image: "/images/collage/flower1.png" },
@@ -186,6 +152,16 @@ function App() {
   const indexOfFirstBlog = indexOfLastBlog - blogsPerPage;
   const currentBlogs = allBlogs.slice(indexOfFirstBlog, indexOfLastBlog);
   const totalPages = Math.ceil(allBlogs.length / blogsPerPage);
+
+  const { scrollYProgress: contactScroll } = useScroll({
+    target: contactSectionRef,
+    offset: ["start end", "end start"]
+  });
+  
+  const yContactListScroll = useTransform(contactScroll, [0.1, 0.9], [600, -1200]);
+  const blurContact = useTransform(contactScroll, [0, 0.35, 0.65, 1], ["blur(18px)", "blur(0px)", "blur(0px)", "blur(18px)"]);
+  const yContactImageSticky = useTransform(contactScroll, [0, 1], [40, -40]); 
+  const opacityContact = useTransform(contactScroll, [0, 0.1, 0.9, 1], [0, 1, 1, 0]);
 
   const smoothFloat = (d) => ({
     animate: { y: [0, 15, 0], rotate: [-2, 2, -2] },
@@ -202,13 +178,9 @@ function App() {
 
       <Header onHomeClick={scrollToTop} onLogoClick={handleLogoClick} />
       
-      <div className="fixed bottom-10 right-10 z-[10001] flex flex-col gap-4 items-center">
-        <ThemeToggle isLoading={isLoading} />
-      </div>
-
       <div className="main-content" onMouseMove={handleMouseMove}>
         <motion.div
-          className="fixed pointer-events-none z-[100] w-[280px] h-[350px] overflow-hidden rounded-2xl shadow-2xl border border-[var(--border-main)] backdrop-blur-md"
+          className="fixed pointer-events-none z-[100] w-[280px] h-[350px] overflow-hidden rounded-2xl shadow-2xl border border-[var(--border-nav)] backdrop-blur-md"
           style={{
             left: cursorX,
             top: cursorY,
@@ -216,7 +188,7 @@ function App() {
             y: "-50%",
             scale: hoveredIndex !== null ? 1 : 0,
             opacity: hoveredIndex !== null ? 1 : 0,
-            background: "rgba(var(--bg-main-rgb, 255, 255, 255), 0.2)",
+            background: "rgba(10, 10, 12, 0.2)",
             boxShadow: "0 8px 32px 0 rgba(0, 0, 0, 0.37)",
           }}
         >
@@ -269,10 +241,10 @@ function App() {
               <motion.div style={{ y: yAboutBg }} className="absolute inset-0 z-0 pointer-events-none">
                 <img src="/images/bgcloude.jpg" alt="Cloud Background" className="w-full h-[120%] object-cover transition-all duration-700" style={{ filter: 'var(--cloud-brightness)' }} />
               </motion.div>
-              <div className="relative z-10 flex flex-col md:flex-row items-center justify-center gap-8 md:gap-28 max-w-6xl mx-auto w-full">
+              <div className="relative z-10 flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16 max-w-5xl mx-auto w-full">
                 <div ref={imageRef} className="shrink-0 relative">
-                  <motion.div style={{ filter: filterStyle, rotate: rotateValue }} className="relative w-[180px] md:w-[320px] aspect-[3/4] flex items-center justify-center overflow-hidden">
-                    <div className="w-[58%] h-[58%] overflow-hidden rounded-full bg-zinc-800 transform translate-y-1">
+                  <motion.div style={{ filter: filterStyle, rotate: rotateValue }} className="relative w-[180px] md:w-[250px] aspect-[3/4] flex items-center justify-center overflow-hidden">
+                    <div className="w-[60%] h-[60%] overflow-hidden rounded-full bg-zinc-800 transform translate-y-1">
                       <video src="/images/profile-video.mp4" className="w-full h-full object-cover" autoPlay loop muted playsInline />
                     </div>
                     <img src="/images/frame-oval.png" alt="Frame" className="absolute w-full h-full object-contain pointer-events-none z-10" />
@@ -347,7 +319,7 @@ function App() {
                     <div className="w-full flex justify-center overflow-visible">
                         <motion.div ref={row1Ref} style={{ x: xProjectsRow1 }} className="flex gap-[2vh] md:gap-[4vh] px-8 w-max">
                         {projectsRow1.map((proj, i) => (
-                            <div key={i} className="shrink-0 h-[22vh] md:h-[30vh] aspect-[3/2] group relative overflow-hidden rounded-2xl md:rounded-3xl border border-[var(--border-main)]">
+                            <div key={i} className="shrink-0 h-[22vh] md:h-[30vh] aspect-[3/2] group relative overflow-hidden rounded-2xl md:rounded-3xl border border-[var(--border-nav)]">
                             <img src={proj.image} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" alt={proj.title} />
                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4 md:p-6"><h4 className="text-white text-base md:text-xl font-medium">{proj.title}</h4></div>
                             </div>
@@ -358,7 +330,7 @@ function App() {
                     <div className="w-full flex justify-center overflow-visible">
                         <motion.div ref={row2Ref} style={{ x: xProjectsRow2 }} className="flex gap-[2vh] md:gap-[4vh] px-8 w-max">
                         {projectsRow2.map((proj, i) => (
-                            <div key={i} className="shrink-0 h-[22vh] md:h-[30vh] aspect-[3/2] group relative overflow-hidden rounded-2xl md:rounded-3xl border border-[var(--border-main)]">
+                            <div key={i} className="shrink-0 h-[22vh] md:h-[30vh] aspect-[3/2] group relative overflow-hidden rounded-2xl md:rounded-3xl border border-[var(--border-nav)]">
                             <img src={proj.image} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" alt={proj.title} />
                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4 md:p-6"><h4 className="text-white text-base md:text-xl font-medium">{proj.title}</h4></div>
                             </div>
@@ -384,7 +356,6 @@ function App() {
                     <h2 className="text-5xl md:text-[10vw] font-bold leading-none" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>Insights.</h2>
                   </motion.div>
                   
-                  {/* Container Sinkron dengan Padding Responsif */}
                   <motion.div style={{ y: blogContentY }} className="w-full flex flex-col items-center pt-20 md:pt-32">
                     <div className="relative z-20 grid grid-cols-1 md:grid-cols-3 gap-8 mb-12 items-stretch w-full">
                       <AnimatePresence mode="wait">
@@ -393,11 +364,11 @@ function App() {
                           initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.5 }}
                           className={`col-span-1 md:col-span-3 grid ${isMobile ? 'grid-cols-1 gap-4 px-4' : 'grid-cols-3 gap-8'}`}
                         >
-                          {currentBlogs.map((blog, i) => (
+                          {currentBlogs.map((blog) => (
                             <div key={blog.title} className="group flex flex-col gap-4">
-                              <div className="relative aspect-[3/2] overflow-hidden rounded-3xl border border-[var(--border-main)] bg-zinc-900/5 shadow-xl">
+                              <div className="relative aspect-[3/2] overflow-hidden rounded-3xl border border-[var(--border-nav)] bg-zinc-900/5 shadow-xl">
                                 <img src={blog.image} className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110" alt={blog.title} />
-                                <div className="absolute top-4 left-4"><span className="px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-[10px] font-bold uppercase tracking-widest text-white">{blog.category}</span></div>
+                                <div className="absolute top-4 left-4"><span className="px-3 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/20 text-[10px] font-bold uppercase tracking-widest text-white">{blog.category}</span></div>
                                 
                                 {isMobile && (
                                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-6">
@@ -420,15 +391,13 @@ function App() {
                     </div>
 
                     <div className="relative z-30 flex justify-center items-center gap-2 w-full">
-                      <button onClick={() => setCurrentPage(1)} disabled={currentPage === 1} className="w-8 h-8 rounded-full border border-[var(--border-main)] flex items-center justify-center opacity-70 hover:opacity-100 bg-[var(--text-bold)]/5 backdrop-blur-sm transition-all disabled:opacity-10 cursor-pointer text-[var(--text-bold)] text-[10px] font-bold">&lt;&lt;</button>
-                      <button onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1} className="w-8 h-8 rounded-full border border-[var(--border-main)] flex items-center justify-center opacity-70 hover:opacity-100 bg-[var(--text-bold)]/5 backdrop-blur-sm transition-all disabled:opacity-10 cursor-pointer text-[var(--text-bold)] text-[10px] font-bold">&lt;</button>
+                      <button onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1} className="w-8 h-8 rounded-full border border-[var(--border-nav)] flex items-center justify-center opacity-70 hover:opacity-100 bg-white/5 backdrop-blur-sm transition-all disabled:opacity-10 cursor-pointer text-[var(--text-bold)] text-[10px] font-bold">&lt;</button>
                       <div className="flex gap-2 mx-2">
                         {Array.from({ length: totalPages }, (_, i) => i + 1).map(n => (
-                          <button key={n} onClick={() => setCurrentPage(n)} className={`w-10 h-10 rounded-full flex items-center justify-center text-[12px] font-bold transition-all cursor-pointer ${currentPage === n ? 'bg-[var(--text-bold)] text-[var(--bg-main)] shadow-lg' : 'border border-[var(--border-main)] opacity-70 hover:opacity-100 bg-[var(--text-bold)]/5 text-[var(--text-bold)]'}`}>{n}</button>
+                          <button key={n} onClick={() => setCurrentPage(n)} className={`w-10 h-10 rounded-full flex items-center justify-center text-[12px] font-bold transition-all cursor-pointer ${currentPage === n ? 'bg-[var(--text-bold)] text-[#0a0a0c] shadow-lg' : 'border border-[var(--border-nav)] opacity-70 hover:opacity-100 bg-white/5 text-[var(--text-bold)]'}`}>{n}</button>
                         ))}
                       </div>
-                      <button onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages} className="w-8 h-8 rounded-full border border-[var(--border-main)] flex items-center justify-center opacity-70 hover:opacity-100 bg-[var(--text-bold)]/5 backdrop-blur-sm transition-all disabled:opacity-10 cursor-pointer text-[var(--text-bold)] text-[10px] font-bold">&gt;</button>
-                      <button onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages} className="w-8 h-8 rounded-full border border-[var(--border-main)] flex items-center justify-center opacity-70 hover:opacity-100 bg-[var(--text-bold)]/5 backdrop-blur-sm transition-all disabled:opacity-10 cursor-pointer text-[var(--text-bold)] text-[10px] font-bold">&gt;&gt;</button>
+                      <button onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages} className="w-8 h-8 rounded-full border border-[var(--border-nav)] flex items-center justify-center opacity-70 hover:opacity-100 bg-white/5 backdrop-blur-sm transition-all disabled:opacity-10 cursor-pointer text-[var(--text-bold)] text-[10px] font-bold">&gt;</button>
                     </div>
                   </motion.div>
                 </div>

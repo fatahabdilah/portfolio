@@ -66,12 +66,12 @@ const Footer = () => {
           filter: blurEffect, 
           opacity: opacityEffect 
         }}
-        className="relative z-10 w-full max-w-[95vw] md:max-w-[85vw] mx-auto mb-12"
+        className="relative z-10 w-full max-w-5xl mx-auto mb-12"
       >
         {/* Nama Utama */}
         <div className="w-full mb-6 md:mb-2 text-center">
           <h2 
-            className="text-[10vw] md:text-[11.5vw] font-bold leading-none tracking-[-0.04em] uppercase select-none"
+            className="text-[10vw] md:text-[9.1vw] font-bold leading-none tracking-[-0.04em] uppercase select-none"
             style={{ 
               fontFamily: 'var(--font-logo)',
               color: 'var(--text-bold)',
