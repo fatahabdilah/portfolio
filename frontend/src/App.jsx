@@ -15,7 +15,7 @@ function App() {
   const [projects, setProjects] = useState([]);
   const [blogs, setBlogs] = useState([]);
   
-  // Mengambil Base URL dari variabel environment .env
+  // Base URL dari .env
   const API_URL = import.meta.env.VITE_API_URL;
 
   const containerRef = useRef(null);
@@ -29,29 +29,26 @@ function App() {
   const row1Ref = useRef(null);
   const row2Ref = useRef(null);
 
-  // --- FETCH DATA DARI BACKEND DENGAN DEBUGGING ---
+  // --- FETCH DATA DARI BACKEND DENGAN LOG DEBUG ---
   useEffect(() => {
     const fetchPortfolioData = async () => {
-      // DEBUG: Cek apakah API_URL terbaca
-      console.log("--- DEBUG API START ---");
-      console.log("Base API URL dari ENV:", API_URL);
-      console.log("Current Origin:", window.location.origin);
+      console.log("--- INITIALIZING API CALL ---");
+      console.log("Target API:", API_URL);
+      console.log("Origin:", window.location.origin);
 
       if (!API_URL) {
-        console.error("CRITICAL: VITE_API_URL tidak ditemukan di .env!");
+        console.error("ERROR: VITE_API_URL IS UNDEFINED!");
         return;
       }
 
       try {
-        console.log("Memulai Fetching ke:", `${API_URL}/projects` , "dan", `${API_URL}/blogs`);
-        
         const [projRes, blogRes] = await Promise.all([
           axios.get(`${API_URL}/projects?limit=50`),
           axios.get(`${API_URL}/blogs?limit=50`)
         ]);
         
-        console.log("API Response Projects:", projRes.status, projRes.data);
-        console.log("API Response Blogs:", blogRes.status, blogRes.data);
+        console.log("Projects Received:", projRes.data.data?.length || 0);
+        console.log("Blogs Received:", blogRes.data.data?.length || 0);
 
         const fetchedProjects = (projRes.data.data || []).map(p => ({
           title: p.title,
@@ -67,26 +64,17 @@ function App() {
 
         setProjects(fetchedProjects);
         setBlogs(fetchedBlogs);
-        console.log("Data Berhasil Disinkronisasi ke State.");
+        console.log("--- SYNC COMPLETE ---");
 
       } catch (err) {
-        // DEBUG: Detail Error yang lebih spesifik
-        console.error("--- DEBUG API ERROR ---");
+        console.error("--- API CONNECTION FAILED ---");
         if (err.response) {
-          // Server merespon tapi dengan status code error (4xx, 5xx)
-          console.error("Server Error Data:", err.response.data);
-          console.error("Server Error Status:", err.response.status);
-          console.error("Server Error Headers:", err.response.headers);
+          console.error(`Status: ${err.response.status} - ${err.response.data?.error || 'Server Error'}`);
         } else if (err.request) {
-          // Request dikirim tapi tidak ada respon (Masalah CORS atau Network)
-          console.error("No Response Received. Kemungkinan besar masalah CORS atau Server Mati.");
-          console.error("Request Details:", err.request);
+          console.error("Network Error: Request was blocked by CORS or Server is down.");
         } else {
-          console.error("Request Setup Error:", err.message);
+          console.error("Setup Error:", err.message);
         }
-        console.log("Axios Config:", err.config);
-      } finally {
-        console.log("--- DEBUG API END ---");
       }
     };
 
@@ -259,12 +247,9 @@ function App() {
         <div ref={containerRef} className="flex flex-col min-h-screen bg-[var(--bg-main)]">
           <main className="flex-grow">
             
-            {/* HERO SECTION */}
             <section id="home" className="relative h-screen flex items-center justify-center px-8 overflow-hidden">
               <div className="absolute inset-0 pointer-events-none select-none">
-                <motion.div style={{ ...gpuStyle, y: yV1 }} className="absolute left-[5%] md:left-[22%] top-[15%] md:top-[12%] w-[30vw] md:w-[12vw] z-20">
-                  <motion.img {...smoothFloat(11)} src="/images/collage/flower1.png" className="w-full" />
-                </motion.div>
+                <motion.div style={{ ...gpuStyle, y: yV1 }} className="absolute left-[5%] md:left-[22%] top-[15%] md:top-[12%] w-[30vw] md:w-[12vw] z-20"><motion.img {...smoothFloat(11)} src="/images/collage/flower1.png" className="w-full" /></motion.div>
                 <motion.img style={{ ...gpuStyle, y: yV3 }} src="/images/collage/sculpture1.png" className="absolute left-[-20%] md:left-[-10%] top-[70%] md:top-[15%] w-[80vw] md:w-[36vw] z-10" />
                 <motion.img style={{ ...gpuStyle, y: yV4 }} src="/images/collage/sculpture2.png" className="absolute right-[-15%] md:right-[-3%] top-[5%] md:top-[0%] w-[70vw] md:w-[36vw] z-10" />
                 <motion.div style={{ ...gpuStyle, y: yV1 }} className="absolute left-[18%] top-[7%] md:top-[5%] w-[20vw] md:w-[10vw] blur-[2px]"><motion.img {...smoothFloat(12)} src="/images/collage/flower1.png" className="w-full" /></motion.div>
@@ -276,27 +261,17 @@ function App() {
                 <motion.div style={{ ...gpuStyle, y: yV5 }} className="absolute right-[20%] top-[70%] md:top-[60%] w-[20vw] md:w-[10vw] z-30"><motion.img {...smoothFloat(8)} src="/images/collage/flower2.png" className="w-full" /></motion.div>
               </div>
               <motion.div className="relative z-40 text-center">
-                <h1 className="text-5xl md:text-[6vw] font-medium tracking-tight leading-[1.1] mb-8" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>
-                  Building <br /> 
-                  <span className="opacity-40 italic" style={{ color: 'var(--text-main)' }}>Digital Experiences.</span>
-                </h1>
-                <p className="max-w-xl mx-auto text-base md:text-lg leading-relaxed font-light px-4" style={{ color: 'var(--text-main)' }}>
-                  Crafting aesthetic and functional digital solutions with a focus on high performance and exceptional user experience.
-                </p>
+                <h1 className="text-5xl md:text-[6vw] font-medium tracking-tight leading-[1.1] mb-8" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>Building <br /> <span className="opacity-40 italic" style={{ color: 'var(--text-main)' }}>Digital Experiences.</span></h1>
+                <p className="max-w-xl mx-auto text-base md:text-lg leading-relaxed font-light px-4" style={{ color: 'var(--text-main)' }}>Crafting aesthetic and functional digital solutions with a focus on high performance and exceptional user experience.</p>
               </motion.div>
             </section>
 
-            {/* ABOUT SECTION */}
             <section id="about" className="relative w-full h-screen overflow-hidden flex items-center justify-center px-6 md:px-8">
-              <motion.div style={{ y: yAboutBg }} className="absolute inset-0 z-0 pointer-events-none">
-                <img src="/images/bgcloude.jpg" alt="Cloud Background" className="w-full h-[120%] object-cover transition-all duration-700" style={{ filter: 'var(--cloud-brightness)' }} />
-              </motion.div>
+              <motion.div style={{ y: yAboutBg }} className="absolute inset-0 z-0 pointer-events-none"><img src="/images/bgcloude.jpg" alt="Cloud Background" className="w-full h-[120%] object-cover transition-all duration-700" style={{ filter: 'var(--cloud-brightness)' }} /></motion.div>
               <div className="relative z-10 flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16 max-w-5xl mx-auto w-full">
                 <div ref={imageRef} className="shrink-0 relative">
                   <motion.div style={{ filter: filterStyle, rotate: rotateValue }} className="relative w-[180px] md:w-[250px] aspect-[3/4] flex items-center justify-center overflow-hidden">
-                    <div className="w-[60%] h-[60%] overflow-hidden rounded-full bg-zinc-800 transform translate-y-1">
-                      <video src="/images/profile-video.mp4" className="w-full h-full object-cover" autoPlay loop muted playsInline />
-                    </div>
+                    <div className="w-[60%] h-[60%] overflow-hidden rounded-full bg-zinc-800 transform translate-y-1"><video src="/images/profile-video.mp4" className="w-full h-full object-cover" autoPlay loop muted playsInline /></div>
                     <img src="/images/frame-oval.png" alt="Frame" className="absolute w-full h-full object-contain pointer-events-none z-10" />
                   </motion.div>
                 </div>
@@ -305,36 +280,20 @@ function App() {
                     <span className="text-[10px] font-black uppercase tracking-[0.5em] mb-2 md:mb-4 block opacity-40" style={{ color: 'var(--text-bold)' }}>About — I</span>
                     <h2 className="text-4xl md:text-6xl font-bold opacity-80" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>The Essence.</h2>
                   </div>
-                  <div className="flex flex-col gap-3 md:gap-4 text-base md:text-xl leading-relaxed md:leading-[1.8] font-light tracking-tight" style={{ color: 'var(--text-bold)' }}>
-                    <p>I am a Computer Science student focused on Web and Android development, building end-to-end digital solutions.</p>
-                    <p>Passionate about creating fluid animations and minimal interfaces that bridge the gap between design and technology.</p>
-                  </div>
+                  <div className="flex flex-col gap-3 md:gap-4 text-base md:text-xl leading-relaxed md:leading-[1.8] font-light tracking-tight" style={{ color: 'var(--text-bold)' }}><p>I am a Computer Science student focused on Web and Android development, building end-to-end digital solutions.</p><p>Passionate about creating fluid animations and minimal interfaces that bridge the gap between design and technology.</p></div>
                 </div>
               </div>
             </section>
 
-            {/* EXPERIENCE SECTION */}
             <div className="relative overflow-visible">
               <div id="experience" className="absolute top-[140vh] md:top-[220vh] left-0 w-full h-1 pointer-events-none z-[100]" />
               <section ref={zoomRef} className="relative h-[300vh] md:h-[450vh] w-full z-20 bg-[var(--bg-main)] shadow-[0_40px_60px_-20px_rgba(0,0,0,0.3)]">
                 <div className="sticky top-0 h-screen w-full flex flex-col items-center justify-start overflow-hidden bg-[var(--bg-main)]">
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <motion.div style={{ scale: bgScale, filter: brightnessStyle, ...gpuStyle, zIndex: 5 }} className="absolute w-[150vw] aspect-[4/3] md:w-[75vw] overflow-hidden">
-                      <img src="/images/bg-landscape.jpeg" alt="Landscape" className="w-full h-full object-cover" />
-                    </motion.div>
-                    <motion.div style={{ scale: frameScale, ...gpuStyle, zIndex: 10 }} className="absolute w-[90vw] md:w-[50vw] aspect-[4/3]">
-                      <img src="/images/frame-landscape.png" alt="Frame" className="absolute w-full h-full object-contain scale-[1.15]" />
-                    </motion.div>
+                    <motion.div style={{ scale: bgScale, filter: brightnessStyle, ...gpuStyle, zIndex: 5 }} className="absolute w-[150vw] aspect-[4/3] md:w-[75vw] overflow-hidden"><img src="/images/bg-landscape.jpeg" alt="Landscape" className="w-full h-full object-cover" /></motion.div>
+                    <motion.div style={{ scale: frameScale, ...gpuStyle, zIndex: 10 }} className="absolute w-[90vw] md:w-[50vw] aspect-[4/3]"><img src="/images/frame-landscape.png" alt="Frame" className="absolute w-full h-full object-contain scale-[1.15]" /></motion.div>
                   </div>
-                  <motion.div 
-                    style={{ 
-                      opacity: opacityExperience, 
-                      y: yExperienceContent, 
-                      pointerEvents: pointerEvents,
-                      filter: blurExperience 
-                    }} 
-                    className="relative z-20 w-full max-w-5xl px-8 pt-[30vh] md:pt-[40vh] pb-[25vh]"
-                  >
+                  <motion.div style={{ opacity: opacityExperience, y: yExperienceContent, pointerEvents: pointerEvents, filter: blurExperience }} className="relative z-20 w-full max-w-5xl px-8 pt-[30vh] md:pt-[40vh] pb-[25vh]">
                     <div className="text-center mb-14 md:mb-24">
                       <span className="text-[10px] font-black uppercase tracking-[0.5em] mb-4 block opacity-80" style={{ color: 'var(--text-bold)' }}>Experience — II</span>
                       <h2 className="text-5xl md:text-8xl font-bold" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>The Journey</h2>
@@ -356,7 +315,6 @@ function App() {
                 </div>
               </section>
 
-              {/* DYNAMIC PROJECTS SECTION */}
               <div id="projects" className="absolute left-0 w-full h-1 pointer-events-none z-[100]" />
               <section ref={projectSectionRef} className="relative h-[500vh] bg-[var(--bg-main)] z-10 -mt-[100vh]">
                 <div className="sticky top-0 h-screen w-full flex flex-col items-center justify-center overflow-hidden">
@@ -391,17 +349,11 @@ function App() {
                 </div>
               </section>
 
-              {/* DYNAMIC BLOG SECTION */}
               <section ref={blogSectionRef} className="relative z-30 min-h-screen overflow-hidden flex flex-col justify-center">
-                <motion.div style={{ y: yBlogBg }} className="absolute inset-0 z-0 pointer-events-none">
-                  <img src="/images/bgcloude.jpg" alt="Cloud Background" className="w-full h-[120%] object-cover transition-all duration-500" style={{ filter: 'var(--cloud-brightness)' }} />
-                </motion.div>
+                <motion.div style={{ y: yBlogBg }} className="absolute inset-0 z-0 pointer-events-none"><img src="/images/bgcloude.jpg" alt="Cloud Background" className="w-full h-[120%] object-cover transition-all duration-500" style={{ filter: 'var(--cloud-brightness)' }} /></motion.div>
                 <div className="max-w-7xl mx-auto relative w-full flex flex-col items-center z-10 px-6">
                   <div id="blog" className="absolute left-0 w-full h-1 pointer-events-none" />
-                  <motion.div 
-                    style={{ y: blogTitleY, filter: blurBlogTitle }} 
-                    className="text-center mb-0 z-10 pointer-events-none sticky top-32 md:top-40"
-                  >
+                  <motion.div style={{ y: blogTitleY, filter: blurBlogTitle }} className="text-center mb-0 z-10 pointer-events-none sticky top-32 md:top-40">
                     <span className="text-[10px] font-black uppercase tracking-[0.5em] block opacity-40" style={{ color: 'var(--text-bold)' }}>Blog — IV</span>
                     <h2 className="text-5xl md:text-[10vw] font-bold leading-none" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>Insights.</h2>
                   </motion.div>
@@ -409,31 +361,15 @@ function App() {
                   <motion.div style={{ y: blogContentY }} className="w-full flex flex-col items-center pt-20 md:pt-32">
                     <div className="relative z-20 grid grid-cols-1 md:grid-cols-3 gap-8 mb-12 items-stretch w-full">
                       <AnimatePresence mode="wait">
-                        <motion.div 
-                          key={currentPage} 
-                          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.5 }}
-                          className={`col-span-1 md:col-span-3 grid ${isMobile ? 'grid-cols-1 gap-4 px-4' : 'grid-cols-3 gap-8'}`}
-                        >
+                        <motion.div key={currentPage} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.5 }} className={`col-span-1 md:col-span-3 grid ${isMobile ? 'grid-cols-1 gap-4 px-4' : 'grid-cols-3 gap-8'}`}>
                           {currentBlogs.length > 0 ? currentBlogs.map((blog, idx) => (
                             <div key={`blog-${idx}`} className="group flex flex-col gap-4">
                               <div className="relative aspect-[3/2] overflow-hidden rounded-3xl border border-[var(--border-nav)] bg-zinc-900/5 shadow-xl">
                                 <img src={blog.image} className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110" alt={blog.title} />
                                 <div className="absolute top-4 left-4"><span className="px-3 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/20 text-[10px] font-bold uppercase tracking-widest text-white">{blog.category}</span></div>
-                                
-                                {isMobile && (
-                                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-6">
-                                    <span className="text-[10px] font-medium uppercase tracking-widest text-white/70 mb-1">{blog.date}</span>
-                                    <h3 className="text-xl font-medium leading-tight text-white">{blog.title}</h3>
-                                  </div>
-                                )}
+                                {isMobile && ( <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-6"><span className="text-[10px] font-medium uppercase tracking-widest text-white/70 mb-1">{blog.date}</span><h3 className="text-xl font-medium leading-tight text-white">{blog.title}</h3></div> )}
                               </div>
-                              
-                              {!isMobile && (
-                                <div className="flex flex-col gap-1 px-2">
-                                  <span className="text-[10px] font-medium uppercase tracking-widest" style={{ color: 'var(--text-main)', opacity: 0.6 }}>{blog.date}</span>
-                                  <h3 className="text-xl font-medium leading-tight group-hover:italic transition-all duration-300" style={{ color: 'var(--text-bold)' }}>{blog.title}</h3>
-                                </div>
-                              )}
+                              {!isMobile && ( <div className="flex flex-col gap-1 px-2"><span className="text-[10px] font-medium uppercase tracking-widest" style={{ color: 'var(--text-main)', opacity: 0.6 }}>{blog.date}</span><h3 className="text-xl font-medium leading-tight group-hover:italic transition-all duration-300" style={{ color: 'var(--text-bold)' }}>{blog.title}</h3></div> )}
                             </div>
                           )) : [1,2,3].map(n => <div key={n} className="aspect-[3/2] bg-zinc-900 animate-pulse rounded-3xl" />)}
                         </motion.div>
@@ -453,47 +389,17 @@ function App() {
                 </div>
               </section>
 
-              {/* CONTACT SECTION */}
               <section ref={contactSectionRef} id="contact" className="relative z-40 bg-[var(--bg-main)] overflow-visible h-[150vh]">
                 <div className="sticky top-0 h-screen w-full flex items-center justify-center overflow-hidden">
                   <div className="max-w-6xl w-full px-8 mx-auto flex flex-col h-full relative">
-                    <div className="absolute inset-0 flex items-center justify-center md:justify-start md:pl-10 z-0 pointer-events-none">
-                      <motion.div style={{ y: yContactImageSticky, opacity: opacityContact }} className="relative w-full max-w-md aspect-[4/3] rounded-2xl overflow-hidden">
-                        <img src="/images/collage/sculpture1.png" className="w-full h-full object-cover" alt="Contact Visual" />
-                      </motion.div>
-                    </div>
-
-                    <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
-                        <motion.div style={{ y: yContactListScroll, opacity: opacityContact, filter: blurContact }} className="-translate-y-[15vh]">
-                            <h2 className="text-6xl md:text-[clamp(4rem,8vw,10rem)] font-bold tracking-tighter leading-none text-center" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>Contact — V</h2>
-                        </motion.div>
-                    </div>
-
+                    <div className="absolute inset-0 flex items-center justify-center md:justify-start md:pl-10 z-0 pointer-events-none"><motion.div style={{ y: yContactImageSticky, opacity: opacityContact }} className="relative w-full max-w-md aspect-[4/3] rounded-2xl overflow-hidden"><img src="/images/collage/sculpture1.png" className="w-full h-full object-cover" alt="Contact Visual" /></motion.div></div>
+                    <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none"><motion.div style={{ y: yContactListScroll, opacity: opacityContact, filter: blurContact }} className="-translate-y-[15vh]"><h2 className="text-6xl md:text-[clamp(4rem,8vw,10rem)] font-bold tracking-tighter leading-none text-center" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>Contact — V</h2></motion.div></div>
                     <div className="relative w-full h-full flex items-center justify-center md:justify-end z-20">
                       <motion.div style={{ y: yContactListScroll, opacity: opacityContact, filter: blurContact }} className="flex flex-col gap-10 md:gap-24 w-full max-w-xl md:-ml-20">
                         <div className="h-[70vh] md:h-[105vh] pointer-events-none" />
-                        <div className="flex flex-row gap-6 items-start">
-                          <span className="text-xl italic opacity-50 shrink-0 w-24 md:w-32" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>Services</span>
-                          <div className="flex flex-col gap-2">
-                            {['Custom Web Apps', 'Portfolio Design', 'Landingpage', 'UI UX'].map((item) => (<span key={item} className="text-3xl md:text-5xl font-medium tracking-tight" style={{ color: 'var(--text-bold)' }}>{item}</span>))}
-                          </div>
-                        </div>
-                        <div className="flex flex-row gap-6 items-start">
-                          <span className="text-xl italic opacity-50 shrink-0 w-24 md:w-32" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>Connect</span>
-                          <div className="flex flex-col gap-2">
-                            <a href="mailto:fatahabdilahh@gmail.com" className="text-3xl md:text-5xl font-medium tracking-tight hover:italic transition-all duration-300" style={{ color: 'var(--text-bold)' }}>fatahabdilahh@gmail.com</a>
-                            <a href="https://www.linkedin.com/in/fataabdilah/" target="_blank" rel="noopener noreferrer" className="text-3xl md:text-5xl font-medium tracking-tight hover:italic transition-all duration-300" style={{ color: 'var(--text-bold)' }}>LinkedIn</a>
-                            <a href="https://github.com/fatahabdilah" target="_blank" rel="noopener noreferrer" className="text-3xl md:text-5xl font-medium tracking-tight hover:italic transition-all duration-300" style={{ color: 'var(--text-bold)' }}>Github</a>
-                            <a href="https://www.instagram.com/fatahhhhhhhhhhhhhh" target="_blank" rel="noopener noreferrer" className="text-3xl md:text-5xl font-medium tracking-tight hover:italic transition-all duration-300" style={{ color: 'var(--text-bold)' }}>Instagram</a>
-                          </div>
-                        </div>
-                        <div className="flex flex-row gap-6 items-start">
-                          <span className="text-xl italic opacity-50 shrink-0 w-24 md:w-32" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>Location</span>
-                          <div className="flex flex-col gap-2">
-                            <span className="text-3xl md:text-5xl font-medium tracking-tight" style={{ color: 'var(--text-bold)' }}>Tangerang City, Indonesia</span>
-                            <span className="text-3xl md:text-5xl font-medium tracking-tight opacity-40" style={{ color: 'var(--text-bold)' }}>Available Worldwide</span>
-                          </div>
-                        </div>
+                        <div className="flex flex-row gap-6 items-start"><span className="text-xl italic opacity-50 shrink-0 w-24 md:w-32" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>Services</span><div className="flex flex-col gap-2">{['Custom Web Apps', 'Portfolio Design', 'Landingpage', 'UI UX'].map((item) => (<span key={item} className="text-3xl md:text-5xl font-medium tracking-tight" style={{ color: 'var(--text-bold)' }}>{item}</span>))}</div></div>
+                        <div className="flex flex-row gap-6 items-start"><span className="text-xl italic opacity-50 shrink-0 w-24 md:w-32" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>Connect</span><div className="flex flex-col gap-2"><a href="mailto:fatahabdilahh@gmail.com" className="text-3xl md:text-5xl font-medium tracking-tight hover:italic transition-all duration-300" style={{ color: 'var(--text-bold)' }}>fatahabdilahh@gmail.com</a><a href="https://www.linkedin.com/in/fataabdilah/" target="_blank" rel="noopener noreferrer" className="text-3xl md:text-5xl font-medium tracking-tight hover:italic transition-all duration-300" style={{ color: 'var(--text-bold)' }}>LinkedIn</a><a href="https://github.com/fatahabdilah" target="_blank" rel="noopener noreferrer" className="text-3xl md:text-5xl font-medium tracking-tight hover:italic transition-all duration-300" style={{ color: 'var(--text-bold)' }}>Github</a><a href="https://www.instagram.com/fatahhhhhhhhhhhhhh" target="_blank" rel="noopener noreferrer" className="text-3xl md:text-5xl font-medium tracking-tight hover:italic transition-all duration-300" style={{ color: 'var(--text-bold)' }}>Instagram</a></div></div>
+                        <div className="flex flex-row gap-6 items-start"><span className="text-xl italic opacity-50 shrink-0 w-24 md:w-32" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>Location</span><div className="flex flex-col gap-2"><span className="text-3xl md:text-5xl font-medium tracking-tight" style={{ color: 'var(--text-bold)' }}>Tangerang City, Indonesia</span><span className="text-3xl md:text-5xl font-medium tracking-tight opacity-40" style={{ color: 'var(--text-bold)' }}>Available Worldwide</span></div></div>
                       </motion.div>
                     </div>
                   </div>
