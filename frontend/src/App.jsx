@@ -29,34 +29,64 @@ function App() {
   const row1Ref = useRef(null);
   const row2Ref = useRef(null);
 
-  // --- FETCH DATA DARI BACKEND ---
+  // --- FETCH DATA DARI BACKEND DENGAN DEBUGGING ---
   useEffect(() => {
     const fetchPortfolioData = async () => {
+      // DEBUG: Cek apakah API_URL terbaca
+      console.log("--- DEBUG API START ---");
+      console.log("Base API URL dari ENV:", API_URL);
+      console.log("Current Origin:", window.location.origin);
+
+      if (!API_URL) {
+        console.error("CRITICAL: VITE_API_URL tidak ditemukan di .env!");
+        return;
+      }
+
       try {
-        // Mengambil data Projects dan Blogs secara paralel
+        console.log("Memulai Fetching ke:", `${API_URL}/projects` , "dan", `${API_URL}/blogs`);
+        
         const [projRes, blogRes] = await Promise.all([
           axios.get(`${API_URL}/projects?limit=50`),
           axios.get(`${API_URL}/blogs?limit=50`)
         ]);
         
-        // Memetakan data Project agar sesuai dengan struktur tampilan visual lama
+        console.log("API Response Projects:", projRes.status, projRes.data);
+        console.log("API Response Blogs:", blogRes.status, blogRes.data);
+
         const fetchedProjects = (projRes.data.data || []).map(p => ({
           title: p.title,
           image: p.imageUrl
         }));
 
-        // Memetakan data Blog agar sesuai dengan struktur tampilan visual lama
         const fetchedBlogs = (blogRes.data.data || []).map(b => ({
           title: b.title,
           date: new Date(b.createdAt).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
-          category: "Insight", // Default category
+          category: "Insight",
           image: b.thumbnailUrl
         }));
 
         setProjects(fetchedProjects);
         setBlogs(fetchedBlogs);
+        console.log("Data Berhasil Disinkronisasi ke State.");
+
       } catch (err) {
-        console.error("Gagal sinkronisasi data API:", err);
+        // DEBUG: Detail Error yang lebih spesifik
+        console.error("--- DEBUG API ERROR ---");
+        if (err.response) {
+          // Server merespon tapi dengan status code error (4xx, 5xx)
+          console.error("Server Error Data:", err.response.data);
+          console.error("Server Error Status:", err.response.status);
+          console.error("Server Error Headers:", err.response.headers);
+        } else if (err.request) {
+          // Request dikirim tapi tidak ada respon (Masalah CORS atau Network)
+          console.error("No Response Received. Kemungkinan besar masalah CORS atau Server Mati.");
+          console.error("Request Details:", err.request);
+        } else {
+          console.error("Request Setup Error:", err.message);
+        }
+        console.log("Axios Config:", err.config);
+      } finally {
+        console.log("--- DEBUG API END ---");
       }
     };
 
@@ -155,7 +185,6 @@ function App() {
   const xProjectsRow1 = useTransform(projectScroll, [0, 1], [-movementDistance * 3, movementDistance * 2.5]);
   const xProjectsRow2 = useTransform(projectScroll, [0, 1], [movementDistance * 3, -movementDistance * 2.5]);
 
-  // Membagi data proyek dinamis ke dalam dua baris animasi
   const projectsRow1 = projects.slice(0, Math.ceil(projects.length / 2));
   const projectsRow2 = projects.slice(Math.ceil(projects.length / 2));
 
@@ -200,7 +229,6 @@ function App() {
       <Header onHomeClick={scrollToTop} onLogoClick={handleLogoClick} />
       
       <div className="main-content" onMouseMove={handleMouseMove}>
-        {/* Experience Hover Image */}
         <motion.div
           className="fixed pointer-events-none z-[100] w-[280px] h-[350px] overflow-hidden rounded-2xl shadow-2xl border border-[var(--border-nav)] backdrop-blur-md"
           style={{
@@ -340,23 +368,23 @@ function App() {
                   <div className="flex flex-col gap-[2vh] md:gap-[4vh] w-full flex-grow justify-center items-center pb-[8vh]">
                     <div className="w-full flex justify-center overflow-visible">
                         <motion.div ref={row1Ref} style={{ x: xProjectsRow1 }} className="flex gap-[2vh] md:gap-[4vh] px-8 w-max">
-                        {projectsRow1.map((proj, i) => (
+                        {projectsRow1.length > 0 ? projectsRow1.map((proj, i) => (
                             <div key={`row1-${i}`} className="shrink-0 h-[22vh] md:h-[30vh] aspect-[3/2] group relative overflow-hidden rounded-2xl md:rounded-3xl border border-[var(--border-nav)]">
                             <img src={proj.image} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" alt={proj.title} />
                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4 md:p-6"><h4 className="text-white text-base md:text-xl font-medium">{proj.title}</h4></div>
                             </div>
-                        ))}
+                        )) : [1,2,3].map(n => <div key={n} className="shrink-0 h-[22vh] md:h-[30vh] aspect-[3/2] bg-zinc-900 animate-pulse rounded-2xl" />)}
                         </motion.div>
                     </div>
 
                     <div className="w-full flex justify-center overflow-visible">
                         <motion.div ref={row2Ref} style={{ x: xProjectsRow2 }} className="flex gap-[2vh] md:gap-[4vh] px-8 w-max">
-                        {projectsRow2.map((proj, i) => (
+                        {projectsRow2.length > 0 ? projectsRow2.map((proj, i) => (
                             <div key={`row2-${i}`} className="shrink-0 h-[22vh] md:h-[30vh] aspect-[3/2] group relative overflow-hidden rounded-2xl md:rounded-3xl border border-[var(--border-nav)]">
                             <img src={proj.image} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" alt={proj.title} />
                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4 md:p-6"><h4 className="text-white text-base md:text-xl font-medium">{proj.title}</h4></div>
                             </div>
-                        ))}
+                        )) : [1,2,3].map(n => <div key={n} className="shrink-0 h-[22vh] md:h-[30vh] aspect-[3/2] bg-zinc-900 animate-pulse rounded-2xl" />)}
                         </motion.div>
                     </div>
                   </div>
@@ -386,7 +414,7 @@ function App() {
                           initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.5 }}
                           className={`col-span-1 md:col-span-3 grid ${isMobile ? 'grid-cols-1 gap-4 px-4' : 'grid-cols-3 gap-8'}`}
                         >
-                          {currentBlogs.map((blog, idx) => (
+                          {currentBlogs.length > 0 ? currentBlogs.map((blog, idx) => (
                             <div key={`blog-${idx}`} className="group flex flex-col gap-4">
                               <div className="relative aspect-[3/2] overflow-hidden rounded-3xl border border-[var(--border-nav)] bg-zinc-900/5 shadow-xl">
                                 <img src={blog.image} className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110" alt={blog.title} />
@@ -407,7 +435,7 @@ function App() {
                                 </div>
                               )}
                             </div>
-                          ))}
+                          )) : [1,2,3].map(n => <div key={n} className="aspect-[3/2] bg-zinc-900 animate-pulse rounded-3xl" />)}
                         </motion.div>
                       </AnimatePresence>
                     </div>
@@ -415,11 +443,11 @@ function App() {
                     <div className="relative z-30 flex justify-center items-center gap-2 w-full">
                       <button onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1} className="w-8 h-8 rounded-full border border-[var(--border-nav)] flex items-center justify-center opacity-70 hover:opacity-100 bg-white/5 backdrop-blur-sm transition-all disabled:opacity-10 cursor-pointer text-[var(--text-bold)] text-[10px] font-bold">&lt;</button>
                       <div className="flex gap-2 mx-2">
-                        {Array.from({ length: totalPages }, (_, i) => i + 1).map(n => (
+                        {Array.from({ length: totalPages || 1 }, (_, i) => i + 1).map(n => (
                           <button key={`page-${n}`} onClick={() => setCurrentPage(n)} className={`w-10 h-10 rounded-full flex items-center justify-center text-[12px] font-bold transition-all cursor-pointer ${currentPage === n ? 'bg-[var(--text-bold)] text-[#0a0a0c] shadow-lg' : 'border border-[var(--border-nav)] opacity-70 hover:opacity-100 bg-white/5 text-[var(--text-bold)]'}`}>{n}</button>
                         ))}
                       </div>
-                      <button onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages} className="w-8 h-8 rounded-full border border-[var(--border-nav)] flex items-center justify-center opacity-70 hover:opacity-100 bg-white/5 backdrop-blur-sm transition-all disabled:opacity-10 cursor-pointer text-[var(--text-bold)] text-[10px] font-bold">&gt;</button>
+                      <button onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages || 1))} disabled={currentPage === (totalPages || 1)} className="w-8 h-8 rounded-full border border-[var(--border-nav)] flex items-center justify-center opacity-70 hover:opacity-100 bg-white/5 backdrop-blur-sm transition-all disabled:opacity-10 cursor-pointer text-[var(--text-bold)] text-[10px] font-bold">&gt;</button>
                     </div>
                   </motion.div>
                 </div>
