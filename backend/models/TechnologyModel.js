@@ -62,4 +62,4 @@ skillSchema.pre('findOneAndDelete', async function(next) {
 });
 
 
-module.exports = mongoose.model('Skill', skillSchema);
+module.exports = mongoose.model('Technology', skillSchema);

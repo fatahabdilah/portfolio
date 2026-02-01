@@ -11,7 +11,6 @@ const Schema = mongoose.Schema;
  * @property {string} imageUrl - Secure URL for the main image (hosted on Cloudinary).
  * @property {string} imagePublicId - Cloudinary Public ID for asset management.
  * @property {string} demoUrl - Optional URL for the live demo.
- * @property {string} repoUrl - Optional URL for the GitHub repository.
  * @property {ObjectId} user - Reference to the Admin user who owns the project.
  */
 const projectSchema = new Schema({
@@ -53,11 +52,7 @@ const projectSchema = new Schema({
         trim: true,
     },
     
-    // Optional Repository Link (Whitespace removed)
-    repoUrl: {
-        type: String,
-        trim: true,
-    },
+ 
     
     // Owner/Admin Reference (Authorization and data isolation)
     user: {

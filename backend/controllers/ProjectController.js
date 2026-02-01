@@ -57,7 +57,7 @@ const processTechnologies = (technologies) => {
  */
 const createProject = async (req, res) => {
     // Menggunakan 'content'
-    const { title, content, technologies, demoUrl, repoUrl } = req.body;
+    const { title, content, technologies, demoUrl } = req.body;
     const userId = req.user._id;
     let result;
 
@@ -103,7 +103,6 @@ const createProject = async (req, res) => {
             imageUrl: result.secure_url,
             imagePublicId: result.public_id,
             demoUrl,
-            repoUrl,
             user: userId,
         });
         

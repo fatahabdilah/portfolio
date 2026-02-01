@@ -1,5 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { motion, useScroll, useTransform, AnimatePresence, useSpring, useMotionValue } from 'framer-motion';
+import axios from 'axios';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import LoadingScreen from './components/LoadingScreen';
@@ -9,6 +10,13 @@ function App() {
   const [hoveredIndex, setHoveredIndex] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [isMobile, setIsMobile] = useState(false);
+
+  // --- API DATA STATE ---
+  const [projects, setProjects] = useState([]);
+  const [blogs, setBlogs] = useState([]);
+  
+  // Mengambil Base URL dari variabel environment .env
+  const API_URL = import.meta.env.VITE_API_URL;
 
   const containerRef = useRef(null);
   const imageRef = useRef(null);
@@ -20,6 +28,40 @@ function App() {
   const [movementDistance, setMovementDistance] = useState(500);
   const row1Ref = useRef(null);
   const row2Ref = useRef(null);
+
+  // --- FETCH DATA DARI BACKEND ---
+  useEffect(() => {
+    const fetchPortfolioData = async () => {
+      try {
+        // Mengambil data Projects dan Blogs secara paralel
+        const [projRes, blogRes] = await Promise.all([
+          axios.get(`${API_URL}/projects?limit=50`),
+          axios.get(`${API_URL}/blogs?limit=50`)
+        ]);
+        
+        // Memetakan data Project agar sesuai dengan struktur tampilan visual lama
+        const fetchedProjects = (projRes.data.data || []).map(p => ({
+          title: p.title,
+          image: p.imageUrl
+        }));
+
+        // Memetakan data Blog agar sesuai dengan struktur tampilan visual lama
+        const fetchedBlogs = (blogRes.data.data || []).map(b => ({
+          title: b.title,
+          date: new Date(b.createdAt).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
+          category: "Insight", // Default category
+          image: b.thumbnailUrl
+        }));
+
+        setProjects(fetchedProjects);
+        setBlogs(fetchedBlogs);
+      } catch (err) {
+        console.error("Gagal sinkronisasi data API:", err);
+      }
+    };
+
+    fetchPortfolioData();
+  }, [API_URL]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -87,8 +129,6 @@ function App() {
 
   const frameScale = useTransform(zoomScroll, [0, 0.5], [1, 10]);
   const bgScale = useTransform(zoomScroll, [0, 0.2, 0.5], [0.4, 1.8, 2.1]); 
-  
-  // Dikunci ke nilai kecerahan gelap (0.8)
   const bgBrightnessScroll = useTransform(zoomScroll, [0.2, 0.9], [0.8, 0.4]);
   const brightnessStyle = useTransform(bgBrightnessScroll, (v) => `brightness(${v})`);
 
@@ -115,19 +155,9 @@ function App() {
   const xProjectsRow1 = useTransform(projectScroll, [0, 1], [-movementDistance * 3, movementDistance * 2.5]);
   const xProjectsRow2 = useTransform(projectScroll, [0, 1], [movementDistance * 3, -movementDistance * 2.5]);
 
-  const projectsRow1 = [
-    { title: "Lumina Dashboard", image: "/images/collage/flower1.png" },
-    { title: "Aether Mobile", image: "/images/collage/sculpture1.png" },
-    { title: "Chronos Portal", image: "/images/collage/flower2.png" },
-    { title: "Nova Identity", image: "/images/collage/sculpture2.png" },
-  ];
-
-  const projectsRow2 = [
-    { title: "Zenith App", image: "/images/collage/flower3.png" },
-    { title: "Vortex Web", image: "/images/collage/sculpture1.png" },
-    { title: "Solaris UI", image: "/images/collage/flower1.png" },
-    { title: "Nebula Core", image: "/images/collage/sculpture2.png" },
-  ];
+  // Membagi data proyek dinamis ke dalam dua baris animasi
+  const projectsRow1 = projects.slice(0, Math.ceil(projects.length / 2));
+  const projectsRow2 = projects.slice(Math.ceil(projects.length / 2));
 
   const { scrollYProgress: blogScroll } = useScroll({
     target: blogSectionRef,
@@ -139,19 +169,10 @@ function App() {
   const blogContentY = useTransform(blogScroll, [0.4, 1], [isMobile ? 50 : 0, -250]); 
   const yBlogBg = useTransform(blogScroll, [0, 1], ["-10%", "10%"]);
 
-  const allBlogs = [
-    { title: "The Future of Web Animation", date: "Jan 12, 2024", category: "Design", image: "/images/collage/flower1.png" },
-    { title: "Mastering Framer Motion", date: "Feb 05, 2024", category: "Tech", image: "/images/collage/sculpture1.png" },
-    { title: "Minimalism in UI Design", date: "Mar 20, 2024", category: "Opinion", image: "/images/collage/flower3.png" },
-    { title: "React Performance Tips", date: "Apr 15, 2024", category: "Dev", image: "/images/collage/sculpture2.png" },
-    { title: "Digital Craftsmanship", date: "May 02, 2024", category: "Aesthetic", image: "/images/collage/flower2.png" },
-    { title: "Modern Workflow", date: "Jun 18, 2024", category: "Productivity", image: "/images/collage/flower1.png" },
-  ];
-
   const indexOfLastBlog = currentPage * blogsPerPage;
   const indexOfFirstBlog = indexOfLastBlog - blogsPerPage;
-  const currentBlogs = allBlogs.slice(indexOfFirstBlog, indexOfLastBlog);
-  const totalPages = Math.ceil(allBlogs.length / blogsPerPage);
+  const currentBlogs = blogs.slice(indexOfFirstBlog, indexOfLastBlog);
+  const totalPages = Math.ceil(blogs.length / blogsPerPage);
 
   const { scrollYProgress: contactScroll } = useScroll({
     target: contactSectionRef,
@@ -179,6 +200,7 @@ function App() {
       <Header onHomeClick={scrollToTop} onLogoClick={handleLogoClick} />
       
       <div className="main-content" onMouseMove={handleMouseMove}>
+        {/* Experience Hover Image */}
         <motion.div
           className="fixed pointer-events-none z-[100] w-[280px] h-[350px] overflow-hidden rounded-2xl shadow-2xl border border-[var(--border-nav)] backdrop-blur-md"
           style={{
@@ -209,7 +231,7 @@ function App() {
         <div ref={containerRef} className="flex flex-col min-h-screen bg-[var(--bg-main)]">
           <main className="flex-grow">
             
-            {/* HERO */}
+            {/* HERO SECTION */}
             <section id="home" className="relative h-screen flex items-center justify-center px-8 overflow-hidden">
               <div className="absolute inset-0 pointer-events-none select-none">
                 <motion.div style={{ ...gpuStyle, y: yV1 }} className="absolute left-[5%] md:left-[22%] top-[15%] md:top-[12%] w-[30vw] md:w-[12vw] z-20">
@@ -236,7 +258,7 @@ function App() {
               </motion.div>
             </section>
 
-            {/* ABOUT */}
+            {/* ABOUT SECTION */}
             <section id="about" className="relative w-full h-screen overflow-hidden flex items-center justify-center px-6 md:px-8">
               <motion.div style={{ y: yAboutBg }} className="absolute inset-0 z-0 pointer-events-none">
                 <img src="/images/bgcloude.jpg" alt="Cloud Background" className="w-full h-[120%] object-cover transition-all duration-700" style={{ filter: 'var(--cloud-brightness)' }} />
@@ -263,7 +285,7 @@ function App() {
               </div>
             </section>
 
-            {/* EXPERIENCE */}
+            {/* EXPERIENCE SECTION */}
             <div className="relative overflow-visible">
               <div id="experience" className="absolute top-[140vh] md:top-[220vh] left-0 w-full h-1 pointer-events-none z-[100]" />
               <section ref={zoomRef} className="relative h-[300vh] md:h-[450vh] w-full z-20 bg-[var(--bg-main)] shadow-[0_40px_60px_-20px_rgba(0,0,0,0.3)]">
@@ -306,7 +328,7 @@ function App() {
                 </div>
               </section>
 
-              {/* PROJECTS SECTION */}
+              {/* DYNAMIC PROJECTS SECTION */}
               <div id="projects" className="absolute left-0 w-full h-1 pointer-events-none z-[100]" />
               <section ref={projectSectionRef} className="relative h-[500vh] bg-[var(--bg-main)] z-10 -mt-[100vh]">
                 <div className="sticky top-0 h-screen w-full flex flex-col items-center justify-center overflow-hidden">
@@ -319,7 +341,7 @@ function App() {
                     <div className="w-full flex justify-center overflow-visible">
                         <motion.div ref={row1Ref} style={{ x: xProjectsRow1 }} className="flex gap-[2vh] md:gap-[4vh] px-8 w-max">
                         {projectsRow1.map((proj, i) => (
-                            <div key={i} className="shrink-0 h-[22vh] md:h-[30vh] aspect-[3/2] group relative overflow-hidden rounded-2xl md:rounded-3xl border border-[var(--border-nav)]">
+                            <div key={`row1-${i}`} className="shrink-0 h-[22vh] md:h-[30vh] aspect-[3/2] group relative overflow-hidden rounded-2xl md:rounded-3xl border border-[var(--border-nav)]">
                             <img src={proj.image} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" alt={proj.title} />
                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4 md:p-6"><h4 className="text-white text-base md:text-xl font-medium">{proj.title}</h4></div>
                             </div>
@@ -330,7 +352,7 @@ function App() {
                     <div className="w-full flex justify-center overflow-visible">
                         <motion.div ref={row2Ref} style={{ x: xProjectsRow2 }} className="flex gap-[2vh] md:gap-[4vh] px-8 w-max">
                         {projectsRow2.map((proj, i) => (
-                            <div key={i} className="shrink-0 h-[22vh] md:h-[30vh] aspect-[3/2] group relative overflow-hidden rounded-2xl md:rounded-3xl border border-[var(--border-nav)]">
+                            <div key={`row2-${i}`} className="shrink-0 h-[22vh] md:h-[30vh] aspect-[3/2] group relative overflow-hidden rounded-2xl md:rounded-3xl border border-[var(--border-nav)]">
                             <img src={proj.image} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" alt={proj.title} />
                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4 md:p-6"><h4 className="text-white text-base md:text-xl font-medium">{proj.title}</h4></div>
                             </div>
@@ -341,7 +363,7 @@ function App() {
                 </div>
               </section>
 
-              {/* BLOG SECTION */}
+              {/* DYNAMIC BLOG SECTION */}
               <section ref={blogSectionRef} className="relative z-30 min-h-screen overflow-hidden flex flex-col justify-center">
                 <motion.div style={{ y: yBlogBg }} className="absolute inset-0 z-0 pointer-events-none">
                   <img src="/images/bgcloude.jpg" alt="Cloud Background" className="w-full h-[120%] object-cover transition-all duration-500" style={{ filter: 'var(--cloud-brightness)' }} />
@@ -364,8 +386,8 @@ function App() {
                           initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.5 }}
                           className={`col-span-1 md:col-span-3 grid ${isMobile ? 'grid-cols-1 gap-4 px-4' : 'grid-cols-3 gap-8'}`}
                         >
-                          {currentBlogs.map((blog) => (
-                            <div key={blog.title} className="group flex flex-col gap-4">
+                          {currentBlogs.map((blog, idx) => (
+                            <div key={`blog-${idx}`} className="group flex flex-col gap-4">
                               <div className="relative aspect-[3/2] overflow-hidden rounded-3xl border border-[var(--border-nav)] bg-zinc-900/5 shadow-xl">
                                 <img src={blog.image} className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110" alt={blog.title} />
                                 <div className="absolute top-4 left-4"><span className="px-3 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/20 text-[10px] font-bold uppercase tracking-widest text-white">{blog.category}</span></div>
@@ -394,7 +416,7 @@ function App() {
                       <button onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1} className="w-8 h-8 rounded-full border border-[var(--border-nav)] flex items-center justify-center opacity-70 hover:opacity-100 bg-white/5 backdrop-blur-sm transition-all disabled:opacity-10 cursor-pointer text-[var(--text-bold)] text-[10px] font-bold">&lt;</button>
                       <div className="flex gap-2 mx-2">
                         {Array.from({ length: totalPages }, (_, i) => i + 1).map(n => (
-                          <button key={n} onClick={() => setCurrentPage(n)} className={`w-10 h-10 rounded-full flex items-center justify-center text-[12px] font-bold transition-all cursor-pointer ${currentPage === n ? 'bg-[var(--text-bold)] text-[#0a0a0c] shadow-lg' : 'border border-[var(--border-nav)] opacity-70 hover:opacity-100 bg-white/5 text-[var(--text-bold)]'}`}>{n}</button>
+                          <button key={`page-${n}`} onClick={() => setCurrentPage(n)} className={`w-10 h-10 rounded-full flex items-center justify-center text-[12px] font-bold transition-all cursor-pointer ${currentPage === n ? 'bg-[var(--text-bold)] text-[#0a0a0c] shadow-lg' : 'border border-[var(--border-nav)] opacity-70 hover:opacity-100 bg-white/5 text-[var(--text-bold)]'}`}>{n}</button>
                         ))}
                       </div>
                       <button onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages} className="w-8 h-8 rounded-full border border-[var(--border-nav)] flex items-center justify-center opacity-70 hover:opacity-100 bg-white/5 backdrop-blur-sm transition-all disabled:opacity-10 cursor-pointer text-[var(--text-bold)] text-[10px] font-bold">&gt;</button>
@@ -403,7 +425,7 @@ function App() {
                 </div>
               </section>
 
-              {/* CONTACT */}
+              {/* CONTACT SECTION */}
               <section ref={contactSectionRef} id="contact" className="relative z-40 bg-[var(--bg-main)] overflow-visible h-[150vh]">
                 <div className="sticky top-0 h-screen w-full flex items-center justify-center overflow-hidden">
                   <div className="max-w-6xl w-full px-8 mx-auto flex flex-col h-full relative">
