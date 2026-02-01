@@ -4,7 +4,7 @@ require("dotenv").config();
 // 1. Import core libraries
 const express = require("express");
 const mongoose = require("mongoose");
-const cors = require("cors"); // Pastikan ini tetap ada
+const cors = require("cors"); 
 const path = require("path");
 const swaggerUi = require("swagger-ui-express");
 const swaggerDocument = require("./config/swagger.json");
@@ -27,11 +27,26 @@ const MONGO_URI = process.env.MONGO_URI;
 // | 2. MIDDLEWARE CONFIGURATION                               |
 // -------------------------------------------------------------
 
-// Solusi Sederhana: Izinkan semua origin untuk menghindari CORS error di online
+// FIX CORS: Menggunakan fungsi origin dinamis karena credentials: true
+// Ini memastikan origin yang meminta akan langsung diizinkan jika diperbolehkan
+const allowedOrigins = [
+  "https://fatahabdilah.site",
+  "http://localhost:5173",
+  "http://localhost:3000"
+];
+
 app.use(cors({
-  origin: "*", 
+  origin: function (origin, callback) {
+    // Izinkan jika origin ada di daftar atau jika request bersifat lokal (tanpa origin, misal: Postman)
+    if (!origin || allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV !== 'production') {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS debug"));
+    }
+  },
   methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
-  credentials: true
+  credentials: true,
+  optionsSuccessStatus: 200
 }));
 
 app.use(express.json());
@@ -88,7 +103,6 @@ app.use("/api/blogs", blogRoutes);
 // -------------------------------------------------------------
 
 const connectDBAndStartServer = async () => {
-  // Load all Mongoose models
   require("./models/UserModel"); 
   require("./models/ProjectModel");
   require("./models/TechnologyModel"); 
