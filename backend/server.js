@@ -27,15 +27,24 @@ const MONGO_URI = process.env.MONGO_URI;
 // -------------------------------------------------------------
 // | 2. MIDDLEWARE CONFIGURATION                |
 // -------------------------------------------------------------
-const allowedOrigin = process.env.FRONTEND_URL;
+const allowedOrigin = process.env.FRONTEND_URL; 
+
 app.use(
   cors({
-    origin: allowedOrigin,
+    // Jika process.env.FRONTEND_URL bernilai 'https://fatahabdilah.site'
+    origin: function (origin, callback) {
+      // Mengizinkan permintaan tanpa origin (seperti mobile apps atau curl) 
+      // dan mengizinkan origin yang sesuai dengan .env
+      if (!origin || origin === allowedOrigin) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
     credentials: true,
   })
 );
-app.use(express.json());
 
 // -------------------------------------------------------------
 // | 3. SWAGGER DOCUMENTATION SETUP                            |
