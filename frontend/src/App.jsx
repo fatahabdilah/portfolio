@@ -4,18 +4,17 @@ import axios from 'axios';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import LoadingScreen from './components/LoadingScreen';
+import { X } from 'lucide-react';
 
 function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [hoveredIndex, setHoveredIndex] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [isMobile, setIsMobile] = useState(false);
+  const [selectedProject, setSelectedProject] = useState(null);
 
-  // --- API DATA STATE ---
   const [projects, setProjects] = useState([]);
   const [blogs, setBlogs] = useState([]);
-  
-  // Base URL dari .env
   const API_URL = import.meta.env.VITE_API_URL;
 
   const containerRef = useRef(null);
@@ -29,55 +28,26 @@ function App() {
   const row1Ref = useRef(null);
   const row2Ref = useRef(null);
 
-  // --- FETCH DATA DARI BACKEND DENGAN LOG DEBUG ---
   useEffect(() => {
     const fetchPortfolioData = async () => {
-      console.log("--- INITIALIZING API CALL ---");
-      console.log("Target API:", API_URL);
-      console.log("Origin:", window.location.origin);
-
-      if (!API_URL) {
-        console.error("ERROR: VITE_API_URL IS UNDEFINED!");
-        return;
-      }
-
+      if (!API_URL) return;
       try {
         const [projRes, blogRes] = await Promise.all([
           axios.get(`${API_URL}/projects?limit=50`),
           axios.get(`${API_URL}/blogs?limit=50`)
         ]);
-        
-        console.log("Projects Received:", projRes.data.data?.length || 0);
-        console.log("Blogs Received:", blogRes.data.data?.length || 0);
-
-        const fetchedProjects = (projRes.data.data || []).map(p => ({
-          title: p.title,
-          image: p.imageUrl
-        }));
-
+        setProjects(projRes.data.data || []);
         const fetchedBlogs = (blogRes.data.data || []).map(b => ({
           title: b.title,
           date: new Date(b.createdAt).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
           category: "Insight",
           image: b.thumbnailUrl
         }));
-
-        setProjects(fetchedProjects);
         setBlogs(fetchedBlogs);
-        console.log("--- SYNC COMPLETE ---");
-
       } catch (err) {
-        console.error("--- API CONNECTION FAILED ---");
-        if (err.response) {
-          console.error(`Status: ${err.response.status} - ${err.response.data?.error || 'Server Error'}`);
-        } else if (err.request) {
-          console.error("Network Error: Request was blocked by CORS or Server is down.");
-        } else {
-          console.error("Setup Error:", err.message);
-        }
+        console.error("Gagal sinkronisasi data API:", err);
       }
     };
-
     fetchPortfolioData();
   }, [API_URL]);
 
@@ -87,33 +57,28 @@ function App() {
       setIsMobile(mobile);
       setMovementDistance(mobile ? 350 : 500);
     };
-
     handleResize();
     window.addEventListener('resize', handleResize);
-    
-    if (window.location.hash) {
-      window.history.replaceState(null, "", window.location.pathname);
-    }
-    
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  useEffect(() => {
+    if (selectedProject) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+  }, [selectedProject]);
 
   const blogsPerPage = isMobile ? 2 : 3;
 
   const handleLogoClick = () => {
     window.scrollTo({ top: 0, behavior: 'instant' });
     setIsLoading(true);
-    window.history.replaceState(null, "", window.location.pathname);
   };
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    window.history.replaceState(null, "", window.location.pathname);
-  };
-
-  const handleMouseMove = (e) => {
-    mouseX.set(e.clientX);
-    mouseY.set(e.clientY);
   };
 
   const mouseX = useMotionValue(0);
@@ -121,34 +86,27 @@ function App() {
   const cursorX = useSpring(mouseX, { damping: 25, stiffness: 150 });
   const cursorY = useSpring(mouseY, { damping: 25, stiffness: 150 });
 
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start start", "end start"]
-  });
+  const handleMouseMove = (e) => {
+    mouseX.set(e.clientX);
+    mouseY.set(e.clientY);
+  };
 
+  const { scrollYProgress } = useScroll({ target: containerRef, offset: ["start start", "end start"] });
   const yV1 = useTransform(scrollYProgress, [0, 1], ["0%", "-30%"]);
   const yV2 = useTransform(scrollYProgress, [0, 1], ["0%", "-60%"]);
   const yV3 = useTransform(scrollYProgress, [0, 1], ["0%", "-100%"]);
   const yV4 = useTransform(scrollYProgress, [0, 1], ["0%", "-150%"]);
   const yV5 = useTransform(scrollYProgress, [0, 1], ["0%", "-220%"]);
 
-  const { scrollYProgress: aboutScroll } = useScroll({
-    target: imageRef,
-    offset: ["start end", "end start"]
-  });
+  const { scrollYProgress: aboutScroll } = useScroll({ target: imageRef, offset: ["start end", "end start"] });
   const filterStyle = useTransform(aboutScroll, [0.3, 0.45, 0.55, 0.7], ["grayscale(100%)", "grayscale(0%)", "grayscale(0%)", "grayscale(100%)"]);
   const rotateValue = useTransform(aboutScroll, [0.3, 0.5, 0.7], [-5, 0, 5]);
   const yAboutBg = useTransform(aboutScroll, [0, 1], ["-10%", "10%"]);
 
-  const { scrollYProgress: zoomScroll } = useScroll({
-    target: zoomRef,
-    offset: ["start start", "end start"]
-  });
-
+  const { scrollYProgress: zoomScroll } = useScroll({ target: zoomRef, offset: ["start start", "end start"] });
   const frameScale = useTransform(zoomScroll, [0, 0.5], [1, 10]);
   const bgScale = useTransform(zoomScroll, [0, 0.2, 0.5], [0.4, 1.8, 2.1]); 
-  const bgBrightnessScroll = useTransform(zoomScroll, [0.2, 0.9], [0.8, 0.4]);
-  const brightnessStyle = useTransform(bgBrightnessScroll, (v) => `brightness(${v})`);
+  const brightnessStyle = useTransform(useTransform(zoomScroll, [0.2, 0.9], [0.8, 0.4]), (v) => `brightness(${v})`);
 
   const opacityExperience = useTransform(zoomScroll, [0.3, 0.45], [0, 1]);
   const blurExperience = useTransform(zoomScroll, [0.3, 0.4, 0.85, 0.95], ["blur(12px)", "blur(0px)", "blur(0px)", "blur(12px)"]);
@@ -162,11 +120,7 @@ function App() {
     { title: "Web Enthusiast", company: "Freelance", year: "2022", image: "/images/collage/flower3.png", detail: "Exploring modern web technologies and building responsive layouts." }
   ];
 
-  const { scrollYProgress: projectScroll } = useScroll({
-    target: projectSectionRef,
-    offset: ["start end", "end start"]
-  });
-
+  const { scrollYProgress: projectScroll } = useScroll({ target: projectSectionRef, offset: ["start end", "end start"] });
   const yProjectTitle = useTransform(projectScroll, [0, 0.2], [50, 0]);
   const opacityProjectTitle = useTransform(projectScroll, [0, 0.2], [0, 1]);
 
@@ -176,26 +130,16 @@ function App() {
   const projectsRow1 = projects.slice(0, Math.ceil(projects.length / 2));
   const projectsRow2 = projects.slice(Math.ceil(projects.length / 2));
 
-  const { scrollYProgress: blogScroll } = useScroll({
-    target: blogSectionRef,
-    offset: ["start end", "end start"]
-  });
-
+  const { scrollYProgress: blogScroll } = useScroll({ target: blogSectionRef, offset: ["start end", "end start"] });
   const blogTitleY = useTransform(blogScroll, [0, 1], [0, -100]);
   const blurBlogTitle = useTransform(blogScroll, [0, 0.3, 0.7, 1], ["blur(12px)", "blur(0px)", "blur(0px)", "blur(12px)"]);
   const blogContentY = useTransform(blogScroll, [0.4, 1], [isMobile ? 50 : 0, -250]); 
   const yBlogBg = useTransform(blogScroll, [0, 1], ["-10%", "10%"]);
 
-  const indexOfLastBlog = currentPage * blogsPerPage;
-  const indexOfFirstBlog = indexOfLastBlog - blogsPerPage;
-  const currentBlogs = blogs.slice(indexOfFirstBlog, indexOfLastBlog);
+  const currentBlogs = blogs.slice((currentPage - 1) * blogsPerPage, currentPage * blogsPerPage);
   const totalPages = Math.ceil(blogs.length / blogsPerPage);
 
-  const { scrollYProgress: contactScroll } = useScroll({
-    target: contactSectionRef,
-    offset: ["start end", "end start"]
-  });
-  
+  const { scrollYProgress: contactScroll } = useScroll({ target: contactSectionRef, offset: ["start end", "end start"] });
   const yContactListScroll = useTransform(contactScroll, [0.1, 0.9], [600, -1200]);
   const blurContact = useTransform(contactScroll, [0, 0.35, 0.65, 1], ["blur(18px)", "blur(0px)", "blur(0px)", "blur(18px)"]);
   const yContactImageSticky = useTransform(contactScroll, [0, 1], [40, -40]); 
@@ -217,13 +161,11 @@ function App() {
       <Header onHomeClick={scrollToTop} onLogoClick={handleLogoClick} />
       
       <div className="main-content" onMouseMove={handleMouseMove}>
+        {/* Experience Hover Custom Cursor */}
         <motion.div
           className="fixed pointer-events-none z-[100] w-[280px] h-[350px] overflow-hidden rounded-2xl shadow-2xl border border-[var(--border-nav)] backdrop-blur-md"
           style={{
-            left: cursorX,
-            top: cursorY,
-            x: "-50%",
-            y: "-50%",
+            left: cursorX, top: cursorY, x: "-50%", y: "-50%",
             scale: hoveredIndex !== null ? 1 : 0,
             opacity: hoveredIndex !== null ? 1 : 0,
             background: "rgba(10, 10, 12, 0.2)",
@@ -244,9 +186,97 @@ function App() {
           </AnimatePresence>
         </motion.div>
 
+        {/* --- PROJECT DETAIL OVERLAY (TIRAI NAIK - ADJUSTED HEIGHT) --- */}
+        <AnimatePresence>
+          {selectedProject && (
+            <>
+              {/* Darken Background Behind Overlay */}
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setSelectedProject(null)}
+                className="fixed inset-0 z-[10000] bg-black/60 backdrop-blur-sm"
+              />
+
+              <motion.div
+                initial={{ y: "100%" }}
+                animate={{ y: "5vh" }} // Naik sampai 10% dari atas
+                exit={{ y: "100%" }}
+                transition={{ duration: 0.8, ease: [0.76, 0, 0.24, 1] }}
+                className="fixed inset-x-0 bottom-0 h-[90vh] z-[10001] bg-[var(--bg-main)] rounded-t-[3rem] shadow-[0_-20px_50px_rgba(0,0,0,0.5)] overflow-y-auto border-t border-white/10"
+              >
+                {/* Close Button - Reduced Size */}
+                <button 
+                  onClick={() => setSelectedProject(null)}
+                  className="fixed top-[12vh] right-8 p-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 transition-colors z-[10002] backdrop-blur-md"
+                >
+                  <X size={24} color="var(--text-bold)" />
+                </button>
+
+                <div className="max-w-3xl mx-auto px-8 py-16 flex flex-col items-center">
+                  {/* Image - Reduced Max Size */}
+                  <motion.div 
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 }}
+                    className="w-full aspect-[16/10] md:aspect-[16/9] rounded-2xl overflow-hidden border border-white/5 shadow-2xl mb-10"
+                  >
+                    <img src={selectedProject.imageUrl} className="w-full h-full object-cover" alt={selectedProject.title} />
+                  </motion.div>
+
+                  <div className="w-full flex flex-col gap-4 text-center md:text-left">
+                    <motion.h2 
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.5 }}
+                      className="text-3xl md:text-5xl font-bold tracking-tight" 
+                      style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}
+                    >
+                      {selectedProject.title}
+                    </motion.h2>
+
+                    <motion.div 
+                      initial={{ opacity: 0, scaleX: 0 }}
+                      animate={{ opacity: 1, scaleX: 1 }}
+                      transition={{ delay: 0.6, duration: 0.8 }}
+                      className="h-[1px] w-full bg-gradient-to-r from-transparent via-white/20 to-transparent my-4" 
+                    />
+
+                    <motion.p 
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.7 }}
+                      className="text-base md:text-lg font-light leading-relaxed opacity-60 text-justify"
+                      style={{ color: 'var(--text-bold)' }}
+                    >
+                      {selectedProject.content}
+                    </motion.p>
+
+                    {/* Meta Info (Optional) */}
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.8 }}
+                      className="mt-8 flex flex-wrap gap-3 justify-center md:justify-start"
+                    >
+                      {selectedProject.technologies?.map((tech, idx) => (
+                        <span key={idx} className="px-4 py-1 rounded-full border border-white/10 text-[10px] uppercase tracking-widest text-white/40">
+                          {tech.name}
+                        </span>
+                      ))}
+                    </motion.div>
+                  </div>
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
+
         <div ref={containerRef} className="flex flex-col min-h-screen bg-[var(--bg-main)]">
           <main className="flex-grow">
             
+            {/* HERO */}
             <section id="home" className="relative h-screen flex items-center justify-center px-8 overflow-hidden">
               <div className="absolute inset-0 pointer-events-none select-none">
                 <motion.div style={{ ...gpuStyle, y: yV1 }} className="absolute left-[5%] md:left-[22%] top-[15%] md:top-[12%] w-[30vw] md:w-[12vw] z-20"><motion.img {...smoothFloat(11)} src="/images/collage/flower1.png" className="w-full" /></motion.div>
@@ -266,6 +296,7 @@ function App() {
               </motion.div>
             </section>
 
+            {/* ABOUT */}
             <section id="about" className="relative w-full h-screen overflow-hidden flex items-center justify-center px-6 md:px-8">
               <motion.div style={{ y: yAboutBg }} className="absolute inset-0 z-0 pointer-events-none"><img src="/images/bgcloude.jpg" alt="Cloud Background" className="w-full h-[120%] object-cover transition-all duration-700" style={{ filter: 'var(--cloud-brightness)' }} /></motion.div>
               <div className="relative z-10 flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16 max-w-5xl mx-auto w-full">
@@ -327,8 +358,12 @@ function App() {
                     <div className="w-full flex justify-center overflow-visible">
                         <motion.div ref={row1Ref} style={{ x: xProjectsRow1 }} className="flex gap-[2vh] md:gap-[4vh] px-8 w-max">
                         {projectsRow1.length > 0 ? projectsRow1.map((proj, i) => (
-                            <div key={`row1-${i}`} className="shrink-0 h-[22vh] md:h-[30vh] aspect-[3/2] group relative overflow-hidden rounded-2xl md:rounded-3xl border border-[var(--border-nav)]">
-                            <img src={proj.image} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" alt={proj.title} />
+                            <div 
+                              key={`row1-${i}`} 
+                              onClick={() => setSelectedProject(proj)}
+                              className="shrink-0 h-[22vh] md:h-[30vh] aspect-[3/2] group relative overflow-hidden rounded-2xl md:rounded-3xl border border-[var(--border-nav)] cursor-pointer"
+                            >
+                            <img src={proj.imageUrl} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" alt={proj.title} />
                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4 md:p-6"><h4 className="text-white text-base md:text-xl font-medium">{proj.title}</h4></div>
                             </div>
                         )) : [1,2,3].map(n => <div key={n} className="shrink-0 h-[22vh] md:h-[30vh] aspect-[3/2] bg-zinc-900 animate-pulse rounded-2xl" />)}
@@ -338,8 +373,12 @@ function App() {
                     <div className="w-full flex justify-center overflow-visible">
                         <motion.div ref={row2Ref} style={{ x: xProjectsRow2 }} className="flex gap-[2vh] md:gap-[4vh] px-8 w-max">
                         {projectsRow2.length > 0 ? projectsRow2.map((proj, i) => (
-                            <div key={`row2-${i}`} className="shrink-0 h-[22vh] md:h-[30vh] aspect-[3/2] group relative overflow-hidden rounded-2xl md:rounded-3xl border border-[var(--border-nav)]">
-                            <img src={proj.image} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" alt={proj.title} />
+                            <div 
+                              key={`row2-${i}`} 
+                              onClick={() => setSelectedProject(proj)}
+                              className="shrink-0 h-[22vh] md:h-[30vh] aspect-[3/2] group relative overflow-hidden rounded-2xl md:rounded-3xl border border-[var(--border-nav)] cursor-pointer"
+                            >
+                            <img src={proj.imageUrl} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" alt={proj.title} />
                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4 md:p-6"><h4 className="text-white text-base md:text-xl font-medium">{proj.title}</h4></div>
                             </div>
                         )) : [1,2,3].map(n => <div key={n} className="shrink-0 h-[22vh] md:h-[30vh] aspect-[3/2] bg-zinc-900 animate-pulse rounded-2xl" />)}
@@ -349,6 +388,7 @@ function App() {
                 </div>
               </section>
 
+              {/* BLOG */}
               <section ref={blogSectionRef} className="relative z-30 min-h-screen overflow-hidden flex flex-col justify-center">
                 <motion.div style={{ y: yBlogBg }} className="absolute inset-0 z-0 pointer-events-none"><img src="/images/bgcloude.jpg" alt="Cloud Background" className="w-full h-[120%] object-cover transition-all duration-500" style={{ filter: 'var(--cloud-brightness)' }} /></motion.div>
                 <div className="max-w-7xl mx-auto relative w-full flex flex-col items-center z-10 px-6">
@@ -389,6 +429,7 @@ function App() {
                 </div>
               </section>
 
+              {/* CONTACT */}
               <section ref={contactSectionRef} id="contact" className="relative z-40 bg-[var(--bg-main)] overflow-visible h-[150vh]">
                 <div className="sticky top-0 h-screen w-full flex items-center justify-center overflow-hidden">
                   <div className="max-w-6xl w-full px-8 mx-auto flex flex-col h-full relative">
