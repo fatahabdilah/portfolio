@@ -8,7 +8,6 @@ import { X } from 'lucide-react';
 
 function App() {
   const [isLoading, setIsLoading] = useState(true);
-  const [hoveredIndex, setHoveredIndex] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [isMobile, setIsMobile] = useState(false);
   const [selectedProject, setSelectedProject] = useState(null);
@@ -109,15 +108,15 @@ function App() {
   const brightnessStyle = useTransform(useTransform(zoomScroll, [0.2, 0.9], [0.8, 0.4]), (v) => `brightness(${v})`);
 
   const opacityExperience = useTransform(zoomScroll, [0.3, 0.45], [0, 1]);
-  const blurExperience = useTransform(zoomScroll, [0.3, 0.4, 0.85, 0.95], ["blur(12px)", "blur(0px)", "blur(0px)", "blur(12px)"]);
+  const blurExperience = useTransform(zoomScroll, [0, 0.4, 0.85, 0.95], ["blur(12px)", "blur(0px)", "blur(0px)", "blur(12px)"]);
   const yExperienceContent = useTransform(zoomScroll, [0.3, 0.9], [150, -800]); 
   const pointerEvents = useTransform(zoomScroll, [0.4, 0.41], ["none", "auto"]);
 
   const experiences = [
-    { title: "Frontend Developer", company: "Tech Solutions", year: "2024", image: "/images/collage/sculpture1.png", detail: "Developing high-performance web applications using React and Framer Motion." },
-    { title: "UI/UX Designer", company: "Creative Agency", year: "2023", image: "/images/collage/flower1.png", detail: "Crafting intuitive user interfaces and aesthetic digital experiences." },
-    { title: "Mobile Specialist", company: "App Studio", year: "2023", image: "/images/collage/sculpture2.png", detail: "Building seamless Android solutions with a focus on smooth interactions." },
-    { title: "Web Enthusiast", company: "Freelance", year: "2022", image: "/images/collage/flower3.png", detail: "Exploring modern web technologies and building responsive layouts." }
+    { title: "Full-stack Web Developer", company: "Educourse.id", year: "2025", detail: "Developed full-stack web applications like LMS and CMS platforms using React, Express, and Next.js with RESTful API integration." },
+    { title: "Front-end Android Developer", company: "PT Lingga Cipta Insania", year: "2025", detail: "Translated Figma designs into 20+ functional XML and Java layouts for B2B transactions using Agile/Scrum methodology." },
+    { title: "Web Administrator", company: (<>Faculty of Computer Science, <br /> Pamulang University</>), year: "2024 - 2025", detail: "Managed 7 websites (OJS & WordPress) and optimized On-Page SEO, increasing organic traffic by 25-30%." },
+    { title: "Front-end Web Developer", company: "UP SMK Negeri 1 Tengaran", year: "2020", detail: "Implemented school profile interfaces using HTML, CSS, JS, and Bootstrap, improving site loading speed by 40-50%." }
   ];
 
   const { scrollYProgress: projectScroll } = useScroll({ target: projectSectionRef, offset: ["start end", "end start"] });
@@ -152,6 +151,18 @@ function App() {
 
   const gpuStyle = { willChange: "transform, filter", translateZ: 0, backfaceVisibility: "hidden" };
 
+  const ProjectCard = ({ proj }) => (
+    <div 
+      onClick={() => setSelectedProject(proj)}
+      className="shrink-0 h-[22vh] md:h-[30vh] aspect-[3/2] group relative overflow-hidden rounded-2xl md:rounded-3xl border border-[var(--border-nav)] cursor-pointer"
+    >
+      <img src={proj.imageUrl} className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105" alt={proj.title} />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500 ease-in-out flex flex-col justify-end p-4 md:p-6 [@media(hover:none)]:opacity-100 [@media(hover:none)]:translate-y-0">
+        <h4 className="text-white text-base md:text-xl font-medium tracking-tight">{proj.title}</h4>
+      </div>
+    </div>
+  );
+
   return (
     <>
       <AnimatePresence mode="wait">
@@ -161,109 +172,22 @@ function App() {
       <Header onHomeClick={scrollToTop} onLogoClick={handleLogoClick} />
       
       <div className="main-content" onMouseMove={handleMouseMove}>
-        {/* Experience Hover Custom Cursor */}
-        <motion.div
-          className="fixed pointer-events-none z-[100] w-[280px] h-[350px] overflow-hidden rounded-2xl shadow-2xl border border-[var(--border-nav)] backdrop-blur-md"
-          style={{
-            left: cursorX, top: cursorY, x: "-50%", y: "-50%",
-            scale: hoveredIndex !== null ? 1 : 0,
-            opacity: hoveredIndex !== null ? 1 : 0,
-            background: "rgba(10, 10, 12, 0.2)",
-            boxShadow: "0 8px 32px 0 rgba(0, 0, 0, 0.37)",
-          }}
-        >
-          <AnimatePresence mode="wait">
-            {hoveredIndex !== null && (
-              <motion.img 
-                key={experiences[hoveredIndex]?.image || hoveredIndex}
-                initial={{ opacity: 0, scale: 1.1 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0 }}
-                src={experiences[hoveredIndex]?.image} 
-                className="w-full h-full object-contain p-6 relative z-10"
-              />
-            )}
-          </AnimatePresence>
-        </motion.div>
-
-        {/* --- PROJECT DETAIL OVERLAY (TIRAI NAIK - ADJUSTED HEIGHT) --- */}
+        {/* --- PROJECT DETAIL OVERLAY --- */}
         <AnimatePresence>
           {selectedProject && (
             <>
-              {/* Darken Background Behind Overlay */}
-              <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                onClick={() => setSelectedProject(null)}
-                className="fixed inset-0 z-[10000] bg-black/60 backdrop-blur-sm"
-              />
-
-              <motion.div
-                initial={{ y: "100%" }}
-                animate={{ y: "5vh" }} // Naik sampai 10% dari atas
-                exit={{ y: "100%" }}
-                transition={{ duration: 0.8, ease: [0.76, 0, 0.24, 1] }}
-                className="fixed inset-x-0 bottom-0 h-[90vh] z-[10001] bg-[var(--bg-main)] rounded-t-[3rem] shadow-[0_-20px_50px_rgba(0,0,0,0.5)] overflow-y-auto border-t border-white/10"
-              >
-                {/* Close Button - Reduced Size */}
-                <button 
-                  onClick={() => setSelectedProject(null)}
-                  className="fixed top-[12vh] right-8 p-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 transition-colors z-[10002] backdrop-blur-md"
-                >
-                  <X size={24} color="var(--text-bold)" />
-                </button>
-
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSelectedProject(null)} className="fixed inset-0 z-[10000] bg-black/60 backdrop-blur-sm cursor-pointer" />
+              <motion.div initial={{ y: "100%" }} animate={{ y: "5vh" }} exit={{ y: "100%" }} transition={{ duration: 0.8, ease: [0.76, 0, 0.24, 1] }} className="fixed inset-x-0 bottom-0 h-[90vh] z-[10001] bg-[var(--bg-main)] rounded-t-[3rem] shadow-[0_-20px_50px_rgba(0,0,0,0.5)] overflow-y-auto border-t border-white/10">
+                <button onClick={() => setSelectedProject(null)} className="fixed top-6 right-8 p-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 transition-colors z-[10002] backdrop-blur-md cursor-pointer"><X size={24} color="var(--text-bold)" /></button>
                 <div className="max-w-3xl mx-auto px-8 py-16 flex flex-col items-center">
-                  {/* Image - Reduced Max Size */}
-                  <motion.div 
-                    initial={{ opacity: 0, y: 30 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4 }}
-                    className="w-full aspect-[16/10] md:aspect-[16/9] rounded-2xl overflow-hidden border border-white/5 shadow-2xl mb-10"
-                  >
-                    <img src={selectedProject.imageUrl} className="w-full h-full object-cover" alt={selectedProject.title} />
-                  </motion.div>
-
+                  <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="w-full aspect-[16/10] md:aspect-[16/9] rounded-2xl overflow-hidden border border-white/5 shadow-2xl mb-10"><img src={selectedProject.imageUrl} className="w-full h-full object-cover" alt={selectedProject.title} /></motion.div>
                   <div className="w-full flex flex-col gap-4 text-center md:text-left">
-                    <motion.h2 
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.5 }}
-                      className="text-3xl md:text-5xl font-bold tracking-tight" 
-                      style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}
-                    >
-                      {selectedProject.title}
-                    </motion.h2>
-
-                    <motion.div 
-                      initial={{ opacity: 0, scaleX: 0 }}
-                      animate={{ opacity: 1, scaleX: 1 }}
-                      transition={{ delay: 0.6, duration: 0.8 }}
-                      className="h-[1px] w-full bg-gradient-to-r from-transparent via-white/20 to-transparent my-4" 
-                    />
-
-                    <motion.p 
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.7 }}
-                      className="text-base md:text-lg font-light leading-relaxed opacity-60 text-justify"
-                      style={{ color: 'var(--text-bold)' }}
-                    >
-                      {selectedProject.content}
-                    </motion.p>
-
-                    {/* Meta Info (Optional) */}
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.8 }}
-                      className="mt-8 flex flex-wrap gap-3 justify-center md:justify-start"
-                    >
+                    <motion.h2 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="text-3xl md:text-5xl font-bold tracking-tight" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>{selectedProject.title}</motion.h2>
+                    <motion.div initial={{ opacity: 0, scaleX: 0 }} animate={{ opacity: 1, scaleX: 1 }} transition={{ delay: 0.6, duration: 0.8 }} className="h-[1px] w-full bg-gradient-to-r from-transparent via-white/20 to-transparent my-4" />
+                    <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }} className="text-base md:text-lg font-light leading-relaxed opacity-60 text-justify" style={{ color: 'var(--text-bold)' }}>{selectedProject.content}</motion.p>
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8 }} className="mt-8 flex flex-wrap gap-3 justify-center md:justify-start">
                       {selectedProject.technologies?.map((tech, idx) => (
-                        <span key={idx} className="px-4 py-1 rounded-full border border-white/10 text-[10px] uppercase tracking-widest text-white/40">
-                          {tech.name}
-                        </span>
+                        <span key={tech._id || idx} className="px-4 py-1 rounded-full border border-white/10 text-[10px] uppercase tracking-widest text-white/40">{tech.name}</span>
                       ))}
                     </motion.div>
                   </div>
@@ -275,8 +199,6 @@ function App() {
 
         <div ref={containerRef} className="flex flex-col min-h-screen bg-[var(--bg-main)]">
           <main className="flex-grow">
-            
-            {/* HERO */}
             <section id="home" className="relative h-screen flex items-center justify-center px-8 overflow-hidden">
               <div className="absolute inset-0 pointer-events-none select-none">
                 <motion.div style={{ ...gpuStyle, y: yV1 }} className="absolute left-[5%] md:left-[22%] top-[15%] md:top-[12%] w-[30vw] md:w-[12vw] z-20"><motion.img {...smoothFloat(11)} src="/images/collage/flower1.png" className="w-full" /></motion.div>
@@ -291,12 +213,11 @@ function App() {
                 <motion.div style={{ ...gpuStyle, y: yV5 }} className="absolute right-[20%] top-[70%] md:top-[60%] w-[20vw] md:w-[10vw] z-30"><motion.img {...smoothFloat(8)} src="/images/collage/flower2.png" className="w-full" /></motion.div>
               </div>
               <motion.div className="relative z-40 text-center">
-                <h1 className="text-5xl md:text-[6vw] font-medium tracking-tight leading-[1.1] mb-8" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>Building <br /> <span className="opacity-40 italic" style={{ color: 'var(--text-main)' }}>Digital Experiences.</span></h1>
+                <h1 className="text-5xl md:text-[6vw] font-medium tracking-tight leading-[1.1] mb-8" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>Building <br /> <span className="opacity-40 italic" style={{ color: 'var(--text-bold)' }}>Digital Experiences.</span></h1>
                 <p className="max-w-xl mx-auto text-base md:text-lg leading-relaxed font-light px-4" style={{ color: 'var(--text-main)' }}>Crafting aesthetic and functional digital solutions with a focus on high performance and exceptional user experience.</p>
               </motion.div>
             </section>
 
-            {/* ABOUT */}
             <section id="about" className="relative w-full h-screen overflow-hidden flex items-center justify-center px-6 md:px-8">
               <motion.div style={{ y: yAboutBg }} className="absolute inset-0 z-0 pointer-events-none"><img src="/images/bgcloude.jpg" alt="Cloud Background" className="w-full h-[120%] object-cover transition-all duration-700" style={{ filter: 'var(--cloud-brightness)' }} /></motion.div>
               <div className="relative z-10 flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16 max-w-5xl mx-auto w-full">
@@ -317,8 +238,8 @@ function App() {
             </section>
 
             <div className="relative overflow-visible">
-              <div id="experience" className="absolute top-[140vh] md:top-[220vh] left-0 w-full h-1 pointer-events-none z-[100]" />
-              <section ref={zoomRef} className="relative h-[300vh] md:h-[450vh] w-full z-20 bg-[var(--bg-main)] shadow-[0_40px_60px_-20px_rgba(0,0,0,0.3)]">
+              <div id="experience" className="absolute top-[170vh] md:top-[245vh] left-0 w-full h-1 pointer-events-none z-[100]" />
+              <section ref={zoomRef} className="relative h-[350vh] md:h-[500vh] w-full z-20 bg-[var(--bg-main)] shadow-[0_40px_60px_-20px_rgba(0,0,0,0.3)]">
                 <div className="sticky top-0 h-screen w-full flex flex-col items-center justify-start overflow-hidden bg-[var(--bg-main)]">
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                     <motion.div style={{ scale: bgScale, filter: brightnessStyle, ...gpuStyle, zIndex: 5 }} className="absolute w-[150vw] aspect-[4/3] md:w-[75vw] overflow-hidden"><img src="/images/bg-landscape.jpeg" alt="Landscape" className="w-full h-full object-cover" /></motion.div>
@@ -331,12 +252,12 @@ function App() {
                     </div>
                     <div className="relative flex flex-col gap-12 before:absolute before:left-4 md:before:left-1/2 before:top-0 before:h-full before:w-[1px] before:bg-[var(--text-bold)] before:opacity-20 before:z-0">
                       {experiences.map((exp, index) => (
-                        <div key={index} onMouseEnter={() => setHoveredIndex(index)} onMouseLeave={() => setHoveredIndex(null)} className={`flex flex-col md:flex-row items-start md:items-center justify-between w-full relative z-10 ${index % 2 === 0 ? 'md:flex-row-reverse' : ''}`}>
-                          <div className="absolute left-4 md:left-1/2 -translate-x-1/2 w-3 h-3 rounded-full shadow-[0_0_15px_rgba(0,0,0,0.1)] border-4 border-[var(--text-bold)]/30 group-hover:scale-150 transition-all duration-300" style={{ backgroundColor: 'var(--text-bold)' }} />
-                          <div className={`w-full md:w-[45%] pl-12 md:pl-0 ${index % 2 === 0 ? 'md:text-left' : 'md:text-right'}`}>
-                            <span className="text-[10px] font-bold tracking-widest mb-2 block opacity-80" style={{ color: 'var(--text-bold)' }}>{exp.year}</span>
-                            <h3 className="text-2xl md:text-4xl font-medium mb-3 group-hover:italic transition-all duration-500" style={{ color: 'var(--text-bold)' }}>{exp.title}</h3>
-                            <p className="text-sm opacity-80 max-w-sm ml-0 mr-auto" style={{ color: 'var(--text-bold)', marginInline: index % 2 === 0 ? '0 auto' : 'auto 0' }}>{exp.detail}</p>
+                        <div key={index} className={`flex flex-col md:flex-row items-start md:items-center justify-between w-full relative z-10 group ${index % 2 === 0 ? 'md:flex-row-reverse' : ''}`}>
+                          <div className="absolute left-4 md:left-1/2 -translate-x-1/2 w-3 h-3 rounded-full shadow-[0_0_15px_rgba(0,0,0,0.1)] border-4 border-[var(--text-bold)]/30 group-hover:scale-150 transition-all duration-300 z-20" style={{ backgroundColor: 'var(--text-bold)' }} />
+                          <div className={`w-full md:w-[45%] pl-12 md:pl-0 text-left ${index % 2 === 0 ? 'md:text-left' : 'md:text-right'}`}>
+                            <div className={`flex flex-col items-start ${index % 2 === 0 ? 'md:items-start' : 'md:items-end'} gap-1 mb-2`}><span className="text-[10px] font-bold tracking-widest block opacity-80" style={{ color: 'var(--text-bold)' }}>{exp.year}</span><div className="px-3 py-0.5 rounded-full border border-[var(--text-bold)]/20 text-[8px] uppercase tracking-widest opacity-60" style={{ color: 'var(--text-bold)' }}>Intern</div></div>
+                            <h3 className="text-2xl md:text-4xl font-medium mb-3 transition-all duration-500" style={{ color: 'var(--text-bold)' }}>{exp.title}</h3>
+                            <p className={`text-sm opacity-80 max-w-sm ml-0 mr-auto ${index % 2 === 0 ? 'md:ml-0 md:mr-auto' : 'md:ml-auto md:mr-0'}`} style={{ color: 'var(--text-bold)' }}>{exp.detail}</p>
                           </div>
                           <div className={`hidden md:block w-[45%] text-xl font-bold opacity-80 uppercase tracking-tighter ${index % 2 === 0 ? 'text-right' : 'text-left'}`} style={{ color: 'var(--text-bold)' }}>{exp.company}</div>
                         </div>
@@ -353,67 +274,52 @@ function App() {
                     <span className="text-[10px] font-black uppercase tracking-[0.5em] mb-2 block opacity-40" style={{ color: 'var(--text-bold)' }}>Project — III</span>
                     <h2 className="text-4xl md:text-7xl font-medium tracking-tighter whitespace-nowrap" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>Curated <span className="opacity-40 italic">Portfolio.</span></h2>
                   </motion.div>
-                  
                   <div className="flex flex-col gap-[2vh] md:gap-[4vh] w-full flex-grow justify-center items-center pb-[8vh]">
-                    <div className="w-full flex justify-center overflow-visible">
-                        <motion.div ref={row1Ref} style={{ x: xProjectsRow1 }} className="flex gap-[2vh] md:gap-[4vh] px-8 w-max">
-                        {projectsRow1.length > 0 ? projectsRow1.map((proj, i) => (
-                            <div 
-                              key={`row1-${i}`} 
-                              onClick={() => setSelectedProject(proj)}
-                              className="shrink-0 h-[22vh] md:h-[30vh] aspect-[3/2] group relative overflow-hidden rounded-2xl md:rounded-3xl border border-[var(--border-nav)] cursor-pointer"
-                            >
-                            <img src={proj.imageUrl} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" alt={proj.title} />
-                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4 md:p-6"><h4 className="text-white text-base md:text-xl font-medium">{proj.title}</h4></div>
-                            </div>
-                        )) : [1,2,3].map(n => <div key={n} className="shrink-0 h-[22vh] md:h-[30vh] aspect-[3/2] bg-zinc-900 animate-pulse rounded-2xl" />)}
-                        </motion.div>
-                    </div>
-
-                    <div className="w-full flex justify-center overflow-visible">
-                        <motion.div ref={row2Ref} style={{ x: xProjectsRow2 }} className="flex gap-[2vh] md:gap-[4vh] px-8 w-max">
-                        {projectsRow2.length > 0 ? projectsRow2.map((proj, i) => (
-                            <div 
-                              key={`row2-${i}`} 
-                              onClick={() => setSelectedProject(proj)}
-                              className="shrink-0 h-[22vh] md:h-[30vh] aspect-[3/2] group relative overflow-hidden rounded-2xl md:rounded-3xl border border-[var(--border-nav)] cursor-pointer"
-                            >
-                            <img src={proj.imageUrl} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" alt={proj.title} />
-                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-4 md:p-6"><h4 className="text-white text-base md:text-xl font-medium">{proj.title}</h4></div>
-                            </div>
-                        )) : [1,2,3].map(n => <div key={n} className="shrink-0 h-[22vh] md:h-[30vh] aspect-[3/2] bg-zinc-900 animate-pulse rounded-2xl" />)}
-                        </motion.div>
-                    </div>
+                    <div className="w-full flex justify-center overflow-visible"><motion.div ref={row1Ref} style={{ x: xProjectsRow1 }} className="flex gap-[2vh] md:gap-[4vh] px-8 w-max">{projectsRow1.length > 0 ? projectsRow1.map((proj, i) => (<ProjectCard key={`row1-${proj._id || i}`} proj={proj} />)) : [1,2,3].map(n => <div key={n} className="shrink-0 h-[22vh] md:h-[30vh] aspect-[3/2] bg-zinc-900 animate-pulse rounded-2xl" />)}</motion.div></div>
+                    <div className="w-full flex justify-center overflow-visible"><motion.div ref={row2Ref} style={{ x: xProjectsRow2 }} className="flex gap-[2vh] md:gap-[4vh] px-8 w-max">{projectsRow2.length > 0 ? projectsRow2.map((proj, i) => (<ProjectCard key={`row2-${proj._id || i}`} proj={proj} />)) : [1,2,3].map(n => <div key={n} className="shrink-0 h-[22vh] md:h-[30vh] aspect-[3/2] bg-zinc-900 animate-pulse rounded-2xl" />)}</motion.div></div>
                   </div>
                 </div>
               </section>
 
-              {/* BLOG */}
+              {/* BLOG SECTION */}
               <section ref={blogSectionRef} className="relative z-30 min-h-screen overflow-hidden flex flex-col justify-center">
                 <motion.div style={{ y: yBlogBg }} className="absolute inset-0 z-0 pointer-events-none"><img src="/images/bgcloude.jpg" alt="Cloud Background" className="w-full h-[120%] object-cover transition-all duration-500" style={{ filter: 'var(--cloud-brightness)' }} /></motion.div>
                 <div className="max-w-7xl mx-auto relative w-full flex flex-col items-center z-10 px-6">
                   <div id="blog" className="absolute left-0 w-full h-1 pointer-events-none" />
-                  <motion.div style={{ y: blogTitleY, filter: blurBlogTitle }} className="text-center mb-0 z-10 pointer-events-none sticky top-32 md:top-40">
+                  
+                  {/* Judul Insights - Z-Index Rendah agar ditimpa konten */}
+                  <motion.div style={{ y: blogTitleY, filter: blurBlogTitle }} className="text-center mb-0 z-[5] pointer-events-none sticky top-32 md:top-40">
                     <span className="text-[10px] font-black uppercase tracking-[0.5em] block opacity-40" style={{ color: 'var(--text-bold)' }}>Blog — IV</span>
                     <h2 className="text-5xl md:text-[10vw] font-bold leading-none" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>Insights.</h2>
                   </motion.div>
                   
-                  <motion.div style={{ y: blogContentY }} className="w-full flex flex-col items-center pt-20 md:pt-32">
-                    <div className="relative z-20 grid grid-cols-1 md:grid-cols-3 gap-8 mb-12 items-stretch w-full">
-                      <AnimatePresence mode="wait">
-                        <motion.div key={currentPage} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.5 }} className={`col-span-1 md:col-span-3 grid ${isMobile ? 'grid-cols-1 gap-4 px-4' : 'grid-cols-3 gap-8'}`}>
-                          {currentBlogs.length > 0 ? currentBlogs.map((blog, idx) => (
-                            <div key={`blog-${idx}`} className="group flex flex-col gap-4">
-                              <div className="relative aspect-[3/2] overflow-hidden rounded-3xl border border-[var(--border-nav)] bg-zinc-900/5 shadow-xl">
-                                <img src={blog.image} className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110" alt={blog.title} />
-                                <div className="absolute top-4 left-4"><span className="px-3 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/20 text-[10px] font-bold uppercase tracking-widest text-white">{blog.category}</span></div>
-                                {isMobile && ( <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-6"><span className="text-[10px] font-medium uppercase tracking-widest text-white/70 mb-1">{blog.date}</span><h3 className="text-xl font-medium leading-tight text-white">{blog.title}</h3></div> )}
+                  {/* Konten Blog - Z-Index Tinggi agar menimpa judul */}
+                  <motion.div style={{ y: blogContentY }} className="w-full flex flex-col items-center pt-20 md:pt-32 relative z-[10]">
+                    {/* Logika Center: Jika blog hanya 1, gunakan flex justify-center, jika lebih gunakan grid col-3 */}
+                    <div className={`relative w-full flex ${currentBlogs.length < 3 ? 'justify-center' : ''}`}>
+                      <div className={`grid gap-8 items-stretch w-full ${currentBlogs.length === 1 ? 'max-w-md grid-cols-1' : currentBlogs.length === 2 ? 'max-w-4xl grid-cols-1 md:grid-cols-2' : 'grid-cols-1 md:grid-cols-3'}`}>
+                        <AnimatePresence mode="wait">
+                          <motion.div 
+                            key={currentPage} 
+                            initial={{ opacity: 0, y: 20 }} 
+                            animate={{ opacity: 1, y: 0 }} 
+                            exit={{ opacity: 0, y: -20 }} 
+                            transition={{ duration: 0.5 }} 
+                            className="contents" // Menjaga grid flow tetap benar
+                          >
+                            {currentBlogs.length > 0 ? currentBlogs.map((blog, idx) => (
+                              <div key={`blog-${idx}`} className="group flex flex-col gap-4">
+                                <div className="relative aspect-[3/2] overflow-hidden rounded-3xl border border-[var(--border-nav)] bg-zinc-900/5 shadow-xl">
+                                  <img src={blog.image} className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110" alt={blog.title} />
+                                  <div className="absolute top-4 left-4"><span className="px-3 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/20 text-[10px] font-bold uppercase tracking-widest text-white">{blog.category}</span></div>
+                                  {isMobile && ( <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-6"><span className="text-[10px] font-medium uppercase tracking-widest text-white/70 mb-1">{blog.date}</span><h3 className="text-xl font-medium leading-tight text-white">{blog.title}</h3></div> )}
+                                </div>
+                                {!isMobile && ( <div className="flex flex-col gap-1 px-2"><span className="text-[10px] font-medium uppercase tracking-widest" style={{ color: 'var(--text-main)', opacity: 0.6 }}>{blog.date}</span><h3 className="text-xl font-medium leading-tight group-hover:italic transition-all duration-300" style={{ color: 'var(--text-bold)' }}>{blog.title}</h3></div> )}
                               </div>
-                              {!isMobile && ( <div className="flex flex-col gap-1 px-2"><span className="text-[10px] font-medium uppercase tracking-widest" style={{ color: 'var(--text-main)', opacity: 0.6 }}>{blog.date}</span><h3 className="text-xl font-medium leading-tight group-hover:italic transition-all duration-300" style={{ color: 'var(--text-bold)' }}>{blog.title}</h3></div> )}
-                            </div>
-                          )) : [1,2,3].map(n => <div key={n} className="aspect-[3/2] bg-zinc-900 animate-pulse rounded-3xl" />)}
-                        </motion.div>
-                      </AnimatePresence>
+                            )) : [1,2,3].map(n => <div key={n} className="aspect-[3/2] bg-zinc-900 animate-pulse rounded-3xl" />)}
+                          </motion.div>
+                        </AnimatePresence>
+                      </div>
                     </div>
 
                     <div className="relative z-30 flex justify-center items-center gap-2 w-full">
@@ -429,7 +335,7 @@ function App() {
                 </div>
               </section>
 
-              {/* CONTACT */}
+              {/* CONTACT SECTION */}
               <section ref={contactSectionRef} id="contact" className="relative z-40 bg-[var(--bg-main)] overflow-visible h-[150vh]">
                 <div className="sticky top-0 h-screen w-full flex items-center justify-center overflow-hidden">
                   <div className="max-w-6xl w-full px-8 mx-auto flex flex-col h-full relative">
