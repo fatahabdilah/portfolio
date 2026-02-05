@@ -7,7 +7,6 @@ const cors = require("cors");
 const path = require("path");
 const swaggerUi = require("swagger-ui-express");
 const swaggerDocument = require("./config/swagger.json");
-require("swagger-ui-dist");
 
 const userRoutes = require("./routes/userRoutes");
 const projectRoutes = require("./routes/projectRoutes");
@@ -18,7 +17,54 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI;
 
-// --- CONFIGURASI CORS DENGAN DETEKSI ORIGIN DINAMIS ---
+// --- OPTIMASI KONEKSI DATABASE (Pola Singleton untuk Vercel) ---
+// Simpan koneksi di tingkat global agar tidak membuat koneksi baru setiap request
+let cachedDb = global.mongoose;
+
+if (!cachedDb) {
+  cachedDb = global.mongoose = { conn: null, promise: null };
+}
+
+const connectDB = async () => {
+  // Jika koneksi sudah ada, gunakan yang tersedia
+  if (cachedDb.conn) {
+    return cachedDb.conn;
+  }
+
+  if (!cachedDb.promise) {
+    const opts = {
+      bufferCommands: false, // PENTING: Matikan buffering agar tidak timeout saat koneksi tertunda
+      serverSelectionTimeoutMS: 5000, // Timeout lebih cepat (5 detik)
+    };
+
+    cachedDb.promise = mongoose.connect(MONGO_URI, opts).then((mongoose) => {
+      console.log("✅ MongoDB Connected");
+      return mongoose;
+    });
+  }
+
+  try {
+    cachedDb.conn = await cachedDb.promise;
+  } catch (e) {
+    cachedDb.promise = null;
+    throw e;
+  }
+
+  return cachedDb.conn;
+};
+
+// Middleware untuk memastikan DB terhubung sebelum memproses rute apapun
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (err) {
+    console.error("❌ DB CONNECTION ERROR:", err.message);
+    res.status(500).json({ error: "Database connection failed" });
+  }
+});
+
+// --- CONFIGURASI CORS ---
 const allowedOrigins = [
   "https://fatahabdilah.site",
   "http://localhost:5173",
@@ -27,13 +73,10 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: function (origin, callback) {
-    // Izinkan request tanpa origin (seperti Postman atau mobile)
     if (!origin) return callback(null, true);
-    
     if (allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true); // Origin diizinkan
+      callback(null, true);
     } else {
-      console.log("Blocked by CORS:", origin);
       callback(new Error("Not allowed by CORS logic"));
     }
   },
@@ -51,7 +94,7 @@ app.use("/docs", swaggerUi.serve, (req, res) => {
   const swaggerDoc = JSON.parse(JSON.stringify(swaggerDocument));
   const serverUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL 
     ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` 
-    : process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : `http://localhost:${PORT}`;
+    : `http://localhost:${PORT}`;
   swaggerDoc.servers = [{ url: serverUrl }];
   const ui = swaggerUi.setup(swaggerDoc, { customCssUrl: `${swaggerUiAssetPath}/swagger-ui.css` });
   ui(req, res);
@@ -61,30 +104,21 @@ app.use("/docs", swaggerUi.serve, (req, res) => {
 app.get("/", (req, res) => {
   res.status(200).json({ status: "success", message: "My-Portfolio REST API", documentation: "/docs" });
 });
+
 app.use("/api/users", userRoutes);
 app.use("/api/projects", projectRoutes);
 app.use("/api/technologies", technologyRoutes); 
 app.use("/api/blogs", blogRoutes);
 
-// --- DATABASE & SERVER ---
-const connectDBAndStartServer = async () => {
-  require("./models/UserModel"); require("./models/ProjectModel");
-  require("./models/TechnologyModel"); require("./models/BlogModel");
+// Import Models untuk inisialisasi schema
+require("./models/UserModel"); 
+require("./models/ProjectModel");
+require("./models/TechnologyModel"); 
+require("./models/BlogModel");
 
-  if (!mongoose.connection.readyState) {
-    try {
-      await mongoose.connect(MONGO_URI, { serverSelectionTimeoutMS: 10000 });
-      console.log("✅ MongoDB Connected");
-    } catch (err) {
-      console.error("❌ DB FAILED:", err.message);
-      if (process.env.NODE_ENV !== "production") process.exit(1);
-    }
-  }
-
-  if (process.env.NODE_ENV !== "test" && process.env.VERCEL_ENV !== "production") {
-    app.listen(PORT, () => console.log(`🚀 Running: http://localhost:${PORT}`));
-  }
-};
-connectDBAndStartServer();
+// Menjalankan server lokal (hanya jika bukan di lingkungan Vercel)
+if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
+  app.listen(PORT, () => console.log(`🚀 Running: http://localhost:${PORT}`));
+}
 
 module.exports = app;
