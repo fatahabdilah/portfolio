@@ -42,7 +42,7 @@ const Footer = () => {
   return (
     <footer 
       ref={footerRef}
-      className="relative h-screen w-screen overflow-hidden flex flex-col bg-[var(--bg-main)]"
+      className="relative h-screen w-full overflow-hidden flex flex-col bg-[var(--bg-main)]"
     >
       {/* Background Cloud */}
       <motion.div 

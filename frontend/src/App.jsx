@@ -4,13 +4,23 @@ import axios from 'axios';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import LoadingScreen from './components/LoadingScreen';
-import { X } from 'lucide-react';
+import { X, ExternalLink } from 'lucide-react';
 
 function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [isMobile, setIsMobile] = useState(false);
   const [selectedProject, setSelectedProject] = useState(null);
+
+  // State untuk Sapaan Multibahasa (Versi Pendek)
+  const [greetingIndex, setGreetingIndex] = useState(0);
+  const greetings = [
+    "Halo",      // Indonesia
+    "مرحباً",    // Arabic
+    "안녕",      // Korean
+    "Hi",        // English
+    "Holla"      // Spanish
+  ];
 
   const [projects, setProjects] = useState([]);
   const [blogs, setBlogs] = useState([]);
@@ -26,6 +36,16 @@ function App() {
   const [movementDistance, setMovementDistance] = useState(500);
   const row1Ref = useRef(null);
   const row2Ref = useRef(null);
+
+  // Logika Berganti Sapaan
+  useEffect(() => {
+    if (!isLoading) {
+      const interval = setInterval(() => {
+        setGreetingIndex((prev) => (prev + 1) % greetings.length);
+      }, 2500); 
+      return () => clearInterval(interval);
+    }
+  }, [isLoading]);
 
   useEffect(() => {
     const fetchPortfolioData = async () => {
@@ -108,7 +128,7 @@ function App() {
   const brightnessStyle = useTransform(useTransform(zoomScroll, [0.2, 0.9], [0.8, 0.4]), (v) => `brightness(${v})`);
 
   const opacityExperience = useTransform(zoomScroll, [0.3, 0.45], [0, 1]);
-  const blurExperience = useTransform(zoomScroll, [0, 0.4, 0.85, 0.95], ["blur(12px)", "blur(0px)", "blur(0px)", "blur(12px)"]);
+  const blurExperience = useTransform(zoomScroll, [0.3, 0.4, 0.85, 0.95], ["blur(12px)", "blur(0px)", "blur(0px)", "blur(12px)"]);
   const yExperienceContent = useTransform(zoomScroll, [0.3, 0.9], [150, -800]); 
   const pointerEvents = useTransform(zoomScroll, [0.4, 0.41], ["none", "auto"]);
 
@@ -156,7 +176,7 @@ function App() {
       onClick={() => setSelectedProject(proj)}
       className="shrink-0 h-[22vh] md:h-[30vh] aspect-[3/2] group relative overflow-hidden rounded-2xl md:rounded-3xl border border-[var(--border-nav)] cursor-pointer"
     >
-      <img src={proj.imageUrl} className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105" alt={proj.title} />
+      <img src={proj.imageUrl} className="w-full h-full object-cover transition-transform duration-1000 ease-in-out group-hover:scale-105" alt={proj.title} />
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500 ease-in-out flex flex-col justify-end p-4 md:p-6 [@media(hover:none)]:opacity-100 [@media(hover:none)]:translate-y-0">
         <h4 className="text-white text-base md:text-xl font-medium tracking-tight">{proj.title}</h4>
       </div>
@@ -182,7 +202,24 @@ function App() {
                 <div className="max-w-3xl mx-auto px-8 py-16 flex flex-col items-center">
                   <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="w-full aspect-[16/10] md:aspect-[16/9] rounded-2xl overflow-hidden border border-white/5 shadow-2xl mb-10"><img src={selectedProject.imageUrl} className="w-full h-full object-cover" alt={selectedProject.title} /></motion.div>
                   <div className="w-full flex flex-col gap-4 text-center md:text-left">
-                    <motion.h2 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="text-3xl md:text-5xl font-bold tracking-tight" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>{selectedProject.title}</motion.h2>
+                    <motion.div 
+                      initial={{ opacity: 0, y: 20 }} 
+                      animate={{ opacity: 1, y: 0 }} 
+                      transition={{ delay: 0.5, duration: 0.5 }}
+                      className="flex flex-wrap items-center justify-between gap-4 w-full"
+                    >
+                        <h2 className="flex-1 text-3xl md:text-5xl font-bold tracking-tight" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>{selectedProject.title}</h2>
+                        {selectedProject.demoUrl && (
+                            <a 
+                                href={selectedProject.demoUrl.startsWith('http') ? selectedProject.demoUrl : `https://${selectedProject.demoUrl}`} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="shrink-0 flex items-center gap-2 px-6 py-2.5 rounded-full bg-[var(--text-bold)] text-[var(--bg-main)] font-bold text-[10px] md:text-xs uppercase tracking-widest hover:opacity-80 transition-all shadow-lg whitespace-nowrap"
+                            >
+                                Visit Website <ExternalLink size={14} />
+                            </a>
+                        )}
+                    </motion.div>
                     <motion.div initial={{ opacity: 0, scaleX: 0 }} animate={{ opacity: 1, scaleX: 1 }} transition={{ delay: 0.6, duration: 0.8 }} className="h-[1px] w-full bg-gradient-to-r from-transparent via-white/20 to-transparent my-4" />
                     <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }} className="text-base md:text-lg font-light leading-relaxed opacity-60 text-justify" style={{ color: 'var(--text-bold)' }}>{selectedProject.content}</motion.p>
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8 }} className="mt-8 flex flex-wrap gap-3 justify-center md:justify-start">
@@ -201,20 +238,41 @@ function App() {
           <main className="flex-grow">
             <section id="home" className="relative h-screen flex items-center justify-center px-8 overflow-hidden">
               <div className="absolute inset-0 pointer-events-none select-none">
-                <motion.div style={{ ...gpuStyle, y: yV1 }} className="absolute left-[5%] md:left-[22%] top-[15%] md:top-[12%] w-[30vw] md:w-[12vw] z-20"><motion.img {...smoothFloat(11)} src="/images/collage/flower1.png" className="w-full" /></motion.div>
-                <motion.img style={{ ...gpuStyle, y: yV3 }} src="/images/collage/sculpture1.png" className="absolute left-[-20%] md:left-[-10%] top-[70%] md:top-[15%] w-[80vw] md:w-[36vw] z-10" />
-                <motion.img style={{ ...gpuStyle, y: yV4 }} src="/images/collage/sculpture2.png" className="absolute right-[-15%] md:right-[-3%] top-[5%] md:top-[0%] w-[70vw] md:w-[36vw] z-10" />
-                <motion.div style={{ ...gpuStyle, y: yV1 }} className="absolute left-[18%] top-[7%] md:top-[5%] w-[20vw] md:w-[10vw] blur-[2px]"><motion.img {...smoothFloat(12)} src="/images/collage/flower1.png" className="w-full" /></motion.div>
-                <motion.div style={{ ...gpuStyle, y: yV2 }} className="absolute left-[25%] bottom-[4%] w-[22vw] md:w-[12vw] blur-[2px]"><motion.img {...smoothFloat(14)} src="/images/collage/flower3.png" className="w-full" /></motion.div>
-                <motion.div style={{ ...gpuStyle, y: yV3 }} className="absolute left-[30%] md:left-[13%] bottom-[-5%] md:bottom-[8%] w-[30vw] md:w-[17vw] z-20"><motion.img {...smoothFloat(10)} src="/images/collage/flower2.png" className="w-full" /></motion.div>
-                <motion.div style={{ ...gpuStyle, y: yV3 }} className="absolute right-[-5%] md:right-[8%] bottom-[12%] md:bottom-[15%] w-[32vw] md:w-[18vw] z-20"><motion.img {...smoothFloat(13)} src="/images/collage/flower1.png" className="w-full" /></motion.div>
-                <motion.div style={{ ...gpuStyle, y: yV4 }} className="absolute right-[52%] md:right-[25%] top-[13%] md:top-[10%] w-[25vw] md:w-[12vw] z-20"><motion.img {...smoothFloat(11)} src="/images/collage/flower3.png" className="w-full" /></motion.div>
-                <motion.div style={{ ...gpuStyle, y: yV5 }} className="absolute right-[15%] md:right-[20%] bottom-[10%] md:bottom-[2%] w-[28vw] md:w-[14vw] blur-[1px]"><motion.img {...smoothFloat(12)} src="/images/collage/flower1.png" className="w-full" /></motion.div>
-                <motion.div style={{ ...gpuStyle, y: yV5 }} className="absolute right-[20%] top-[70%] md:top-[60%] w-[20vw] md:w-[10vw] z-30"><motion.img {...smoothFloat(8)} src="/images/collage/flower2.png" className="w-full" /></motion.div>
+                <motion.div style={{ ...gpuStyle, y: yV1 }} className="absolute left-[5%] lg:left-[22%] top-[15%] lg:top-[12%] w-[30vw] lg:w-[12vw] z-20"><motion.img {...smoothFloat(11)} src="/images/collage/flower1.png" className="w-full" /></motion.div>
+                <motion.img style={{ ...gpuStyle, y: yV3 }} src="/images/collage/sculpture1.png" className="absolute left-[-20%] lg:left-[-10%] top-[60%] lg:top-[15%] w-[90vw] lg:w-[36vw] z-10" />
+                <motion.img style={{ ...gpuStyle, y: yV4 }} src="/images/collage/sculpture2.png" className="absolute right-[-17%] lg:right-[-5%] top-[3%] lg:top-[0%] w-[75vw] lg:w-[36vw] z-10" />
+                <motion.div style={{ ...gpuStyle, y: yV1 }} className="absolute left-[18%] top-[7%] lg:top-[5%] w-[20vw] lg:w-[10vw] blur-[2px]"><motion.img {...smoothFloat(12)} src="/images/collage/flower1.png" className="w-full" /></motion.div>
+                <motion.div style={{ ...gpuStyle, y: yV2 }} className="absolute left-[25%] bottom-[5%] lg:bottom-[4%] w-[22vw] lg:w-[12vw] blur-[2px]"><motion.img {...smoothFloat(14)} src="/images/collage/flower3.png" className="w-full" /></motion.div>
+                <motion.div style={{ ...gpuStyle, y: yV3 }} className="absolute left-[30%] lg:left-[13%] bottom-[0%] lg:bottom-[8%] w-[30vw] lg:w-[17vw] z-20"><motion.img {...smoothFloat(10)} src="/images/collage/flower2.png" className="w-full" /></motion.div>
+                <motion.div style={{ ...gpuStyle, y: yV3 }} className="absolute right-[-4%] lg:right-[8%] bottom-[16%] lg:bottom-[15%] w-[32vw] lg:w-[18vw] z-20"><motion.img {...smoothFloat(13)} src="/images/collage/flower1.png" className="w-full" /></motion.div>
+                <motion.div style={{ ...gpuStyle, y: yV4 }} className="absolute right-[50%] lg:right-[25%] top-[13%] lg:top-[10%] w-[25vw] lg:w-[12vw] z-20"><motion.img {...smoothFloat(11)} src="/images/collage/flower3.png" className="w-full" /></motion.div>
+                <motion.div style={{ ...gpuStyle, y: yV5 }} className="absolute right-[15%] lg:right-[20%] bottom-[10%] lg:bottom-[2%] w-[28vw] lg:w-[14vw] blur-[1px]"><motion.img {...smoothFloat(12)} src="/images/collage/flower1.png" className="w-full" /></motion.div>
+                <motion.div style={{ ...gpuStyle, y: yV5 }} className="absolute right-[20%] top-[70%] lg:top-[60%] w-[20vw] lg:w-[10vw] z-30"><motion.img {...smoothFloat(8)} src="/images/collage/flower2.png" className="w-full" /></motion.div>
               </div>
-              <motion.div className="relative z-40 text-center">
-                <h1 className="text-5xl md:text-[6vw] font-medium tracking-tight leading-[1.1] mb-8" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>Building <br /> <span className="opacity-40 italic" style={{ color: 'var(--text-bold)' }}>Digital Experiences.</span></h1>
-                <p className="max-w-xl mx-auto text-base md:text-lg leading-relaxed font-light px-4" style={{ color: 'var(--text-main)' }}>Crafting aesthetic and functional digital solutions with a focus on high performance and exceptional user experience.</p>
+              
+              <motion.div className="relative z-40 text-center flex flex-col items-center gap-2">
+                <div className="text-2xl md:text-3xl font-light tracking-wider" style={{ color: 'var(--text-main)', fontFamily: 'var(--font-sans)' }}>
+                  <AnimatePresence mode="wait">
+                    <motion.span
+                      key={greetingIndex}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.4 }}
+                      className="inline-block"
+                    >
+                      {greetings[greetingIndex]},
+                    </motion.span>
+                  </AnimatePresence>
+                </div>
+                
+                <h1 className="text-4xl md:text-[6vw] mb-2 font-bold leading-none tracking-tight whitespace-nowrap" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>
+                  I'm Fatah Abdilah
+                </h1>
+                
+                <p className="max-w-xl mx-auto text-xs md:text-lg uppercase tracking-[0.3em] opacity-60 font-light" style={{ color: 'var(--text-main)' }}>
+                  Fullstack Web Developer
+                </p>
               </motion.div>
             </section>
 
@@ -230,7 +288,9 @@ function App() {
                 <div className="flex flex-col justify-center text-center md:text-left">
                   <div className="mb-4 md:mb-6">
                     <span className="text-[10px] font-black uppercase tracking-[0.5em] mb-2 md:mb-4 block opacity-40" style={{ color: 'var(--text-bold)' }}>About — I</span>
-                    <h2 className="text-4xl md:text-6xl font-bold opacity-80" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>The Essence.</h2>
+                    <h2 className="text-4xl md:text-6xl font-bold opacity-80" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>
+                      About Me
+                    </h2>
                   </div>
                   <div className="flex flex-col gap-3 md:gap-4 text-base md:text-xl leading-relaxed md:leading-[1.8] font-light tracking-tight" style={{ color: 'var(--text-bold)' }}><p>I am a Computer Science student focused on Web and Android development, building end-to-end digital solutions.</p><p>Passionate about creating fluid animations and minimal interfaces that bridge the gap between design and technology.</p></div>
                 </div>
@@ -238,8 +298,8 @@ function App() {
             </section>
 
             <div className="relative overflow-visible">
-              <div id="experience" className="absolute top-[170vh] md:top-[245vh] left-0 w-full h-1 pointer-events-none z-[100]" />
-              <section ref={zoomRef} className="relative h-[350vh] md:h-[500vh] w-full z-20 bg-[var(--bg-main)] shadow-[0_40px_60px_-20px_rgba(0,0,0,0.3)]">
+              <div id="experience" className="absolute top-[240vh] md:top-[300vh] left-0 w-full h-1 pointer-events-none z-[100]" />
+              <section ref={zoomRef} className="relative h-[500vh] md:h-[600vh] w-full z-20 bg-[var(--bg-main)] shadow-[0_40px_60px_-20px_rgba(0,0,0,0.3)]">
                 <div className="sticky top-0 h-screen w-full flex flex-col items-center justify-start overflow-hidden bg-[var(--bg-main)]">
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                     <motion.div style={{ scale: bgScale, filter: brightnessStyle, ...gpuStyle, zIndex: 5 }} className="absolute w-[150vw] aspect-[4/3] md:w-[75vw] overflow-hidden"><img src="/images/bg-landscape.jpeg" alt="Landscape" className="w-full h-full object-cover" /></motion.div>
@@ -255,8 +315,14 @@ function App() {
                         <div key={index} className={`flex flex-col md:flex-row items-start md:items-center justify-between w-full relative z-10 group ${index % 2 === 0 ? 'md:flex-row-reverse' : ''}`}>
                           <div className="absolute left-4 md:left-1/2 -translate-x-1/2 w-3 h-3 rounded-full shadow-[0_0_15px_rgba(0,0,0,0.1)] border-4 border-[var(--text-bold)]/30 group-hover:scale-150 transition-all duration-300 z-20" style={{ backgroundColor: 'var(--text-bold)' }} />
                           <div className={`w-full md:w-[45%] pl-12 md:pl-0 text-left ${index % 2 === 0 ? 'md:text-left' : 'md:text-right'}`}>
-                            <div className={`flex flex-col items-start ${index % 2 === 0 ? 'md:items-start' : 'md:items-end'} gap-1 mb-2`}><span className="text-[10px] font-bold tracking-widest block opacity-80" style={{ color: 'var(--text-bold)' }}>{exp.year}</span><div className="px-3 py-0.5 rounded-full border border-[var(--text-bold)]/20 text-[8px] uppercase tracking-widest opacity-60" style={{ color: 'var(--text-bold)' }}>Intern</div></div>
-                            <h3 className="text-2xl md:text-4xl font-medium mb-3 transition-all duration-500" style={{ color: 'var(--text-bold)' }}>{exp.title}</h3>
+                            <div className={`flex flex-col mb-2 ${index % 2 === 0 ? 'items-start md:items-start' : 'items-start md:items-end'}`}>
+                              <span className="text-[12px] font-bold tracking-widest block opacity-80 mb-1" style={{ color: 'var(--text-bold)' }}>{exp.year}</span>
+                              <h3 className="text-2xl md:text-4xl font-medium mb-1 transition-all duration-500" style={{ color: 'var(--text-bold)' }}>{exp.title}</h3>
+                              <div className="flex flex-col md:flex-row items-start md:items-center gap-2">
+                                <div className="px-3 py-0.5 rounded-full border border-[var(--text-bold)]/20 text-[9px] uppercase tracking-widest opacity-60 w-fit" style={{ color: 'var(--text-bold)' }}>Intern</div>
+                                <div className="md:hidden text-xs font-bold opacity-80 uppercase tracking-tighter" style={{ color: 'var(--text-bold)' }}>{exp.company}</div>
+                              </div>
+                            </div>
                             <p className={`text-sm opacity-80 max-w-sm ml-0 mr-auto ${index % 2 === 0 ? 'md:ml-0 md:mr-auto' : 'md:ml-auto md:mr-0'}`} style={{ color: 'var(--text-bold)' }}>{exp.detail}</p>
                           </div>
                           <div className={`hidden md:block w-[45%] text-xl font-bold opacity-80 uppercase tracking-tighter ${index % 2 === 0 ? 'text-right' : 'text-left'}`} style={{ color: 'var(--text-bold)' }}>{exp.company}</div>
@@ -294,7 +360,7 @@ function App() {
                   </motion.div>
                   
                   {/* Konten Blog - Z-Index Tinggi agar menimpa judul */}
-                  <motion.div style={{ y: blogContentY }} className="w-full flex flex-col items-center pt-20 md:pt-32 relative z-[10]">
+                  <motion.div style={{ y: blogContentY }} className="gap-4 w-full flex flex-col items-center pt-20 md:pt-32 relative z-[10]">
                     {/* Logika Center: Jika blog hanya 1, gunakan flex justify-center, jika lebih gunakan grid col-3 */}
                     <div className={`relative w-full flex ${currentBlogs.length < 3 ? 'justify-center' : ''}`}>
                       <div className={`grid gap-8 items-stretch w-full ${currentBlogs.length === 1 ? 'max-w-md grid-cols-1' : currentBlogs.length === 2 ? 'max-w-4xl grid-cols-1 md:grid-cols-2' : 'grid-cols-1 md:grid-cols-3'}`}>
@@ -310,7 +376,7 @@ function App() {
                             {currentBlogs.length > 0 ? currentBlogs.map((blog, idx) => (
                               <div key={`blog-${idx}`} className="group flex flex-col gap-4">
                                 <div className="relative aspect-[3/2] overflow-hidden rounded-3xl border border-[var(--border-nav)] bg-zinc-900/5 shadow-xl">
-                                  <img src={blog.image} className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110" alt={blog.title} />
+                                  <img src={blog.image} className="w-full h-full object-cover transition-all duration-1000 ease-in-out group-hover:scale-110" alt={blog.title} />
                                   <div className="absolute top-4 left-4"><span className="px-3 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/20 text-[10px] font-bold uppercase tracking-widest text-white">{blog.category}</span></div>
                                   {isMobile && ( <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-6"><span className="text-[10px] font-medium uppercase tracking-widest text-white/70 mb-1">{blog.date}</span><h3 className="text-xl font-medium leading-tight text-white">{blog.title}</h3></div> )}
                                 </div>

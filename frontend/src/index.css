@@ -3,6 +3,8 @@
 
 html {
   scroll-behavior: smooth;
+  /* Mencegah pergeseran layout saat scrollbar muncul/hilang */
+  scrollbar-gutter: stable;
 }
 
 :root {
@@ -26,18 +28,49 @@ body {
   background-color: var(--bg-main);
   color: var(--text-main);
   transition: background-color 0.5s ease, color 0.5s ease;
+  /* Memastikan scroll vertikal tetap aktif */
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 img {
   transition: filter 0.5s ease;
 }
 
-/* Menyembunyikan scrollbar horizontal di seluruh aplikasi */
+/* --- PERBAIKAN SCROLLBAR CUSTOM --- */
+
+/* Firefox (Standard) */
 * {
-  -ms-overflow-style: none;  /* Internet Explorer 10+ */
-  scrollbar-width: none;     /* Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-nav) transparent;
 }
 
-*::-webkit-scrollbar { 
-  display: none;             /* Safari and Chrome */
+/* Chrome, Safari, dan Edge (Webkit) */
+/* Menargetkan semua elemen termasuk html/root secara konsisten */
+::-webkit-scrollbar {
+  width: 6px; /* Lebar scrollbar vertikal */
+  height: 0px; /* Sembunyikan scrollbar horizontal secara total */
+}
+
+/* Area jalurnya scrollbar */
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Bagian batang yang digeser */
+::-webkit-scrollbar-thumb {
+  background-color: var(--border-nav);
+  border-radius: 20px;
+  /* Memberikan efek sedikit transparan agar elegan */
+  border: 1px solid transparent; 
+}
+
+/* Saat di-hover agar lebih terlihat */
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Khusus untuk elemen detail (seperti modal/overlay) agar tetap mengikuti aturan yang sama */
+.main-content *::-webkit-scrollbar {
+  width: 6px;
 }
