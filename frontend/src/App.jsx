@@ -6,21 +6,76 @@ import Footer from './components/Footer';
 import LoadingScreen from './components/LoadingScreen';
 import { X, ExternalLink } from 'lucide-react';
 
+// --- BAGIAN PENTING: ProjectCard DIPINDAHKAN KE LUAR App() ---
+const ProjectCard = ({ proj, onClick }) => {
+  // Kita gunakan varian Framer Motion untuk animasi yang lebih bersih dan performan
+  const cardVariants = {
+    rest: { scale: 1 },
+    hover: { scale: 1.05 }
+  };
+
+  const overlayVariants = {
+    rest: { opacity: 0 },
+    hover: { opacity: 1 }
+  };
+
+  const textVariants = {
+    rest: { y: 20, opacity: 0 },
+    hover: { y: 0, opacity: 1 }
+  };
+
+  return (
+    <motion.div
+      onClick={() => onClick(proj)}
+      initial="rest"
+      whileHover="hover"
+      animate="rest"
+      className="shrink-0 h-[22vh] md:h-[30vh] aspect-[3/2] relative overflow-hidden rounded-2xl md:rounded-3xl border border-[var(--border-nav)] cursor-pointer bg-zinc-900 z-10"
+    >
+      {/* Gambar */}
+      <motion.div 
+        variants={cardVariants}
+        transition={{ duration: 0.6, ease: [0.25, 1, 0.5, 1] }} // Easing halus
+        className="absolute inset-0 w-full h-full"
+      >
+        <img 
+          src={proj.imageUrl} 
+          className="w-full h-full object-cover" 
+          alt={proj.title} 
+          style={{ pointerEvents: 'none' }} // Mencegah gambar mencuri event
+        />
+      </motion.div>
+      
+      {/* Overlay Gradient */}
+      <motion.div 
+        variants={overlayVariants}
+        transition={{ duration: 0.4 }}
+        className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent z-10 pointer-events-none"
+      />
+
+      {/* Konten Teks */}
+      <motion.div 
+        variants={textVariants}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+        className="absolute inset-0 flex flex-col justify-end p-4 md:p-6 z-20 pointer-events-none"
+      >
+        <h4 className="text-white text-base md:text-xl font-medium tracking-tight">
+          {proj.title}
+        </h4>
+      </motion.div>
+    </motion.div>
+  );
+};
+// --- AKHIR ProjectCard ---
+
 function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [isMobile, setIsMobile] = useState(false);
   const [selectedProject, setSelectedProject] = useState(null);
 
-  // State untuk Sapaan Multibahasa (Versi Pendek)
   const [greetingIndex, setGreetingIndex] = useState(0);
-  const greetings = [
-    "Halo",      // Indonesia
-    "مرحباً",    // Arabic
-    "안녕",      // Korean
-    "Hi",        // English
-    "Holla"      // Spanish
-  ];
+  const greetings = ["Halo", "مرحباً", "안녕", "Hi", "Holla"];
 
   const [projects, setProjects] = useState([]);
   const [blogs, setBlogs] = useState([]);
@@ -37,7 +92,6 @@ function App() {
   const row1Ref = useRef(null);
   const row2Ref = useRef(null);
 
-  // Logika Berganti Sapaan
   useEffect(() => {
     if (!isLoading) {
       const interval = setInterval(() => {
@@ -171,18 +225,6 @@ function App() {
 
   const gpuStyle = { willChange: "transform, filter", translateZ: 0, backfaceVisibility: "hidden" };
 
-  const ProjectCard = ({ proj }) => (
-    <div 
-      onClick={() => setSelectedProject(proj)}
-      className="shrink-0 h-[22vh] md:h-[30vh] aspect-[3/2] group relative overflow-hidden rounded-2xl md:rounded-3xl border border-[var(--border-nav)] cursor-pointer"
-    >
-      <img src={proj.imageUrl} className="w-full h-full object-cover transition-transform duration-1000 ease-in-out group-hover:scale-105" alt={proj.title} />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500 ease-in-out flex flex-col justify-end p-4 md:p-6 [@media(hover:none)]:opacity-100 [@media(hover:none)]:translate-y-0">
-        <h4 className="text-white text-base md:text-xl font-medium tracking-tight">{proj.title}</h4>
-      </div>
-    </div>
-  );
-
   return (
     <>
       <AnimatePresence mode="wait">
@@ -201,14 +243,14 @@ function App() {
                 <button onClick={() => setSelectedProject(null)} className="fixed top-6 right-8 p-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 transition-colors z-[10002] backdrop-blur-md cursor-pointer"><X size={24} color="var(--text-bold)" /></button>
                 <div className="max-w-3xl mx-auto px-8 py-16 flex flex-col items-center">
                   <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="w-full aspect-[16/10] md:aspect-[16/9] rounded-2xl overflow-hidden border border-white/5 shadow-2xl mb-10"><img src={selectedProject.imageUrl} className="w-full h-full object-cover" alt={selectedProject.title} /></motion.div>
-                  <div className="w-full flex flex-col gap-4 text-center md:text-left">
+                  <div className="w-full flex flex-col gap-4 text-left">
                     <motion.div 
                       initial={{ opacity: 0, y: 20 }} 
                       animate={{ opacity: 1, y: 0 }} 
                       transition={{ delay: 0.5, duration: 0.5 }}
                       className="flex flex-wrap items-center justify-between gap-4 w-full"
                     >
-                        <h2 className="flex-1 text-3xl md:text-5xl font-bold tracking-tight" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>{selectedProject.title}</h2>
+                        <h2 className="flex-1 text-3xl md:text-5xl font-bold tracking-tight text-left" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>{selectedProject.title}</h2>
                         {selectedProject.demoUrl && (
                             <a 
                                 href={selectedProject.demoUrl.startsWith('http') ? selectedProject.demoUrl : `https://${selectedProject.demoUrl}`} 
@@ -222,7 +264,7 @@ function App() {
                     </motion.div>
                     <motion.div initial={{ opacity: 0, scaleX: 0 }} animate={{ opacity: 1, scaleX: 1 }} transition={{ delay: 0.6, duration: 0.8 }} className="h-[1px] w-full bg-gradient-to-r from-transparent via-white/20 to-transparent my-4" />
                     <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }} className="text-base md:text-lg font-light leading-relaxed opacity-60 text-justify" style={{ color: 'var(--text-bold)' }}>{selectedProject.content}</motion.p>
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8 }} className="mt-8 flex flex-wrap gap-3 justify-center md:justify-start">
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8 }} className="mt-8 flex flex-wrap gap-3 justify-start">
                       {selectedProject.technologies?.map((tech, idx) => (
                         <span key={tech._id || idx} className="px-4 py-1 rounded-full border border-white/10 text-[10px] uppercase tracking-widest text-white/40">{tech.name}</span>
                       ))}
@@ -341,8 +383,8 @@ function App() {
                     <h2 className="text-4xl md:text-7xl font-medium tracking-tighter whitespace-nowrap" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>Curated <span className="opacity-40 italic">Portfolio.</span></h2>
                   </motion.div>
                   <div className="flex flex-col gap-[2vh] md:gap-[4vh] w-full flex-grow justify-center items-center pb-[8vh]">
-                    <div className="w-full flex justify-center overflow-visible"><motion.div ref={row1Ref} style={{ x: xProjectsRow1 }} className="flex gap-[2vh] md:gap-[4vh] px-8 w-max">{projectsRow1.length > 0 ? projectsRow1.map((proj, i) => (<ProjectCard key={`row1-${proj._id || i}`} proj={proj} />)) : [1,2,3].map(n => <div key={n} className="shrink-0 h-[22vh] md:h-[30vh] aspect-[3/2] bg-zinc-900 animate-pulse rounded-2xl" />)}</motion.div></div>
-                    <div className="w-full flex justify-center overflow-visible"><motion.div ref={row2Ref} style={{ x: xProjectsRow2 }} className="flex gap-[2vh] md:gap-[4vh] px-8 w-max">{projectsRow2.length > 0 ? projectsRow2.map((proj, i) => (<ProjectCard key={`row2-${proj._id || i}`} proj={proj} />)) : [1,2,3].map(n => <div key={n} className="shrink-0 h-[22vh] md:h-[30vh] aspect-[3/2] bg-zinc-900 animate-pulse rounded-2xl" />)}</motion.div></div>
+                    <div className="w-full flex justify-center overflow-visible"><motion.div ref={row1Ref} style={{ x: xProjectsRow1 }} className="flex gap-[2vh] md:gap-[4vh] px-8 w-max">{projectsRow1.length > 0 ? projectsRow1.map((proj, i) => (<ProjectCard key={`row1-${proj._id || i}`} proj={proj} onClick={setSelectedProject} />)) : [1,2,3].map(n => <div key={n} className="shrink-0 h-[22vh] md:h-[30vh] aspect-[3/2] bg-zinc-900 animate-pulse rounded-2xl" />)}</motion.div></div>
+                    <div className="w-full flex justify-center overflow-visible"><motion.div ref={row2Ref} style={{ x: xProjectsRow2 }} className="flex gap-[2vh] md:gap-[4vh] px-8 w-max">{projectsRow2.length > 0 ? projectsRow2.map((proj, i) => (<ProjectCard key={`row2-${proj._id || i}`} proj={proj} onClick={setSelectedProject} />)) : [1,2,3].map(n => <div key={n} className="shrink-0 h-[22vh] md:h-[30vh] aspect-[3/2] bg-zinc-900 animate-pulse rounded-2xl" />)}</motion.div></div>
                   </div>
                 </div>
               </section>
@@ -353,15 +395,14 @@ function App() {
                 <div className="max-w-7xl mx-auto relative w-full flex flex-col items-center z-10 px-6">
                   <div id="blog" className="absolute left-0 w-full h-1 pointer-events-none" />
                   
-                  {/* Judul Insights - Z-Index Rendah agar ditimpa konten */}
+                  {/* Judul Insights */}
                   <motion.div style={{ y: blogTitleY, filter: blurBlogTitle }} className="text-center mb-0 z-[5] pointer-events-none sticky top-32 md:top-40">
                     <span className="text-[10px] font-black uppercase tracking-[0.5em] block opacity-40" style={{ color: 'var(--text-bold)' }}>Blog — IV</span>
                     <h2 className="text-5xl md:text-[10vw] font-bold leading-none" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>Insights.</h2>
                   </motion.div>
                   
-                  {/* Konten Blog - Z-Index Tinggi agar menimpa judul */}
+                  {/* Konten Blog */}
                   <motion.div style={{ y: blogContentY }} className="gap-4 w-full flex flex-col items-center pt-20 md:pt-32 relative z-[10]">
-                    {/* Logika Center: Jika blog hanya 1, gunakan flex justify-center, jika lebih gunakan grid col-3 */}
                     <div className={`relative w-full flex ${currentBlogs.length < 3 ? 'justify-center' : ''}`}>
                       <div className={`grid gap-8 items-stretch w-full ${currentBlogs.length === 1 ? 'max-w-md grid-cols-1' : currentBlogs.length === 2 ? 'max-w-4xl grid-cols-1 md:grid-cols-2' : 'grid-cols-1 md:grid-cols-3'}`}>
                         <AnimatePresence mode="wait">
@@ -371,7 +412,7 @@ function App() {
                             animate={{ opacity: 1, y: 0 }} 
                             exit={{ opacity: 0, y: -20 }} 
                             transition={{ duration: 0.5 }} 
-                            className="contents" // Menjaga grid flow tetap benar
+                            className="contents" 
                           >
                             {currentBlogs.length > 0 ? currentBlogs.map((blog, idx) => (
                               <div key={`blog-${idx}`} className="group flex flex-col gap-4">
