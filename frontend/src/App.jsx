@@ -1,82 +1,77 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { motion, useScroll, useTransform, AnimatePresence, useSpring, useMotionValue } from 'framer-motion';
 import axios from 'axios';
+import { useNavigate, useLocation, useMatch } from 'react-router-dom';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import LoadingScreen from './components/LoadingScreen';
+import BlogDetailOverlay from './pages/BlogDetail.jsx'; // Import komponen overlay
 import { X, ExternalLink } from 'lucide-react';
 
-// --- BAGIAN PENTING: ProjectCard DIPINDAHKAN KE LUAR App() ---
+// DATA PENGALAMAN (PENTING: Jangan dihapus)
+const experiencesData = [
+  { title: "Full-stack Web Developer", company: "Educourse.id", year: "2025", detail: "Developed full-stack web applications like LMS and CMS platforms using React, Express, and Next.js with RESTful API integration." },
+  { title: "Front-end Android Developer", company: "PT Lingga Cipta Insania", year: "2025", detail: "Translated Figma designs into 20+ functional XML and Java layouts for B2B transactions using Agile/Scrum methodology." },
+  { title: "Web Administrator", company: "Faculty of Computer Science, Pamulang University", year: "2024 - 2025", detail: "Managed 7 websites (OJS & WordPress) and optimized On-Page SEO, increasing organic traffic by 25-30%." },
+  { title: "Front-end Web Developer", company: "UP SMK Negeri 1 Tengaran", year: "2020", detail: "Implemented school profile interfaces using HTML, CSS, JS, and Bootstrap, improving site loading speed by 40-50%." }
+];
+
+// KOMPONEN CARD
 const ProjectCard = ({ proj, onClick }) => {
-  // Kita gunakan varian Framer Motion untuk animasi yang lebih bersih dan performan
-  const cardVariants = {
-    rest: { scale: 1 },
-    hover: { scale: 1.05 }
-  };
+  const [isHovered, setIsHovered] = useState(false);
+  const leaveTimeout = useRef(null);
 
-  const overlayVariants = {
-    rest: { opacity: 0 },
-    hover: { opacity: 1 }
+  const handleSafeEnter = () => {
+    if (leaveTimeout.current) clearTimeout(leaveTimeout.current);
+    if (!isHovered) setIsHovered(true);
   };
-
-  const textVariants = {
-    rest: { y: 20, opacity: 0 },
-    hover: { y: 0, opacity: 1 }
+  const handleSafeLeave = () => {
+    leaveTimeout.current = setTimeout(() => setIsHovered(false), 50);
   };
 
   return (
-    <motion.div
+    <div 
       onClick={() => onClick(proj)}
-      initial="rest"
-      whileHover="hover"
-      animate="rest"
-      className="shrink-0 h-[22vh] md:h-[30vh] aspect-[3/2] relative overflow-hidden rounded-2xl md:rounded-3xl border border-[var(--border-nav)] cursor-pointer bg-zinc-900 z-10"
+      onMouseEnter={handleSafeEnter}
+      onMouseLeave={handleSafeLeave}
+      className="shrink-0 h-[22vh] md:h-[30vh] aspect-[3/2] relative overflow-hidden rounded-2xl md:rounded-3xl border border-[var(--border-nav)] cursor-pointer bg-zinc-900 z-10 isolate"
     >
-      {/* Gambar */}
-      <motion.div 
-        variants={cardVariants}
-        transition={{ duration: 0.6, ease: [0.25, 1, 0.5, 1] }} // Easing halus
-        className="absolute inset-0 w-full h-full"
-      >
-        <img 
-          src={proj.imageUrl} 
-          className="w-full h-full object-cover" 
-          alt={proj.title} 
-          style={{ pointerEvents: 'none' }} // Mencegah gambar mencuri event
-        />
-      </motion.div>
-      
-      {/* Overlay Gradient */}
-      <motion.div 
-        variants={overlayVariants}
-        transition={{ duration: 0.4 }}
-        className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent z-10 pointer-events-none"
-      />
-
-      {/* Konten Teks */}
-      <motion.div 
-        variants={textVariants}
-        transition={{ duration: 0.4, ease: "easeOut" }}
-        className="absolute inset-0 flex flex-col justify-end p-4 md:p-6 z-20 pointer-events-none"
-      >
-        <h4 className="text-white text-base md:text-xl font-medium tracking-tight">
-          {proj.title}
-        </h4>
-      </motion.div>
-    </motion.div>
+      <img src={proj.imageUrl} className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out" style={{ transform: isHovered ? 'scale(1.1)' : 'scale(1)', pointerEvents: 'none' }} alt={proj.title} />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent transition-opacity duration-500 ease-out" style={{ opacity: isHovered ? 1 : 0, pointerEvents: 'none' }} />
+      <div className="absolute inset-0 flex flex-col justify-end p-4 md:p-6 transition-transform duration-500 ease-out" style={{ transform: isHovered ? 'translateY(0)' : 'translateY(16px)', opacity: isHovered ? 1 : 0, pointerEvents: 'none' }} >
+        <h4 className="text-white text-base md:text-xl font-medium tracking-tight">{proj.title}</h4>
+      </div>
+      <div className="absolute inset-0 z-50 bg-transparent" />
+    </div>
   );
 };
-// --- AKHIR ProjectCard ---
 
 function App() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  // --- LOGIC ROUTING PENTING ---
+  const blogMatch = useMatch('/blog/:id');
+  const blogId = blogMatch?.params?.id;
+
+  // Cek apakah akses ini adalah "Direct Access" (Reload di halaman blog)
+  // Jika akses langsung, state history biasanya kosong atau key default.
+  // Kita bisa cek apakah kita punya 'previousLocation' di state (teknik react router).
+  // TAPI, cara paling simpel: Jika blogId ada TAPI isLoading masih true (awal render), berarti direct access.
+  const [isDirectAccess, setIsDirectAccess] = useState(!!blogId);
+
+  // Jika direct access, kita sembunyikan home content agar tidak berat/aneh
+  // TAPI agar efek "Back" mulus, idealnya home tetap ada.
+  // Untuk kasus "Tidak ada tombol back", kita handle di komponen BlogDetailOverlay prop.
+
+  // Loading Screen: Muncul hanya saat refresh / akses pertama kali
   const [isLoading, setIsLoading] = useState(true);
+
   const [currentPage, setCurrentPage] = useState(1);
   const [isMobile, setIsMobile] = useState(false);
   const [selectedProject, setSelectedProject] = useState(null);
-
   const [greetingIndex, setGreetingIndex] = useState(0);
   const greetings = ["Halo", "مرحباً", "안녕", "Hi", "Holla"];
-
   const [projects, setProjects] = useState([]);
   const [blogs, setBlogs] = useState([]);
   const API_URL = import.meta.env.VITE_API_URL;
@@ -87,10 +82,30 @@ function App() {
   const projectSectionRef = useRef(null);
   const blogSectionRef = useRef(null);
   const contactSectionRef = useRef(null);
-
-  const [movementDistance, setMovementDistance] = useState(500);
   const row1Ref = useRef(null);
   const row2Ref = useRef(null);
+  const [movementDistance, setMovementDistance] = useState(500);
+
+  // Navigasi ke Blog: Set state isDirectAccess = false karena ini navigasi internal
+  const handleBlogClick = (id) => {
+    setIsDirectAccess(false); // Tandai ini bukan direct access
+    navigate(`/blog/${id}`);
+  };
+
+  const handleLogoClick = () => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    setIsLoading(true); // Reset loading effect
+    navigate('/');
+  };
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    // Jika ganti URL ke root ('/'), reset status direct access
+    if (!blogId) setIsDirectAccess(false);
+  }, [blogId]);
 
   useEffect(() => {
     if (!isLoading) {
@@ -111,6 +126,7 @@ function App() {
         ]);
         setProjects(projRes.data.data || []);
         const fetchedBlogs = (blogRes.data.data || []).map(b => ({
+          id: b._id,
           title: b.title,
           date: new Date(b.createdAt).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }),
           category: "Insight",
@@ -135,35 +151,25 @@ function App() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Kunci Scroll hanya jika Project Modal ATAU Blog Overlay aktif
   useEffect(() => {
-    if (selectedProject) {
+    if (selectedProject || blogId) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'unset';
     }
-  }, [selectedProject]);
+  }, [selectedProject, blogId]);
 
   const blogsPerPage = isMobile ? 2 : 3;
 
-  const handleLogoClick = () => {
-    window.scrollTo({ top: 0, behavior: 'instant' });
-    setIsLoading(true);
-  };
-
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
-  const cursorX = useSpring(mouseX, { damping: 25, stiffness: 150 });
-  const cursorY = useSpring(mouseY, { damping: 25, stiffness: 150 });
-
   const handleMouseMove = (e) => {
     mouseX.set(e.clientX);
     mouseY.set(e.clientY);
   };
 
+  // --- Scroll & Animation Logic (Tetap Sama) ---
   const { scrollYProgress } = useScroll({ target: containerRef, offset: ["start start", "end start"] });
   const yV1 = useTransform(scrollYProgress, [0, 1], ["0%", "-30%"]);
   const yV2 = useTransform(scrollYProgress, [0, 1], ["0%", "-60%"]);
@@ -186,20 +192,11 @@ function App() {
   const yExperienceContent = useTransform(zoomScroll, [0.3, 0.9], [150, -800]); 
   const pointerEvents = useTransform(zoomScroll, [0.4, 0.41], ["none", "auto"]);
 
-  const experiences = [
-    { title: "Full-stack Web Developer", company: "Educourse.id", year: "2025", detail: "Developed full-stack web applications like LMS and CMS platforms using React, Express, and Next.js with RESTful API integration." },
-    { title: "Front-end Android Developer", company: "PT Lingga Cipta Insania", year: "2025", detail: "Translated Figma designs into 20+ functional XML and Java layouts for B2B transactions using Agile/Scrum methodology." },
-    { title: "Web Administrator", company: (<>Faculty of Computer Science, <br /> Pamulang University</>), year: "2024 - 2025", detail: "Managed 7 websites (OJS & WordPress) and optimized On-Page SEO, increasing organic traffic by 25-30%." },
-    { title: "Front-end Web Developer", company: "UP SMK Negeri 1 Tengaran", year: "2020", detail: "Implemented school profile interfaces using HTML, CSS, JS, and Bootstrap, improving site loading speed by 40-50%." }
-  ];
-
   const { scrollYProgress: projectScroll } = useScroll({ target: projectSectionRef, offset: ["start end", "end start"] });
   const yProjectTitle = useTransform(projectScroll, [0, 0.2], [50, 0]);
   const opacityProjectTitle = useTransform(projectScroll, [0, 0.2], [0, 1]);
-
   const xProjectsRow1 = useTransform(projectScroll, [0, 1], [-movementDistance * 3, movementDistance * 2.5]);
   const xProjectsRow2 = useTransform(projectScroll, [0, 1], [movementDistance * 3, -movementDistance * 2.5]);
-
   const projectsRow1 = projects.slice(0, Math.ceil(projects.length / 2));
   const projectsRow2 = projects.slice(Math.ceil(projects.length / 2));
 
@@ -208,7 +205,6 @@ function App() {
   const blurBlogTitle = useTransform(blogScroll, [0, 0.3, 0.7, 1], ["blur(12px)", "blur(0px)", "blur(0px)", "blur(12px)"]);
   const blogContentY = useTransform(blogScroll, [0.4, 1], [isMobile ? 50 : 0, -250]); 
   const yBlogBg = useTransform(blogScroll, [0, 1], ["-10%", "10%"]);
-
   const currentBlogs = blogs.slice((currentPage - 1) * blogsPerPage, currentPage * blogsPerPage);
   const totalPages = Math.ceil(blogs.length / blogsPerPage);
 
@@ -217,12 +213,10 @@ function App() {
   const blurContact = useTransform(contactScroll, [0, 0.35, 0.65, 1], ["blur(18px)", "blur(0px)", "blur(0px)", "blur(18px)"]);
   const yContactImageSticky = useTransform(contactScroll, [0, 1], [40, -40]); 
   const opacityContact = useTransform(contactScroll, [0, 0.1, 0.9, 1], [0, 1, 1, 0]);
-
   const smoothFloat = (d) => ({
     animate: { y: [0, 15, 0], rotate: [-2, 2, -2] },
     transition: { duration: d, repeat: Infinity, ease: "easeInOut" }
   });
-
   const gpuStyle = { willChange: "transform, filter", translateZ: 0, backfaceVisibility: "hidden" };
 
   return (
@@ -231,10 +225,22 @@ function App() {
         {isLoading && <LoadingScreen key="loader" onFinished={() => setIsLoading(false)} />}
       </AnimatePresence>
 
+      {/* OVERLAY BLOG DETAIL */}
+      <AnimatePresence>
+        {blogId && (
+          <BlogDetailOverlay 
+            key="blog-overlay" 
+            id={blogId} 
+            // Kirim prop isDirectAccess ke komponen overlay
+            isDirectAccess={isDirectAccess}
+          />
+        )}
+      </AnimatePresence>
+
       <Header onHomeClick={scrollToTop} onLogoClick={handleLogoClick} />
       
       <div className="main-content" onMouseMove={handleMouseMove}>
-        {/* --- PROJECT DETAIL OVERLAY --- */}
+        {/* Project Modal */}
         <AnimatePresence>
           {selectedProject && (
             <>
@@ -244,20 +250,10 @@ function App() {
                 <div className="max-w-3xl mx-auto px-8 py-16 flex flex-col items-center">
                   <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="w-full aspect-[16/10] md:aspect-[16/9] rounded-2xl overflow-hidden border border-white/5 shadow-2xl mb-10"><img src={selectedProject.imageUrl} className="w-full h-full object-cover" alt={selectedProject.title} /></motion.div>
                   <div className="w-full flex flex-col gap-4 text-left">
-                    <motion.div 
-                      initial={{ opacity: 0, y: 20 }} 
-                      animate={{ opacity: 1, y: 0 }} 
-                      transition={{ delay: 0.5, duration: 0.5 }}
-                      className="flex flex-wrap items-center justify-between gap-4 w-full"
-                    >
+                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5, duration: 0.5 }} className="flex flex-wrap items-center justify-between gap-4 w-full">
                         <h2 className="flex-1 text-3xl md:text-5xl font-bold tracking-tight text-left" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>{selectedProject.title}</h2>
                         {selectedProject.demoUrl && (
-                            <a 
-                                href={selectedProject.demoUrl.startsWith('http') ? selectedProject.demoUrl : `https://${selectedProject.demoUrl}`} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="shrink-0 flex items-center gap-2 px-6 py-2.5 rounded-full bg-[var(--text-bold)] text-[var(--bg-main)] font-bold text-[10px] md:text-xs uppercase tracking-widest hover:opacity-80 transition-all shadow-lg whitespace-nowrap"
-                            >
+                            <a href={selectedProject.demoUrl.startsWith('http') ? selectedProject.demoUrl : `https://${selectedProject.demoUrl}`} target="_blank" rel="noopener noreferrer" className="shrink-0 flex items-center gap-2 px-6 py-2.5 rounded-full bg-[var(--text-bold)] text-[var(--bg-main)] font-bold text-[10px] md:text-xs uppercase tracking-widest hover:opacity-80 transition-all shadow-lg whitespace-nowrap">
                                 Visit Website <ExternalLink size={14} />
                             </a>
                         )}
@@ -278,44 +274,29 @@ function App() {
 
         <div ref={containerRef} className="flex flex-col min-h-screen bg-[var(--bg-main)]">
           <main className="flex-grow">
+            {/* Sections Content... (Tidak ada perubahan di sini, tetap sama persis) */}
             <section id="home" className="relative h-screen flex items-center justify-center px-8 overflow-hidden">
-              <div className="absolute inset-0 pointer-events-none select-none">
-                <motion.div style={{ ...gpuStyle, y: yV1 }} className="absolute left-[5%] lg:left-[22%] top-[15%] lg:top-[12%] w-[30vw] lg:w-[12vw] z-20"><motion.img {...smoothFloat(11)} src="/images/collage/flower1.png" className="w-full" /></motion.div>
-                <motion.img style={{ ...gpuStyle, y: yV3 }} src="/images/collage/sculpture1.png" className="absolute left-[-20%] lg:left-[-10%] top-[60%] lg:top-[15%] w-[90vw] lg:w-[36vw] z-10" />
-                <motion.img style={{ ...gpuStyle, y: yV4 }} src="/images/collage/sculpture2.png" className="absolute right-[-17%] lg:right-[-5%] top-[3%] lg:top-[0%] w-[75vw] lg:w-[36vw] z-10" />
-                <motion.div style={{ ...gpuStyle, y: yV1 }} className="absolute left-[18%] top-[7%] lg:top-[5%] w-[20vw] lg:w-[10vw] blur-[2px]"><motion.img {...smoothFloat(12)} src="/images/collage/flower1.png" className="w-full" /></motion.div>
-                <motion.div style={{ ...gpuStyle, y: yV2 }} className="absolute left-[25%] bottom-[5%] lg:bottom-[4%] w-[22vw] lg:w-[12vw] blur-[2px]"><motion.img {...smoothFloat(14)} src="/images/collage/flower3.png" className="w-full" /></motion.div>
-                <motion.div style={{ ...gpuStyle, y: yV3 }} className="absolute left-[30%] lg:left-[13%] bottom-[0%] lg:bottom-[8%] w-[30vw] lg:w-[17vw] z-20"><motion.img {...smoothFloat(10)} src="/images/collage/flower2.png" className="w-full" /></motion.div>
-                <motion.div style={{ ...gpuStyle, y: yV3 }} className="absolute right-[-4%] lg:right-[8%] bottom-[16%] lg:bottom-[15%] w-[32vw] lg:w-[18vw] z-20"><motion.img {...smoothFloat(13)} src="/images/collage/flower1.png" className="w-full" /></motion.div>
-                <motion.div style={{ ...gpuStyle, y: yV4 }} className="absolute right-[50%] lg:right-[25%] top-[13%] lg:top-[10%] w-[25vw] lg:w-[12vw] z-20"><motion.img {...smoothFloat(11)} src="/images/collage/flower3.png" className="w-full" /></motion.div>
-                <motion.div style={{ ...gpuStyle, y: yV5 }} className="absolute right-[15%] lg:right-[20%] bottom-[10%] lg:bottom-[2%] w-[28vw] lg:w-[14vw] blur-[1px]"><motion.img {...smoothFloat(12)} src="/images/collage/flower1.png" className="w-full" /></motion.div>
-                <motion.div style={{ ...gpuStyle, y: yV5 }} className="absolute right-[20%] top-[70%] lg:top-[60%] w-[20vw] lg:w-[10vw] z-30"><motion.img {...smoothFloat(8)} src="/images/collage/flower2.png" className="w-full" /></motion.div>
-              </div>
-              
-              <motion.div className="relative z-40 text-center flex flex-col items-center gap-2">
-                <div className="text-2xl md:text-3xl font-light tracking-wider" style={{ color: 'var(--text-main)', fontFamily: 'var(--font-sans)' }}>
-                  <AnimatePresence mode="wait">
-                    <motion.span
-                      key={greetingIndex}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      transition={{ duration: 0.4 }}
-                      className="inline-block"
-                    >
-                      {greetings[greetingIndex]},
-                    </motion.span>
-                  </AnimatePresence>
+                <div className="absolute inset-0 pointer-events-none select-none">
+                    <motion.div style={{ ...gpuStyle, y: yV1 }} className="absolute left-[5%] lg:left-[22%] top-[15%] lg:top-[12%] w-[30vw] lg:w-[12vw] z-20"><motion.img {...smoothFloat(11)} src="/images/collage/flower1.png" className="w-full" /></motion.div>
+                    <motion.img style={{ ...gpuStyle, y: yV3 }} src="/images/collage/sculpture1.png" className="absolute left-[-20%] lg:left-[-10%] top-[60%] lg:top-[15%] w-[90vw] lg:w-[36vw] z-10" />
+                    <motion.img style={{ ...gpuStyle, y: yV4 }} src="/images/collage/sculpture2.png" className="absolute right-[-17%] lg:right-[-5%] top-[3%] lg:top-[0%] w-[75vw] lg:w-[36vw] z-10" />
+                    <motion.div style={{ ...gpuStyle, y: yV1 }} className="absolute left-[18%] top-[7%] lg:top-[5%] w-[20vw] lg:w-[10vw] blur-[2px]"><motion.img {...smoothFloat(12)} src="/images/collage/flower1.png" className="w-full" /></motion.div>
+                    <motion.div style={{ ...gpuStyle, y: yV2 }} className="absolute left-[25%] bottom-[5%] lg:bottom-[4%] w-[22vw] lg:w-[12vw] blur-[2px]"><motion.img {...smoothFloat(14)} src="/images/collage/flower3.png" className="w-full" /></motion.div>
+                    <motion.div style={{ ...gpuStyle, y: yV3 }} className="absolute left-[30%] lg:left-[13%] bottom-[0%] lg:bottom-[8%] w-[30vw] lg:w-[17vw] z-20"><motion.img {...smoothFloat(10)} src="/images/collage/flower2.png" className="w-full" /></motion.div>
+                    <motion.div style={{ ...gpuStyle, y: yV3 }} className="absolute right-[-4%] lg:right-[8%] bottom-[16%] lg:bottom-[15%] w-[32vw] lg:w-[18vw] z-20"><motion.img {...smoothFloat(13)} src="/images/collage/flower1.png" className="w-full" /></motion.div>
+                    <motion.div style={{ ...gpuStyle, y: yV4 }} className="absolute right-[50%] lg:right-[25%] top-[13%] lg:top-[10%] w-[25vw] lg:w-[12vw] z-20"><motion.img {...smoothFloat(11)} src="/images/collage/flower3.png" className="w-full" /></motion.div>
+                    <motion.div style={{ ...gpuStyle, y: yV5 }} className="absolute right-[15%] lg:right-[20%] bottom-[10%] lg:bottom-[2%] w-[28vw] lg:w-[14vw] blur-[1px]"><motion.img {...smoothFloat(12)} src="/images/collage/flower1.png" className="w-full" /></motion.div>
+                    <motion.div style={{ ...gpuStyle, y: yV5 }} className="absolute right-[20%] top-[70%] lg:top-[60%] w-[20vw] lg:w-[10vw] z-30"><motion.img {...smoothFloat(8)} src="/images/collage/flower2.png" className="w-full" /></motion.div>
                 </div>
-                
-                <h1 className="text-4xl md:text-[6vw] mb-2 font-bold leading-none tracking-tight whitespace-nowrap" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>
-                  I'm Fatah Abdilah
-                </h1>
-                
-                <p className="max-w-xl mx-auto text-xs md:text-lg uppercase tracking-[0.3em] opacity-60 font-light" style={{ color: 'var(--text-main)' }}>
-                  Fullstack Web Developer
-                </p>
-              </motion.div>
+                <motion.div className="relative z-40 text-center flex flex-col items-center gap-2">
+                    <div className="text-2xl md:text-3xl font-light tracking-wider" style={{ color: 'var(--text-main)', fontFamily: 'var(--font-sans)' }}>
+                    <AnimatePresence mode="wait">
+                        <motion.span key={greetingIndex} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.4 }} className="inline-block">{greetings[greetingIndex]},</motion.span>
+                    </AnimatePresence>
+                    </div>
+                    <h1 className="text-4xl md:text-[6vw] mb-2 font-bold leading-none tracking-tight whitespace-nowrap" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>I'm Fatah Abdilah</h1>
+                    <p className="max-w-xl mx-auto text-xs md:text-lg uppercase tracking-[0.3em] opacity-60 font-light" style={{ color: 'var(--text-main)' }}>Fullstack Web Developer</p>
+                </motion.div>
             </section>
 
             <section id="about" className="relative w-full h-screen overflow-hidden flex items-center justify-center px-6 md:px-8">
@@ -330,9 +311,7 @@ function App() {
                 <div className="flex flex-col justify-center text-center md:text-left">
                   <div className="mb-4 md:mb-6">
                     <span className="text-[10px] font-black uppercase tracking-[0.5em] mb-2 md:mb-4 block opacity-40" style={{ color: 'var(--text-bold)' }}>About — I</span>
-                    <h2 className="text-4xl md:text-6xl font-bold opacity-80" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>
-                      About Me
-                    </h2>
+                    <h2 className="text-4xl md:text-6xl font-bold opacity-80" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>About Me</h2>
                   </div>
                   <div className="flex flex-col gap-3 md:gap-4 text-base md:text-xl leading-relaxed md:leading-[1.8] font-light tracking-tight" style={{ color: 'var(--text-bold)' }}><p>I am a Computer Science student focused on Web and Android development, building end-to-end digital solutions.</p><p>Passionate about creating fluid animations and minimal interfaces that bridge the gap between design and technology.</p></div>
                 </div>
@@ -353,7 +332,7 @@ function App() {
                       <h2 className="text-5xl md:text-8xl font-bold" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>The Journey</h2>
                     </div>
                     <div className="relative flex flex-col gap-12 before:absolute before:left-4 md:before:left-1/2 before:top-0 before:h-full before:w-[1px] before:bg-[var(--text-bold)] before:opacity-20 before:z-0">
-                      {experiences.map((exp, index) => (
+                      {experiencesData.map((exp, index) => (
                         <div key={index} className={`flex flex-col md:flex-row items-start md:items-center justify-between w-full relative z-10 group ${index % 2 === 0 ? 'md:flex-row-reverse' : ''}`}>
                           <div className="absolute left-4 md:left-1/2 -translate-x-1/2 w-3 h-3 rounded-full shadow-[0_0_15px_rgba(0,0,0,0.1)] border-4 border-[var(--text-bold)]/30 group-hover:scale-150 transition-all duration-300 z-20" style={{ backgroundColor: 'var(--text-bold)' }} />
                           <div className={`w-full md:w-[45%] pl-12 md:pl-0 text-left ${index % 2 === 0 ? 'md:text-left' : 'md:text-right'}`}>
@@ -394,31 +373,19 @@ function App() {
                 <motion.div style={{ y: yBlogBg }} className="absolute inset-0 z-0 pointer-events-none"><img src="/images/bgcloude.jpg" alt="Cloud Background" className="w-full h-[120%] object-cover transition-all duration-500" style={{ filter: 'var(--cloud-brightness)' }} /></motion.div>
                 <div className="max-w-7xl mx-auto relative w-full flex flex-col items-center z-10 px-6">
                   <div id="blog" className="absolute left-0 w-full h-1 pointer-events-none" />
-                  
-                  {/* Judul Insights */}
                   <motion.div style={{ y: blogTitleY, filter: blurBlogTitle }} className="text-center mb-0 z-[5] pointer-events-none sticky top-32 md:top-40">
                     <span className="text-[10px] font-black uppercase tracking-[0.5em] block opacity-40" style={{ color: 'var(--text-bold)' }}>Blog — IV</span>
                     <h2 className="text-5xl md:text-[10vw] font-bold leading-none" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>Insights.</h2>
                   </motion.div>
-                  
-                  {/* Konten Blog */}
                   <motion.div style={{ y: blogContentY }} className="gap-4 w-full flex flex-col items-center pt-20 md:pt-32 relative z-[10]">
                     <div className={`relative w-full flex ${currentBlogs.length < 3 ? 'justify-center' : ''}`}>
                       <div className={`grid gap-8 items-stretch w-full ${currentBlogs.length === 1 ? 'max-w-md grid-cols-1' : currentBlogs.length === 2 ? 'max-w-4xl grid-cols-1 md:grid-cols-2' : 'grid-cols-1 md:grid-cols-3'}`}>
                         <AnimatePresence mode="wait">
-                          <motion.div 
-                            key={currentPage} 
-                            initial={{ opacity: 0, y: 20 }} 
-                            animate={{ opacity: 1, y: 0 }} 
-                            exit={{ opacity: 0, y: -20 }} 
-                            transition={{ duration: 0.5 }} 
-                            className="contents" 
-                          >
+                          <motion.div key={currentPage} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.5 }} className="contents">
                             {currentBlogs.length > 0 ? currentBlogs.map((blog, idx) => (
-                              <div key={`blog-${idx}`} className="group flex flex-col gap-4">
+                              <div key={`blog-${idx}`} className="group flex flex-col gap-4 cursor-pointer" onClick={() => handleBlogClick(blog.id)}>
                                 <div className="relative aspect-[3/2] overflow-hidden rounded-3xl border border-[var(--border-nav)] bg-zinc-900/5 shadow-xl">
                                   <img src={blog.image} className="w-full h-full object-cover transition-all duration-1000 ease-in-out group-hover:scale-110" alt={blog.title} />
-                                  <div className="absolute top-4 left-4"><span className="px-3 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/20 text-[10px] font-bold uppercase tracking-widest text-white">{blog.category}</span></div>
                                   {isMobile && ( <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-6"><span className="text-[10px] font-medium uppercase tracking-widest text-white/70 mb-1">{blog.date}</span><h3 className="text-xl font-medium leading-tight text-white">{blog.title}</h3></div> )}
                                 </div>
                                 {!isMobile && ( <div className="flex flex-col gap-1 px-2"><span className="text-[10px] font-medium uppercase tracking-widest" style={{ color: 'var(--text-main)', opacity: 0.6 }}>{blog.date}</span><h3 className="text-xl font-medium leading-tight group-hover:italic transition-all duration-300" style={{ color: 'var(--text-bold)' }}>{blog.title}</h3></div> )}
@@ -428,7 +395,6 @@ function App() {
                         </AnimatePresence>
                       </div>
                     </div>
-
                     <div className="relative z-30 flex justify-center items-center gap-2 w-full">
                       <button onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1} className="w-8 h-8 rounded-full border border-[var(--border-nav)] flex items-center justify-center opacity-70 hover:opacity-100 bg-white/5 backdrop-blur-sm transition-all disabled:opacity-10 cursor-pointer text-[var(--text-bold)] text-[10px] font-bold">&lt;</button>
                       <div className="flex gap-2 mx-2">
@@ -442,7 +408,6 @@ function App() {
                 </div>
               </section>
 
-              {/* CONTACT SECTION */}
               <section ref={contactSectionRef} id="contact" className="relative z-40 bg-[var(--bg-main)] overflow-visible h-[150vh]">
                 <div className="sticky top-0 h-screen w-full flex items-center justify-center overflow-hidden">
                   <div className="max-w-6xl w-full px-8 mx-auto flex flex-col h-full relative">
