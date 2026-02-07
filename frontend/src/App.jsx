@@ -5,10 +5,10 @@ import { useNavigate, useLocation, useMatch } from 'react-router-dom';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import LoadingScreen from './components/LoadingScreen';
-import BlogDetailOverlay from './pages/BlogDetail.jsx'; // Import komponen overlay
+import BlogDetailOverlay from './pages/BlogDetail.jsx';
 import { X, ExternalLink } from 'lucide-react';
 
-// DATA PENGALAMAN (PENTING: Jangan dihapus)
+// DATA PENGALAMAN
 const experiencesData = [
   { title: "Full-stack Web Developer", company: "Educourse.id", year: "2025", detail: "Developed full-stack web applications like LMS and CMS platforms using React, Express, and Next.js with RESTful API integration." },
   { title: "Front-end Android Developer", company: "PT Lingga Cipta Insania", year: "2025", detail: "Translated Figma designs into 20+ functional XML and Java layouts for B2B transactions using Agile/Scrum methodology." },
@@ -16,57 +16,43 @@ const experiencesData = [
   { title: "Front-end Web Developer", company: "UP SMK Negeri 1 Tengaran", year: "2020", detail: "Implemented school profile interfaces using HTML, CSS, JS, and Bootstrap, improving site loading speed by 40-50%." }
 ];
 
-// KOMPONEN CARD
+// --- KOMPONEN PROJECT CARD ---
 const ProjectCard = ({ proj, onClick }) => {
-  const [isHovered, setIsHovered] = useState(false);
-  const leaveTimeout = useRef(null);
-
-  const handleSafeEnter = () => {
-    if (leaveTimeout.current) clearTimeout(leaveTimeout.current);
-    if (!isHovered) setIsHovered(true);
-  };
-  const handleSafeLeave = () => {
-    leaveTimeout.current = setTimeout(() => setIsHovered(false), 50);
-  };
-
   return (
     <div 
       onClick={() => onClick(proj)}
-      onMouseEnter={handleSafeEnter}
-      onMouseLeave={handleSafeLeave}
-      className="shrink-0 h-[22vh] md:h-[30vh] aspect-[3/2] relative overflow-hidden rounded-2xl md:rounded-3xl border border-[var(--border-nav)] cursor-pointer bg-zinc-900 z-10 isolate"
+      // Class 'group' wajib ada di parent agar hover terdeteksi
+      className="group shrink-0 h-[22vh] md:h-[30vh] aspect-[3/2] relative overflow-hidden rounded-2xl md:rounded-3xl border border-[var(--border-nav)] cursor-pointer bg-zinc-900 z-10 isolate"
     >
-      <img src={proj.imageUrl} className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out" style={{ transform: isHovered ? 'scale(1.1)' : 'scale(1)', pointerEvents: 'none' }} alt={proj.title} />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent transition-opacity duration-500 ease-out" style={{ opacity: isHovered ? 1 : 0, pointerEvents: 'none' }} />
-      <div className="absolute inset-0 flex flex-col justify-end p-4 md:p-6 transition-transform duration-500 ease-out" style={{ transform: isHovered ? 'translateY(0)' : 'translateY(16px)', opacity: isHovered ? 1 : 0, pointerEvents: 'none' }} >
+      {/* Menggunakan class manual 'smooth-zoom-image' */}
+      <img 
+        src={proj.imageUrl} 
+        className="absolute inset-0 w-full h-full object-cover smooth-zoom-image" 
+        alt={proj.title} 
+      />
+      
+      {/* Overlay Gradient: opacity transition */}
+      <div 
+        className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 transition-opacity duration-500 ease-out group-hover:opacity-100" 
+      />
+      
+      {/* Teks Judul */}
+      <div 
+        className="absolute inset-0 flex flex-col justify-end p-4 md:p-6 translate-y-4 opacity-0 transition-all duration-500 ease-out group-hover:translate-y-0 group-hover:opacity-100" 
+      >
         <h4 className="text-white text-base md:text-xl font-medium tracking-tight">{proj.title}</h4>
       </div>
-      <div className="absolute inset-0 z-50 bg-transparent" />
     </div>
   );
 };
 
 function App() {
   const navigate = useNavigate();
-  const location = useLocation();
-  
-  // --- LOGIC ROUTING PENTING ---
   const blogMatch = useMatch('/blog/:id');
   const blogId = blogMatch?.params?.id;
 
-  // Cek apakah akses ini adalah "Direct Access" (Reload di halaman blog)
-  // Jika akses langsung, state history biasanya kosong atau key default.
-  // Kita bisa cek apakah kita punya 'previousLocation' di state (teknik react router).
-  // TAPI, cara paling simpel: Jika blogId ada TAPI isLoading masih true (awal render), berarti direct access.
   const [isDirectAccess, setIsDirectAccess] = useState(!!blogId);
-
-  // Jika direct access, kita sembunyikan home content agar tidak berat/aneh
-  // TAPI agar efek "Back" mulus, idealnya home tetap ada.
-  // Untuk kasus "Tidak ada tombol back", kita handle di komponen BlogDetailOverlay prop.
-
-  // Loading Screen: Muncul hanya saat refresh / akses pertama kali
   const [isLoading, setIsLoading] = useState(true);
-
   const [currentPage, setCurrentPage] = useState(1);
   const [isMobile, setIsMobile] = useState(false);
   const [selectedProject, setSelectedProject] = useState(null);
@@ -86,15 +72,14 @@ function App() {
   const row2Ref = useRef(null);
   const [movementDistance, setMovementDistance] = useState(500);
 
-  // Navigasi ke Blog: Set state isDirectAccess = false karena ini navigasi internal
   const handleBlogClick = (id) => {
-    setIsDirectAccess(false); // Tandai ini bukan direct access
+    setIsDirectAccess(false);
     navigate(`/blog/${id}`);
   };
 
   const handleLogoClick = () => {
     window.scrollTo({ top: 0, behavior: 'instant' });
-    setIsLoading(true); // Reset loading effect
+    setIsLoading(true);
     navigate('/');
   };
 
@@ -103,7 +88,6 @@ function App() {
   };
 
   useEffect(() => {
-    // Jika ganti URL ke root ('/'), reset status direct access
     if (!blogId) setIsDirectAccess(false);
   }, [blogId]);
 
@@ -151,16 +135,13 @@ function App() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Kunci Scroll hanya jika Project Modal ATAU Blog Overlay aktif
   useEffect(() => {
-    if (selectedProject || blogId) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
+    document.body.style.overflow = (selectedProject || blogId) ? 'hidden' : 'unset';
   }, [selectedProject, blogId]);
 
   const blogsPerPage = isMobile ? 2 : 3;
+  const currentBlogs = blogs.slice((currentPage - 1) * blogsPerPage, currentPage * blogsPerPage);
+  const totalPages = Math.ceil(blogs.length / blogsPerPage);
 
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
@@ -169,7 +150,7 @@ function App() {
     mouseY.set(e.clientY);
   };
 
-  // --- Scroll & Animation Logic (Tetap Sama) ---
+  // Scroll Animations
   const { scrollYProgress } = useScroll({ target: containerRef, offset: ["start start", "end start"] });
   const yV1 = useTransform(scrollYProgress, [0, 1], ["0%", "-30%"]);
   const yV2 = useTransform(scrollYProgress, [0, 1], ["0%", "-60%"]);
@@ -205,12 +186,12 @@ function App() {
   const blurBlogTitle = useTransform(blogScroll, [0, 0.3, 0.7, 1], ["blur(12px)", "blur(0px)", "blur(0px)", "blur(12px)"]);
   const blogContentY = useTransform(blogScroll, [0.4, 1], [isMobile ? 50 : 0, -250]); 
   const yBlogBg = useTransform(blogScroll, [0, 1], ["-10%", "10%"]);
-  const currentBlogs = blogs.slice((currentPage - 1) * blogsPerPage, currentPage * blogsPerPage);
-  const totalPages = Math.ceil(blogs.length / blogsPerPage);
 
   const { scrollYProgress: contactScroll } = useScroll({ target: contactSectionRef, offset: ["start end", "end start"] });
-  const yContactListScroll = useTransform(contactScroll, [0.1, 0.9], [600, -1200]);
-  const blurContact = useTransform(contactScroll, [0, 0.35, 0.65, 1], ["blur(18px)", "blur(0px)", "blur(0px)", "blur(18px)"]);
+  // PERBAIKAN ANIMASI SCROLL UNTUK KONTAK (Karena jarak spacer dihapus, animasi disesuaikan)
+  // Mulai dari bawah (300px), bergerak ke atas (-500px) saat scroll
+  const yContactListScroll = useTransform(contactScroll, [0.1, 0.9], [300, -500]);
+  const blurContact = useTransform(contactScroll, [0, 0.2, 0.8, 1], ["blur(18px)", "blur(0px)", "blur(0px)", "blur(18px)"]);
   const yContactImageSticky = useTransform(contactScroll, [0, 1], [40, -40]); 
   const opacityContact = useTransform(contactScroll, [0, 0.1, 0.9, 1], [0, 1, 1, 0]);
   const smoothFloat = (d) => ({
@@ -221,20 +202,27 @@ function App() {
 
   return (
     <>
+      {/* --- INJEKSI CSS MANUAL (PASTI BISA) --- */}
+      <style>{`
+        /* Definisi animasi zoom manual dengan durasi 0.6s (Lebih Cepat Sedikit) */
+        .smooth-zoom-image {
+          transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+          transform: scale(1);
+          will-change: transform;
+        }
+        
+        /* Saat parent (.group) di hover, trigger zoom pada class ini */
+        .group:hover .smooth-zoom-image {
+          transform: scale(1.1);
+        }
+      `}</style>
+
       <AnimatePresence mode="wait">
         {isLoading && <LoadingScreen key="loader" onFinished={() => setIsLoading(false)} />}
       </AnimatePresence>
 
-      {/* OVERLAY BLOG DETAIL */}
       <AnimatePresence>
-        {blogId && (
-          <BlogDetailOverlay 
-            key="blog-overlay" 
-            id={blogId} 
-            // Kirim prop isDirectAccess ke komponen overlay
-            isDirectAccess={isDirectAccess}
-          />
-        )}
+        {blogId && <BlogDetailOverlay key="blog-overlay" id={blogId} isDirectAccess={isDirectAccess} />}
       </AnimatePresence>
 
       <Header onHomeClick={scrollToTop} onLogoClick={handleLogoClick} />
@@ -260,11 +248,11 @@ function App() {
                     </motion.div>
                     <motion.div initial={{ opacity: 0, scaleX: 0 }} animate={{ opacity: 1, scaleX: 1 }} transition={{ delay: 0.6, duration: 0.8 }} className="h-[1px] w-full bg-gradient-to-r from-transparent via-white/20 to-transparent my-4" />
                     <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }} className="text-base md:text-lg font-light leading-relaxed opacity-60 text-justify" style={{ color: 'var(--text-bold)' }}>{selectedProject.content}</motion.p>
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8 }} className="mt-8 flex flex-wrap gap-3 justify-start">
+                    <div className="mt-8 flex flex-wrap gap-3 justify-start">
                       {selectedProject.technologies?.map((tech, idx) => (
                         <span key={tech._id || idx} className="px-4 py-1 rounded-full border border-white/10 text-[10px] uppercase tracking-widest text-white/40">{tech.name}</span>
                       ))}
-                    </motion.div>
+                    </div>
                   </div>
                 </div>
               </motion.div>
@@ -274,7 +262,7 @@ function App() {
 
         <div ref={containerRef} className="flex flex-col min-h-screen bg-[var(--bg-main)]">
           <main className="flex-grow">
-            {/* Sections Content... (Tidak ada perubahan di sini, tetap sama persis) */}
+            {/* HERO SECTION */}
             <section id="home" className="relative h-screen flex items-center justify-center px-8 overflow-hidden">
                 <div className="absolute inset-0 pointer-events-none select-none">
                     <motion.div style={{ ...gpuStyle, y: yV1 }} className="absolute left-[5%] lg:left-[22%] top-[15%] lg:top-[12%] w-[30vw] lg:w-[12vw] z-20"><motion.img {...smoothFloat(11)} src="/images/collage/flower1.png" className="w-full" /></motion.div>
@@ -299,6 +287,7 @@ function App() {
                 </motion.div>
             </section>
 
+            {/* ABOUT SECTION */}
             <section id="about" className="relative w-full h-screen overflow-hidden flex items-center justify-center px-6 md:px-8">
               <motion.div style={{ y: yAboutBg }} className="absolute inset-0 z-0 pointer-events-none"><img src="/images/bgcloude.jpg" alt="Cloud Background" className="w-full h-[120%] object-cover transition-all duration-700" style={{ filter: 'var(--cloud-brightness)' }} /></motion.div>
               <div className="relative z-10 flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16 max-w-5xl mx-auto w-full">
@@ -318,6 +307,7 @@ function App() {
               </div>
             </section>
 
+            {/* EXPERIENCE SECTION */}
             <div className="relative overflow-visible">
               <div id="experience" className="absolute top-[240vh] md:top-[300vh] left-0 w-full h-1 pointer-events-none z-[100]" />
               <section ref={zoomRef} className="relative h-[500vh] md:h-[600vh] w-full z-20 bg-[var(--bg-main)] shadow-[0_40px_60px_-20px_rgba(0,0,0,0.3)]">
@@ -339,10 +329,6 @@ function App() {
                             <div className={`flex flex-col mb-2 ${index % 2 === 0 ? 'items-start md:items-start' : 'items-start md:items-end'}`}>
                               <span className="text-[12px] font-bold tracking-widest block opacity-80 mb-1" style={{ color: 'var(--text-bold)' }}>{exp.year}</span>
                               <h3 className="text-2xl md:text-4xl font-medium mb-1 transition-all duration-500" style={{ color: 'var(--text-bold)' }}>{exp.title}</h3>
-                              <div className="flex flex-col md:flex-row items-start md:items-center gap-2">
-                                <div className="px-3 py-0.5 rounded-full border border-[var(--text-bold)]/20 text-[9px] uppercase tracking-widest opacity-60 w-fit" style={{ color: 'var(--text-bold)' }}>Intern</div>
-                                <div className="md:hidden text-xs font-bold opacity-80 uppercase tracking-tighter" style={{ color: 'var(--text-bold)' }}>{exp.company}</div>
-                              </div>
                             </div>
                             <p className={`text-sm opacity-80 max-w-sm ml-0 mr-auto ${index % 2 === 0 ? 'md:ml-0 md:mr-auto' : 'md:ml-auto md:mr-0'}`} style={{ color: 'var(--text-bold)' }}>{exp.detail}</p>
                           </div>
@@ -354,6 +340,7 @@ function App() {
                 </div>
               </section>
 
+              {/* PROJECT SECTION */}
               <div id="projects" className="absolute left-0 w-full h-1 pointer-events-none z-[100]" />
               <section ref={projectSectionRef} className="relative h-[500vh] bg-[var(--bg-main)] z-10 -mt-[100vh]">
                 <div className="sticky top-0 h-screen w-full flex flex-col items-center justify-center overflow-hidden">
@@ -362,8 +349,20 @@ function App() {
                     <h2 className="text-4xl md:text-7xl font-medium tracking-tighter whitespace-nowrap" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>Curated <span className="opacity-40 italic">Portfolio.</span></h2>
                   </motion.div>
                   <div className="flex flex-col gap-[2vh] md:gap-[4vh] w-full flex-grow justify-center items-center pb-[8vh]">
-                    <div className="w-full flex justify-center overflow-visible"><motion.div ref={row1Ref} style={{ x: xProjectsRow1 }} className="flex gap-[2vh] md:gap-[4vh] px-8 w-max">{projectsRow1.length > 0 ? projectsRow1.map((proj, i) => (<ProjectCard key={`row1-${proj._id || i}`} proj={proj} onClick={setSelectedProject} />)) : [1,2,3].map(n => <div key={n} className="shrink-0 h-[22vh] md:h-[30vh] aspect-[3/2] bg-zinc-900 animate-pulse rounded-2xl" />)}</motion.div></div>
-                    <div className="w-full flex justify-center overflow-visible"><motion.div ref={row2Ref} style={{ x: xProjectsRow2 }} className="flex gap-[2vh] md:gap-[4vh] px-8 w-max">{projectsRow2.length > 0 ? projectsRow2.map((proj, i) => (<ProjectCard key={`row2-${proj._id || i}`} proj={proj} onClick={setSelectedProject} />)) : [1,2,3].map(n => <div key={n} className="shrink-0 h-[22vh] md:h-[30vh] aspect-[3/2] bg-zinc-900 animate-pulse rounded-2xl" />)}</motion.div></div>
+                    <div className="w-full flex justify-center overflow-visible">
+                        <motion.div style={{ x: xProjectsRow1 }} className="flex gap-[2vh] md:gap-[4vh] px-8 w-max">
+                            {projectsRow1.length > 0 ? projectsRow1.map((proj, i) => (
+                                <ProjectCard key={`row1-${proj._id || i}`} proj={proj} onClick={setSelectedProject} />
+                            )) : [1,2,3].map(n => <div key={n} className="shrink-0 h-[22vh] md:h-[30vh] aspect-[3/2] bg-zinc-900 animate-pulse rounded-2xl" />)}
+                        </motion.div>
+                    </div>
+                    <div className="w-full flex justify-center overflow-visible">
+                        <motion.div style={{ x: xProjectsRow2 }} className="flex gap-[2vh] md:gap-[4vh] px-8 w-max">
+                            {projectsRow2.length > 0 ? projectsRow2.map((proj, i) => (
+                                <ProjectCard key={`row2-${proj._id || i}`} proj={proj} onClick={setSelectedProject} />
+                            )) : [1,2,3].map(n => <div key={n} className="shrink-0 h-[22vh] md:h-[30vh] aspect-[3/2] bg-zinc-900 animate-pulse rounded-2xl" />)}
+                        </motion.div>
+                    </div>
                   </div>
                 </div>
               </section>
@@ -371,7 +370,8 @@ function App() {
               {/* BLOG SECTION */}
               <section ref={blogSectionRef} className="relative z-30 min-h-screen overflow-hidden flex flex-col justify-center">
                 <motion.div style={{ y: yBlogBg }} className="absolute inset-0 z-0 pointer-events-none"><img src="/images/bgcloude.jpg" alt="Cloud Background" className="w-full h-[120%] object-cover transition-all duration-500" style={{ filter: 'var(--cloud-brightness)' }} /></motion.div>
-                <div className="max-w-7xl mx-auto relative w-full flex flex-col items-center z-10 px-6">
+                {/* PERUBAHAN: max-w-5xl (dikecilkan dari max-w-7xl) agar blog lebih ramping */}
+                <div className="max-w-5xl mx-auto relative w-full flex flex-col items-center z-10 px-6">
                   <div id="blog" className="absolute left-0 w-full h-1 pointer-events-none" />
                   <motion.div style={{ y: blogTitleY, filter: blurBlogTitle }} className="text-center mb-0 z-[5] pointer-events-none sticky top-32 md:top-40">
                     <span className="text-[10px] font-black uppercase tracking-[0.5em] block opacity-40" style={{ color: 'var(--text-bold)' }}>Blog — IV</span>
@@ -385,7 +385,12 @@ function App() {
                             {currentBlogs.length > 0 ? currentBlogs.map((blog, idx) => (
                               <div key={`blog-${idx}`} className="group flex flex-col gap-4 cursor-pointer" onClick={() => handleBlogClick(blog.id)}>
                                 <div className="relative aspect-[3/2] overflow-hidden rounded-3xl border border-[var(--border-nav)] bg-zinc-900/5 shadow-xl">
-                                  <img src={blog.image} className="w-full h-full object-cover transition-all duration-1000 ease-in-out group-hover:scale-110" alt={blog.title} />
+                                  {/* --- GAMBAR BLOG DENGAN CSS MANUAL 'smooth-zoom-image' --- */}
+                                  <img 
+                                    src={blog.image} 
+                                    className="w-full h-full object-cover smooth-zoom-image" 
+                                    alt={blog.title} 
+                                  />
                                   {isMobile && ( <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-6"><span className="text-[10px] font-medium uppercase tracking-widest text-white/70 mb-1">{blog.date}</span><h3 className="text-xl font-medium leading-tight text-white">{blog.title}</h3></div> )}
                                 </div>
                                 {!isMobile && ( <div className="flex flex-col gap-1 px-2"><span className="text-[10px] font-medium uppercase tracking-widest" style={{ color: 'var(--text-main)', opacity: 0.6 }}>{blog.date}</span><h3 className="text-xl font-medium leading-tight group-hover:italic transition-all duration-300" style={{ color: 'var(--text-bold)' }}>{blog.title}</h3></div> )}
@@ -395,27 +400,29 @@ function App() {
                         </AnimatePresence>
                       </div>
                     </div>
-                    <div className="relative z-30 flex justify-center items-center gap-2 w-full">
-                      <button onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1} className="w-8 h-8 rounded-full border border-[var(--border-nav)] flex items-center justify-center opacity-70 hover:opacity-100 bg-white/5 backdrop-blur-sm transition-all disabled:opacity-10 cursor-pointer text-[var(--text-bold)] text-[10px] font-bold">&lt;</button>
+                    {/* Pagination */}
+                    <div className="relative z-30 flex justify-center items-center gap-2 w-full mt-2">
+                      <button onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1} className="w-8 h-8 rounded-full border border-[var(--border-nav)] flex items-center justify-center text-[var(--text-bold)] disabled:opacity-10 cursor-pointer">&lt;</button>
                       <div className="flex gap-2 mx-2">
                         {Array.from({ length: totalPages || 1 }, (_, i) => i + 1).map(n => (
-                          <button key={`page-${n}`} onClick={() => setCurrentPage(n)} className={`w-10 h-10 rounded-full flex items-center justify-center text-[12px] font-bold transition-all cursor-pointer ${currentPage === n ? 'bg-[var(--text-bold)] text-[#0a0a0c] shadow-lg' : 'border border-[var(--border-nav)] opacity-70 hover:opacity-100 bg-white/5 text-[var(--text-bold)]'}`}>{n}</button>
+                          <button key={`page-${n}`} onClick={() => setCurrentPage(n)} className={`w-10 h-10 rounded-full flex items-center justify-center text-[12px] font-bold transition-all cursor-pointer ${currentPage === n ? 'bg-[var(--text-bold)] text-[#0a0a0c]' : 'border border-[var(--border-nav)] text-[var(--text-bold)]'}`}>{n}</button>
                         ))}
                       </div>
-                      <button onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages || 1))} disabled={currentPage === (totalPages || 1)} className="w-8 h-8 rounded-full border border-[var(--border-nav)] flex items-center justify-center opacity-70 hover:opacity-100 bg-white/5 backdrop-blur-sm transition-all disabled:opacity-10 cursor-pointer text-[var(--text-bold)] text-[10px] font-bold">&gt;</button>
+                      <button onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages || 1))} disabled={currentPage === (totalPages || 1)} className="w-8 h-8 rounded-full border border-[var(--border-nav)] flex items-center justify-center text-[var(--text-bold)] disabled:opacity-10 cursor-pointer">&gt;</button>
                     </div>
                   </motion.div>
                 </div>
               </section>
 
-              <section ref={contactSectionRef} id="contact" className="relative z-40 bg-[var(--bg-main)] overflow-visible h-[150vh]">
+              {/* CONTACT SECTION */}
+              <section ref={contactSectionRef} id="contact" className="relative z-40 bg-[var(--bg-main)] overflow-visible h-[200vh] md:h-[300vh]">
                 <div className="sticky top-0 h-screen w-full flex items-center justify-center overflow-hidden">
-                  <div className="max-w-6xl w-full px-8 mx-auto flex flex-col h-full relative">
+                  <div className="max-w-5xl w-full px-8 mx-auto flex flex-col h-full relative">
                     <div className="absolute inset-0 flex items-center justify-center md:justify-start md:pl-10 z-0 pointer-events-none"><motion.div style={{ y: yContactImageSticky, opacity: opacityContact }} className="relative w-full max-w-md aspect-[4/3] rounded-2xl overflow-hidden"><img src="/images/collage/sculpture1.png" className="w-full h-full object-cover" alt="Contact Visual" /></motion.div></div>
-                    <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none"><motion.div style={{ y: yContactListScroll, opacity: opacityContact, filter: blurContact }} className="-translate-y-[15vh]"><h2 className="text-6xl md:text-[clamp(4rem,8vw,10rem)] font-bold tracking-tighter leading-none text-center" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>Contact — V</h2></motion.div></div>
+                    <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none"><motion.div style={{ y: yContactListScroll, opacity: opacityContact, filter: blurContact }} className="-translate-y-90 md:-translate-y-80"><h2 className="text-6xl md:text-[clamp(4rem,8vw,10rem)] font-bold tracking-tighter leading-none text-center" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>Contact — V</h2></motion.div></div>
                     <div className="relative w-full h-full flex items-center justify-center md:justify-end z-20">
-                      <motion.div style={{ y: yContactListScroll, opacity: opacityContact, filter: blurContact }} className="flex flex-col gap-10 md:gap-24 w-full max-w-xl md:-ml-20">
-                        <div className="h-[70vh] md:h-[105vh] pointer-events-none" />
+                      {/* PERUBAHAN: Jarak Konsisten (mt-[400px] atau nilai lain) - HAPUS Spacer vh */}
+                      <motion.div style={{ y: yContactListScroll, opacity: opacityContact, filter: blurContact }} className="flex flex-col gap-10 md:gap-10 w-full max-w-xl md:-ml-20 mt-[50px] md:mt-[350px]">
                         <div className="flex flex-row gap-6 items-start"><span className="text-xl italic opacity-50 shrink-0 w-24 md:w-32" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>Services</span><div className="flex flex-col gap-2">{['Custom Web Apps', 'Portfolio Design', 'Landingpage', 'UI UX'].map((item) => (<span key={item} className="text-3xl md:text-5xl font-medium tracking-tight" style={{ color: 'var(--text-bold)' }}>{item}</span>))}</div></div>
                         <div className="flex flex-row gap-6 items-start"><span className="text-xl italic opacity-50 shrink-0 w-24 md:w-32" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>Connect</span><div className="flex flex-col gap-2"><a href="mailto:fatahabdilahh@gmail.com" className="text-3xl md:text-5xl font-medium tracking-tight hover:italic transition-all duration-300" style={{ color: 'var(--text-bold)' }}>fatahabdilahh@gmail.com</a><a href="https://www.linkedin.com/in/fataabdilah/" target="_blank" rel="noopener noreferrer" className="text-3xl md:text-5xl font-medium tracking-tight hover:italic transition-all duration-300" style={{ color: 'var(--text-bold)' }}>LinkedIn</a><a href="https://github.com/fatahabdilah" target="_blank" rel="noopener noreferrer" className="text-3xl md:text-5xl font-medium tracking-tight hover:italic transition-all duration-300" style={{ color: 'var(--text-bold)' }}>Github</a><a href="https://www.instagram.com/fatahhhhhhhhhhhhhh" target="_blank" rel="noopener noreferrer" className="text-3xl md:text-5xl font-medium tracking-tight hover:italic transition-all duration-300" style={{ color: 'var(--text-bold)' }}>Instagram</a></div></div>
                         <div className="flex flex-row gap-6 items-start"><span className="text-xl italic opacity-50 shrink-0 w-24 md:w-32" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>Location</span><div className="flex flex-col gap-2"><span className="text-3xl md:text-5xl font-medium tracking-tight" style={{ color: 'var(--text-bold)' }}>Tangerang City, Indonesia</span><span className="text-3xl md:text-5xl font-medium tracking-tight opacity-40" style={{ color: 'var(--text-bold)' }}>Available Worldwide</span></div></div>
