@@ -28,11 +28,13 @@ const ProjectCard = ({ proj, onClick }) => {
         className="absolute inset-0 w-full h-full object-cover smooth-zoom-image" 
         alt={proj.title} 
       />
+      {/* Overlay Shadow: Selalu muncul di mobile (opacity-100), hover di desktop */}
       <div 
-        className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 transition-opacity duration-500 ease-out group-hover:opacity-100" 
+        className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-100 md:opacity-0 transition-opacity duration-500 ease-out md:group-hover:opacity-100" 
       />
+      {/* Teks: Selalu muncul & posisi normal di mobile (opacity-100 translate-y-0), hover di desktop */}
       <div 
-        className="absolute inset-0 flex flex-col justify-end p-4 md:p-6 translate-y-4 opacity-0 transition-all duration-500 ease-out group-hover:translate-y-0 group-hover:opacity-100" 
+        className="absolute inset-0 flex flex-col justify-end p-4 md:p-6 translate-y-0 md:translate-y-4 opacity-100 md:opacity-0 transition-all duration-500 ease-out md:group-hover:translate-y-0 md:group-hover:opacity-100" 
       >
         <h4 className="text-white text-base md:text-xl font-medium tracking-tight">{proj.title}</h4>
       </div>
@@ -63,8 +65,6 @@ function App() {
   const projectSectionRef = useRef(null);
   const blogSectionRef = useRef(null);
   const contactSectionRef = useRef(null);
-  const row1Ref = useRef(null);
-  const row2Ref = useRef(null);
   const [movementDistance, setMovementDistance] = useState(500);
 
   const handleBlogClick = (id) => {
@@ -196,7 +196,6 @@ function App() {
   const yContactImageSticky = useTransform(contactScroll, [0, 1], [40, -40]); 
   const opacityContact = useTransform(contactScroll, [0, 0.1, 0.9, 1], [0, 1, 1, 0]);
 
-  // --- SETINGAN DINAMIS CONTACT IMAGES ---
   const contactImages = [
     "/images/contact3.png",
     "/images/contact1.png",
@@ -354,8 +353,9 @@ function App() {
               <div id="projects" className="absolute left-0 w-full h-1 pointer-events-none z-[100]" />
               <section ref={projectSectionRef} className="relative h-[500vh] bg-[var(--bg-main)] z-10 -mt-[100vh]">
                 <div className="sticky top-0 h-screen w-full flex flex-col items-center justify-center overflow-hidden">
-                  <motion.div style={{ y: yProjectTitle, opacity: opacityProjectTitle }} className="w-full text-center pt-[15vh] md:pt-[24vh] mb-[4vh]">
-                    <span className="text-[10px] font-black uppercase tracking-[0.5em] mb-2 block opacity-40" style={{ color: 'var(--text-bold)' }}>Project — III</span>
+                  {/* 1. PERBAIKAN KOMPOSISI JUDUL PORTOFOLIO: mb-4 agar lebih rapat ke grid */}
+                  <motion.div style={{ y: yProjectTitle, opacity: opacityProjectTitle }} className="w-full text-center pt-[15vh] md:pt-[24vh] mb-4">
+                    <span className="text-[10px] font-black uppercase tracking-[0.5em] mb-1 md:mb-2 block opacity-40" style={{ color: 'var(--text-bold)' }}>Project — III</span>
                     <h2 className="text-4xl md:text-7xl font-medium tracking-tighter whitespace-nowrap" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>Curated <span className="opacity-40 italic">Portfolio.</span></h2>
                   </motion.div>
                   <div className="flex flex-col gap-[2vh] md:gap-[4vh] w-full flex-grow justify-center items-center pb-[8vh]">
@@ -385,7 +385,8 @@ function App() {
                     <span className="text-[10px] font-black uppercase tracking-[0.5em] block opacity-40" style={{ color: 'var(--text-bold)' }}>Blog — IV</span>
                     <h2 className="text-5xl md:text-[10vw] font-bold leading-none" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>Insights.</h2>
                   </motion.div>
-                  <motion.div style={{ y: blogContentY }} className="gap-4 w-full flex flex-col items-center pt-20 md:pt-32 relative z-[10]">
+                  {/* 2. PERBAIKAN KOMPOSISI BLOG: pt-6 di mobile agar lebih rapat ke judul */}
+                  <motion.div style={{ y: blogContentY }} className="gap-4 w-full flex flex-col items-center pt-6 md:pt-32 relative z-[10]">
                     <div className={`relative w-full flex ${currentBlogs.length < blogsPerPage ? 'justify-center' : ''}`}>
                       <div className={`grid gap-8 items-stretch w-full grid-cols-1 md:grid-cols-2 lg:grid-cols-3`}>
                         <AnimatePresence mode="wait">
@@ -398,9 +399,9 @@ function App() {
                                     className="w-full h-full object-cover smooth-zoom-image" 
                                     alt={blog.title} 
                                   />
-                                  {isMobile && ( <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-6"><span className="text-[10px] font-medium uppercase tracking-widest text-white/70 mb-1">{blog.date}</span><h3 className="text-xl font-medium leading-tight text-white">{blog.title}</h3></div> )}
+                                  {(isMobile || isTablet) && ( <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-6"><span className="text-[10px] font-medium uppercase tracking-widest text-white/70 mb-1">{blog.date}</span><h3 className="text-xl font-medium leading-tight text-white">{blog.title}</h3></div> )}
                                 </div>
-                                {!isMobile && ( <div className="flex flex-col gap-1 px-2"><span className="text-[10px] font-medium uppercase tracking-widest" style={{ color: 'var(--text-main)', opacity: 0.6 }}>{blog.date}</span><h3 className="text-xl font-medium leading-tight group-hover:italic transition-all duration-300" style={{ color: 'var(--text-bold)' }}>{blog.title}</h3></div> )}
+                                {!(isMobile || isTablet) && ( <div className="flex flex-col gap-1 px-2"><span className="text-[10px] font-medium uppercase tracking-widest" style={{ color: 'var(--text-main)', opacity: 0.6 }}>{blog.date}</span><h3 className="text-xl font-medium leading-tight group-hover:italic transition-all duration-300" style={{ color: 'var(--text-bold)' }}>{blog.title}</h3></div> )}
                               </div>
                             )) : [1,2,3].map(n => <div key={n} className="aspect-[3/2] bg-zinc-900 animate-pulse rounded-3xl" />)}
                           </motion.div>
@@ -424,7 +425,6 @@ function App() {
               <section ref={contactSectionRef} id="contact" className="relative z-40 bg-[var(--bg-main)] overflow-visible h-[200vh] md:h-[300vh]">
                 <div className="sticky top-0 h-screen w-full flex items-center justify-center overflow-hidden">
                   <div className="max-w-5xl w-full px-8 mx-auto flex flex-col h-full relative">
-                    {/* CONTAINER GAMBAR DENGAN JARAK KANAN KIRI */}
                     <div className="absolute inset-0 flex items-center justify-center md:justify-start px-6 md:px-10 z-0 pointer-events-none">
                       <motion.div style={{ y: yContactImageSticky, opacity: opacityContact }} className="relative w-full max-w-md aspect-[4/3] rounded-2xl overflow-hidden shadow-2xl">
                         {contactImages.map((src, idx) => {
@@ -446,31 +446,39 @@ function App() {
                     </div>
                     <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none"><motion.div style={{ y: yContactListScroll, opacity: opacityContact, filter: blurContact }} className="-translate-y-75 md:-translate-y-80"><h2 className="text-6xl md:text-[clamp(4rem,8vw,10rem)] font-bold tracking-tighter leading-none text-center" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>Contact — V</h2></motion.div></div>
                     <div className="relative w-full h-full flex items-center justify-center md:justify-end z-20">
-                      <motion.div style={{ y: yContactListScroll, opacity: opacityContact, filter: blurContact }} className="flex flex-col gap-10 md:gap-10 w-full max-w-xl md:-ml-20 mt-[100px] md:mt-[350px]">
+                      <motion.div style={{ y: yContactListScroll, opacity: opacityContact, filter: blurContact }} className="flex flex-col gap-10 md:gap-14 w-full max-w-xl md:-ml-20 mt-[100px] md:mt-[200px]">
+                        
+                        {/* 3. PERBAIKAN UKURAN TEKS KONTAK DI DEVICE BESAR: lg:text-4xl & lg:text-5xl */}
+                        {/* SERVICES */}
                         <div className="flex flex-col md:flex-row gap-2 md:gap-6 items-start">
-                          <span className="text-xl italic shrink-0 w-24 md:w-32" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>Services</span>
-                          <div className="flex flex-col gap-2">
+                          <span className="text-xl italic shrink-0 w-full md:w-32 text-left" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>Services</span>
+                          <div className="flex flex-col gap-2 items-start">
                             {['Custom Web Apps', 'Portfolio Design', 'Landingpage', 'UI UX'].map((item) => (
-                              <span key={item} className="text-3xl md:text-5xl font-medium tracking-tight" style={{ color: 'var(--text-bold)' }}>{item}</span>
+                              <span key={item} className="text-xl md:text-3xl lg:text-4xl font-medium tracking-tight" style={{ color: 'var(--text-bold)' }}>{item}</span>
                             ))}
                           </div>
                         </div>
+
+                        {/* CONNECT */}
                         <div className="flex flex-col md:flex-row gap-2 md:gap-6 items-start">
-                          <span className="text-xl italic shrink-0 w-24 md:w-32" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>Connect</span>
-                          <div className="flex flex-col gap-2">
-                            <a href="mailto:fatahabdilahh@gmail.com" className="text-3xl md:text-5xl font-medium tracking-tight hover:italic transition-all duration-300" style={{ color: 'var(--text-bold)' }}>fatahabdilahh@gmail.com</a>
-                            <a href="https://www.linkedin.com/in/fataabdilah/" target="_blank" rel="noopener noreferrer" className="text-3xl md:text-5xl font-medium tracking-tight hover:italic transition-all duration-300" style={{ color: 'var(--text-bold)' }}>LinkedIn</a>
-                            <a href="https://github.com/fatahabdilah" target="_blank" rel="noopener noreferrer" className="text-3xl md:text-5xl font-medium tracking-tight hover:italic transition-all duration-300" style={{ color: 'var(--text-bold)' }}>Github</a>
-                            <a href="https://www.instagram.com/fatahhhhhhhhhhhhhh" target="_blank" rel="noopener noreferrer" className="text-3xl md:text-5xl font-medium tracking-tight hover:italic transition-all duration-300" style={{ color: 'var(--text-bold)' }}>Instagram</a>
+                          <span className="text-xl italic shrink-0 w-full md:w-32 text-left" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>Connect</span>
+                          <div className="flex flex-col gap-2 items-start">
+                            <a href="mailto:fatahabdilahh@gmail.com" className="text-xl md:text-3xl lg:text-5xl font-medium tracking-tight hover:italic transition-all duration-300" style={{ color: 'var(--text-bold)' }}>fatahabdilahh@gmail.com</a>
+                            <a href="https://www.linkedin.com/in/fataabdilah/" target="_blank" rel="noopener noreferrer" className="text-xl md:text-3xl lg:text-5xl font-medium tracking-tight hover:italic transition-all duration-300" style={{ color: 'var(--text-bold)' }}>LinkedIn</a>
+                            <a href="https://github.com/fatahabdilah" target="_blank" rel="noopener noreferrer" className="text-xl md:text-3xl lg:text-5xl font-medium tracking-tight hover:italic transition-all duration-300" style={{ color: 'var(--text-bold)' }}>Github</a>
+                            <a href="https://www.instagram.com/fatahhhhhhhhhhhhhh" target="_blank" rel="noopener noreferrer" className="text-xl md:text-3xl lg:text-5xl font-medium tracking-tight hover:italic transition-all duration-300" style={{ color: 'var(--text-bold)' }}>Instagram</a>
                           </div>
                         </div>
+
+                        {/* LOCATION */}
                         <div className="flex flex-col md:flex-row gap-2 md:gap-6 items-start">
-                          <span className="text-xl italic shrink-0 w-24 md:w-32" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>Location</span>
-                          <div className="flex flex-col gap-2">
-                            <span className="text-3xl md:text-5xl font-medium tracking-tight" style={{ color: 'var(--text-bold)' }}>Tangerang City, Indonesia</span>
-                            <span className="text-3xl md:text-5xl font-medium tracking-tight opacity-40" style={{ color: 'var(--text-bold)' }}>Available Worldwide</span>
+                          <span className="text-xl italic shrink-0 w-full md:w-32 text-left" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>Location</span>
+                          <div className="flex flex-col gap-2 items-start">
+                            <span className="text-xl md:text-3xl lg:text-4xl font-medium tracking-tight" style={{ color: 'var(--text-bold)' }}>Tangerang City, Indonesia</span>
+                            <span className="text-xl md:text-3xl lg:text-4xl font-medium tracking-tight opacity-40" style={{ color: 'var(--text-bold)' }}>Available Worldwide</span>
                           </div>
                         </div>
+
                       </motion.div>
                     </div>
                   </div>
