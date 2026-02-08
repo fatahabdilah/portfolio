@@ -10,10 +10,10 @@ import { X, ExternalLink } from 'lucide-react';
 
 // DATA PENGALAMAN
 const experiencesData = [
-  { title: "Full-stack Web Developer", company: "Educourse.id", year: "2025", detail: "Developed full-stack web applications like LMS and CMS platforms using React, Express, and Next.js with RESTful API integration." },
-  { title: "Front-end Android Developer", company: "PT Lingga Cipta Insania", year: "2025", detail: "Translated Figma designs into 20+ functional XML and Java layouts for B2B transactions using Agile/Scrum methodology." },
-  { title: "Web Administrator", company: "Faculty of Computer Science, Pamulang University", year: "2024 - 2025", detail: "Managed 7 websites (OJS & WordPress) and optimized On-Page SEO, increasing organic traffic by 25-30%." },
-  { title: "Front-end Web Developer", company: "UP SMK Negeri 1 Tengaran", year: "2020", detail: "Implemented school profile interfaces using HTML, CSS, JS, and Bootstrap, improving site loading speed by 40-50%." }
+  { title: "Full-stack Web Developer", company: "Educourse.id", year: "2025", detail: "Delivered 20+ industrial-grade web projects using Next.js and Django with full RESTful API integration in just 4 months." },
+  { title: "Front-end Android Developer", company: "PT Lingga Cipta Insania", year: "2025", detail: "Converted complex Figma designs into 20+ functional XML/Java layouts while ensuring seamless server-side data synchronization." },
+  { title: "Web Administrator", company: "Faculty of Computer Science, Pamulang University", year: "2024 - 2025", detail: "Managed 7 platforms and boosted organic traffic by 30% through targeted On-Page SEO and proactive technical maintenance." },
+  { title: "Front-end Web Developer", company: "UP SMK Negeri 1 Tengaran", year: "2020", detail: "Built responsive school interfaces using Bootstrap and optimized technical assets to increase site loading speed by 50%." }
 ];
 
 // --- KOMPONEN PROJECT CARD ---
@@ -21,22 +21,16 @@ const ProjectCard = ({ proj, onClick }) => {
   return (
     <div 
       onClick={() => onClick(proj)}
-      // Class 'group' wajib ada di parent agar hover terdeteksi
       className="group shrink-0 h-[22vh] md:h-[30vh] aspect-[3/2] relative overflow-hidden rounded-2xl md:rounded-3xl border border-[var(--border-nav)] cursor-pointer bg-zinc-900 z-10 isolate"
     >
-      {/* Menggunakan class manual 'smooth-zoom-image' */}
       <img 
         src={proj.imageUrl} 
         className="absolute inset-0 w-full h-full object-cover smooth-zoom-image" 
         alt={proj.title} 
       />
-      
-      {/* Overlay Gradient: opacity transition */}
       <div 
         className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 transition-opacity duration-500 ease-out group-hover:opacity-100" 
       />
-      
-      {/* Teks Judul */}
       <div 
         className="absolute inset-0 flex flex-col justify-end p-4 md:p-6 translate-y-4 opacity-0 transition-all duration-500 ease-out group-hover:translate-y-0 group-hover:opacity-100" 
       >
@@ -187,13 +181,44 @@ function App() {
   const blogContentY = useTransform(blogScroll, [0.4, 1], [isMobile ? 50 : 0, -250]); 
   const yBlogBg = useTransform(blogScroll, [0, 1], ["-10%", "10%"]);
 
-  const { scrollYProgress: contactScroll } = useScroll({ target: contactSectionRef, offset: ["start end", "end start"] });
-  // PERBAIKAN ANIMASI SCROLL UNTUK KONTAK (Karena jarak spacer dihapus, animasi disesuaikan)
-  // Mulai dari bawah (300px), bergerak ke atas (-500px) saat scroll
+  // SECTION CONTACT CONFIG
+  const { scrollYProgress: contactScroll } = useScroll({ 
+    target: contactSectionRef, 
+    offset: ["start end", "end start"] 
+  });
   const yContactListScroll = useTransform(contactScroll, [0.1, 0.9], [300, -500]);
   const blurContact = useTransform(contactScroll, [0, 0.2, 0.8, 1], ["blur(18px)", "blur(0px)", "blur(0px)", "blur(18px)"]);
   const yContactImageSticky = useTransform(contactScroll, [0, 1], [40, -40]); 
   const opacityContact = useTransform(contactScroll, [0, 0.1, 0.9, 1], [0, 1, 1, 0]);
+
+  // --- SETINGAN DINAMIS CONTACT IMAGES ---
+  const contactImages = [
+    "/images/contact1.png",
+    // "/images/contact2.png",
+    "/images/contact3.png",
+    "/images/contact4.png"
+  ];
+
+  /**
+   * FUNGSI PENGATURAN TRANSISI (SESUAIKAN DI SINI)
+   * @param {number} index - urutan gambar (dimulai dari 0)
+   * @returns {Array} Rentang Opacity [Mulai Muncul, Selesai Muncul]
+   */
+  const getTransitionRange = (index) => {
+    if (index === 0) return [0, 0]; // Gambar pertama dasar
+    
+    // PENGATURAN:
+    const startOffset = 0.2; // Kapan transisi menimpa dimulai (15% scroll)
+    const endLimit = 0.6;    // Kapan semua transisi harus selesai (85% scroll)
+    const transitionSpeed = 0.05; // Durasi transisi menimpa (semakin kecil semakin cepat)
+    
+    // Menghitung jarak antar gambar secara merata
+    const totalStep = (endLimit - startOffset) / (contactImages.length - 1);
+    const start = startOffset + (totalStep * index);
+    
+    return [start, start + transitionSpeed];
+  };
+
   const smoothFloat = (d) => ({
     animate: { y: [0, 15, 0], rotate: [-2, 2, -2] },
     transition: { duration: d, repeat: Infinity, ease: "easeInOut" }
@@ -202,16 +227,12 @@ function App() {
 
   return (
     <>
-      {/* --- INJEKSI CSS MANUAL (PASTI BISA) --- */}
       <style>{`
-        /* Definisi animasi zoom manual dengan durasi 0.6s (Lebih Cepat Sedikit) */
         .smooth-zoom-image {
           transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
           transform: scale(1);
           will-change: transform;
         }
-        
-        /* Saat parent (.group) di hover, trigger zoom pada class ini */
         .group:hover .smooth-zoom-image {
           transform: scale(1.1);
         }
@@ -228,7 +249,6 @@ function App() {
       <Header onHomeClick={scrollToTop} onLogoClick={handleLogoClick} />
       
       <div className="main-content" onMouseMove={handleMouseMove}>
-        {/* Project Modal */}
         <AnimatePresence>
           {selectedProject && (
             <>
@@ -262,7 +282,6 @@ function App() {
 
         <div ref={containerRef} className="flex flex-col min-h-screen bg-[var(--bg-main)]">
           <main className="flex-grow">
-            {/* HERO SECTION */}
             <section id="home" className="relative h-screen flex items-center justify-center px-8 overflow-hidden">
                 <div className="absolute inset-0 pointer-events-none select-none">
                     <motion.div style={{ ...gpuStyle, y: yV1 }} className="absolute left-[5%] lg:left-[22%] top-[15%] lg:top-[12%] w-[30vw] lg:w-[12vw] z-20"><motion.img {...smoothFloat(11)} src="/images/collage/flower1.png" className="w-full" /></motion.div>
@@ -287,7 +306,6 @@ function App() {
                 </motion.div>
             </section>
 
-            {/* ABOUT SECTION */}
             <section id="about" className="relative w-full h-screen overflow-hidden flex items-center justify-center px-6 md:px-8">
               <motion.div style={{ y: yAboutBg }} className="absolute inset-0 z-0 pointer-events-none"><img src="/images/bgcloude.jpg" alt="Cloud Background" className="w-full h-[120%] object-cover transition-all duration-700" style={{ filter: 'var(--cloud-brightness)' }} /></motion.div>
               <div className="relative z-10 flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16 max-w-5xl mx-auto w-full">
@@ -302,12 +320,11 @@ function App() {
                     <span className="text-[10px] font-black uppercase tracking-[0.5em] mb-2 md:mb-4 block opacity-40" style={{ color: 'var(--text-bold)' }}>About — I</span>
                     <h2 className="text-4xl md:text-6xl font-bold opacity-80" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>About Me</h2>
                   </div>
-                  <div className="flex flex-col gap-3 md:gap-4 text-base md:text-xl leading-relaxed md:leading-[1.8] font-light tracking-tight" style={{ color: 'var(--text-bold)' }}><p>I am a Computer Science student focused on Web and Android development, building end-to-end digital solutions.</p><p>Passionate about creating fluid animations and minimal interfaces that bridge the gap between design and technology.</p></div>
+                  <div className="flex flex-col gap-3 md:gap-4 text-base md:text-xl leading-relaxed md:leading-[1.8] font-light tracking-tight" style={{ color: 'var(--text-bold)' }}><p>About Me I am a Computer Science student at Pamulang University focusing on Full-stack Web Development. I bridge the gap between Figma designs and functional API integrations to build end-to-end digital solutions.</p><p>With over 40 projects completed, I specialize in creating high-performance web applications through effective team collaboration. My goal is to deliver clean, user-centric interfaces that drive results.</p></div>
                 </div>
               </div>
             </section>
 
-            {/* EXPERIENCE SECTION */}
             <div className="relative overflow-visible">
               <div id="experience" className="absolute top-[240vh] md:top-[300vh] left-0 w-full h-1 pointer-events-none z-[100]" />
               <section ref={zoomRef} className="relative h-[500vh] md:h-[600vh] w-full z-20 bg-[var(--bg-main)] shadow-[0_40px_60px_-20px_rgba(0,0,0,0.3)]">
@@ -340,7 +357,6 @@ function App() {
                 </div>
               </section>
 
-              {/* PROJECT SECTION */}
               <div id="projects" className="absolute left-0 w-full h-1 pointer-events-none z-[100]" />
               <section ref={projectSectionRef} className="relative h-[500vh] bg-[var(--bg-main)] z-10 -mt-[100vh]">
                 <div className="sticky top-0 h-screen w-full flex flex-col items-center justify-center overflow-hidden">
@@ -367,10 +383,8 @@ function App() {
                 </div>
               </section>
 
-              {/* BLOG SECTION */}
               <section ref={blogSectionRef} className="relative z-30 min-h-screen overflow-hidden flex flex-col justify-center">
                 <motion.div style={{ y: yBlogBg }} className="absolute inset-0 z-0 pointer-events-none"><img src="/images/bgcloude.jpg" alt="Cloud Background" className="w-full h-[120%] object-cover transition-all duration-500" style={{ filter: 'var(--cloud-brightness)' }} /></motion.div>
-                {/* PERUBAHAN: max-w-5xl (dikecilkan dari max-w-7xl) agar blog lebih ramping */}
                 <div className="max-w-5xl mx-auto relative w-full flex flex-col items-center z-10 px-6">
                   <div id="blog" className="absolute left-0 w-full h-1 pointer-events-none" />
                   <motion.div style={{ y: blogTitleY, filter: blurBlogTitle }} className="text-center mb-0 z-[5] pointer-events-none sticky top-32 md:top-40">
@@ -385,7 +399,6 @@ function App() {
                             {currentBlogs.length > 0 ? currentBlogs.map((blog, idx) => (
                               <div key={`blog-${idx}`} className="group flex flex-col gap-4 cursor-pointer" onClick={() => handleBlogClick(blog.id)}>
                                 <div className="relative aspect-[3/2] overflow-hidden rounded-3xl border border-[var(--border-nav)] bg-zinc-900/5 shadow-xl">
-                                  {/* --- GAMBAR BLOG DENGAN CSS MANUAL 'smooth-zoom-image' --- */}
                                   <img 
                                     src={blog.image} 
                                     className="w-full h-full object-cover smooth-zoom-image" 
@@ -400,7 +413,6 @@ function App() {
                         </AnimatePresence>
                       </div>
                     </div>
-                    {/* Pagination */}
                     <div className="relative z-30 flex justify-center items-center gap-2 w-full mt-2">
                       <button onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} disabled={currentPage === 1} className="w-8 h-8 rounded-full border border-[var(--border-nav)] flex items-center justify-center text-[var(--text-bold)] disabled:opacity-10 cursor-pointer">&lt;</button>
                       <div className="flex gap-2 mx-2">
@@ -418,14 +430,36 @@ function App() {
               <section ref={contactSectionRef} id="contact" className="relative z-40 bg-[var(--bg-main)] overflow-visible h-[200vh] md:h-[300vh]">
                 <div className="sticky top-0 h-screen w-full flex items-center justify-center overflow-hidden">
                   <div className="max-w-5xl w-full px-8 mx-auto flex flex-col h-full relative">
-                    <div className="absolute inset-0 flex items-center justify-center md:justify-start md:pl-10 z-0 pointer-events-none"><motion.div style={{ y: yContactImageSticky, opacity: opacityContact }} className="relative w-full max-w-md aspect-[4/3] rounded-2xl overflow-hidden"><img src="/images/collage/sculpture1.png" className="w-full h-full object-cover" alt="Contact Visual" /></motion.div></div>
+                    <div className="absolute inset-0 flex items-center justify-center md:justify-start md:pl-10 z-0 pointer-events-none">
+                      <motion.div style={{ y: yContactImageSticky, opacity: opacityContact }} className="relative w-full max-w-md aspect-[4/3] rounded-2xl overflow-hidden">
+                        
+                        {/* LOOPING GAMBAR MENIMPA SECARA DINAMIS */}
+                        {contactImages.map((src, idx) => {
+                          const range = getTransitionRange(idx);
+                          return (
+                            <motion.img 
+                              key={src}
+                              src={src}
+                              // Gambar 0 z-index 1, Gambar 1 z-index 2, dst.
+                              style={{ 
+                                zIndex: idx + 1,
+                                // Gambar 0 selalu opacity 1, lainnya mengikuti scroll
+                                opacity: idx === 0 ? 1 : useTransform(contactScroll, range, [0, 1])
+                              }} 
+                              className="absolute inset-0 w-full h-full object-cover" 
+                              alt={`Visual ${idx}`} 
+                            />
+                          );
+                        })}
+
+                      </motion.div>
+                    </div>
                     <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none"><motion.div style={{ y: yContactListScroll, opacity: opacityContact, filter: blurContact }} className="-translate-y-75 md:-translate-y-80"><h2 className="text-6xl md:text-[clamp(4rem,8vw,10rem)] font-bold tracking-tighter leading-none text-center" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>Contact — V</h2></motion.div></div>
                     <div className="relative w-full h-full flex items-center justify-center md:justify-end z-20">
-                      {/* PERUBAHAN: Jarak Konsisten (mt-[400px] atau nilai lain) - HAPUS Spacer vh */}
                       <motion.div style={{ y: yContactListScroll, opacity: opacityContact, filter: blurContact }} className="flex flex-col gap-10 md:gap-10 w-full max-w-xl md:-ml-20 mt-[100px] md:mt-[350px]">
-                        <div className="flex flex-row gap-6 items-start"><span className="text-xl italic opacity-50 shrink-0 w-24 md:w-32" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>Services</span><div className="flex flex-col gap-2">{['Custom Web Apps', 'Portfolio Design', 'Landingpage', 'UI UX'].map((item) => (<span key={item} className="text-3xl md:text-5xl font-medium tracking-tight" style={{ color: 'var(--text-bold)' }}>{item}</span>))}</div></div>
-                        <div className="flex flex-row gap-6 items-start"><span className="text-xl italic opacity-50 shrink-0 w-24 md:w-32" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>Connect</span><div className="flex flex-col gap-2"><a href="mailto:fatahabdilahh@gmail.com" className="text-3xl md:text-5xl font-medium tracking-tight hover:italic transition-all duration-300" style={{ color: 'var(--text-bold)' }}>fatahabdilahh@gmail.com</a><a href="https://www.linkedin.com/in/fataabdilah/" target="_blank" rel="noopener noreferrer" className="text-3xl md:text-5xl font-medium tracking-tight hover:italic transition-all duration-300" style={{ color: 'var(--text-bold)' }}>LinkedIn</a><a href="https://github.com/fatahabdilah" target="_blank" rel="noopener noreferrer" className="text-3xl md:text-5xl font-medium tracking-tight hover:italic transition-all duration-300" style={{ color: 'var(--text-bold)' }}>Github</a><a href="https://www.instagram.com/fatahhhhhhhhhhhhhh" target="_blank" rel="noopener noreferrer" className="text-3xl md:text-5xl font-medium tracking-tight hover:italic transition-all duration-300" style={{ color: 'var(--text-bold)' }}>Instagram</a></div></div>
-                        <div className="flex flex-row gap-6 items-start"><span className="text-xl italic opacity-50 shrink-0 w-24 md:w-32" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>Location</span><div className="flex flex-col gap-2"><span className="text-3xl md:text-5xl font-medium tracking-tight" style={{ color: 'var(--text-bold)' }}>Tangerang City, Indonesia</span><span className="text-3xl md:text-5xl font-medium tracking-tight opacity-40" style={{ color: 'var(--text-bold)' }}>Available Worldwide</span></div></div>
+                        <div className="flex flex-row gap-6 items-start"><span className="text-xl italic shrink-0 w-24 md:w-32" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>Services</span><div className="flex flex-col gap-2">{['Custom Web Apps', 'Portfolio Design', 'Landingpage', 'UI UX'].map((item) => (<span key={item} className="text-3xl md:text-5xl font-medium tracking-tight" style={{ color: 'var(--text-bold)' }}>{item}</span>))}</div></div>
+                        <div className="flex flex-row gap-6 items-start"><span className="text-xl italic shrink-0 w-24 md:w-32" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>Connect</span><div className="flex flex-col gap-2"><a href="mailto:fatahabdilahh@gmail.com" className="text-3xl md:text-5xl font-medium tracking-tight hover:italic transition-all duration-300" style={{ color: 'var(--text-bold)' }}>fatahabdilahh@gmail.com</a><a href="https://www.linkedin.com/in/fataabdilah/" target="_blank" rel="noopener noreferrer" className="text-3xl md:text-5xl font-medium tracking-tight hover:italic transition-all duration-300" style={{ color: 'var(--text-bold)' }}>LinkedIn</a><a href="https://github.com/fatahabdilah" target="_blank" rel="noopener noreferrer" className="text-3xl md:text-5xl font-medium tracking-tight hover:italic transition-all duration-300" style={{ color: 'var(--text-bold)' }}>Github</a><a href="https://www.instagram.com/fatahhhhhhhhhhhhhh" target="_blank" rel="noopener noreferrer" className="text-3xl md:text-5xl font-medium tracking-tight hover:italic transition-all duration-300" style={{ color: 'var(--text-bold)' }}>Instagram</a></div></div>
+                        <div className="flex flex-row gap-6 items-start"><span className="text-xl italic shrink-0 w-24 md:w-32" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>Location</span><div className="flex flex-col gap-2"><span className="text-3xl md:text-5xl font-medium tracking-tight" style={{ color: 'var(--text-bold)' }}>Tangerang City, Indonesia</span><span className="text-3xl md:text-5xl font-medium tracking-tight opacity-40" style={{ color: 'var(--text-bold)' }}>Available Worldwide</span></div></div>
                       </motion.div>
                     </div>
                   </div>
