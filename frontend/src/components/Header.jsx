@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X } from 'lucide-react';
+import { useNavigate, useMatch } from 'react-router-dom';
 
 const Header = ({ onHomeClick, onLogoClick }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
+  const isBlogDetail = useMatch('/blog/:id');
 
   const handleFaClick = (e) => {
     e.preventDefault();
@@ -13,12 +16,40 @@ const Header = ({ onHomeClick, onLogoClick }) => {
 
   const handleScroll = (e, targetId) => {
     e.preventDefault();
-    const element = document.getElementById(targetId);
-    if (element) {
-      element.scrollIntoView({
-        behavior: 'smooth',
-        block: 'start',
-      });
+    
+    if (isBlogDetail) {
+      // 1. Trigger tutup overlay
+      navigate('/');
+      
+      // 2. Tunggu sampai benar-benar turun (durasi overlay 0.8s + sedikit buffer)
+      setTimeout(() => {
+        const element = document.getElementById(targetId);
+        if (element) {
+          // Scroll bawaan browser
+          element.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'start' 
+          });
+        }
+      }, 850); 
+    } else {
+      const element = document.getElementById(targetId);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+    setIsOpen(false);
+  };
+
+  const handleHomeNavigation = (e) => {
+    e.preventDefault();
+    if (isBlogDetail) {
+      navigate('/');
+      setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }, 850);
+    } else {
+      onHomeClick();
     }
     setIsOpen(false);
   };
@@ -45,7 +76,6 @@ const Header = ({ onHomeClick, onLogoClick }) => {
           className="w-full max-w-5xl relative flex items-center justify-between md:justify-center px-6 md:px-8 py-1.5 md:py-2.5 pointer-events-auto"
           style={{ minHeight: 'calc(var(--nav-height-mobile))', height: 'auto' }}
         >
-          {/* Background Glassmorphism */}
           <div 
             className="absolute inset-0 rounded-full transition-opacity duration-500"
             style={{ 
@@ -60,7 +90,7 @@ const Header = ({ onHomeClick, onLogoClick }) => {
 
           <nav className="hidden md:flex items-center w-full h-full relative z-10">
             <div className="flex flex-1 items-center justify-around h-full">
-              <NavLink onClick={(e) => { e.preventDefault(); onHomeClick(); }}>Home</NavLink>
+              <NavLink onClick={handleHomeNavigation}>Home</NavLink>
               <NavLink href="#about" targetId="about">About</NavLink>
               <NavLink href="#experience" targetId="experience">Experience</NavLink>
             </div>
@@ -106,7 +136,7 @@ const Header = ({ onHomeClick, onLogoClick }) => {
               transition={{ delay: 0.1 }}
               className="flex flex-col items-center gap-2"
             >
-              <NavLink mobile onClick={(e) => { e.preventDefault(); onHomeClick(); setIsOpen(false); }}>Home</NavLink>
+              <NavLink mobile onClick={handleHomeNavigation}>Home</NavLink>
               <NavLink mobile href="#about" targetId="about">About</NavLink>
               <NavLink mobile href="#experience" targetId="experience">Experience</NavLink>
               <NavLink mobile href="#projects" targetId="projects">Project</NavLink>
