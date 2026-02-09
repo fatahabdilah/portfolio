@@ -425,8 +425,9 @@ function App() {
               <section ref={contactSectionRef} id="contact" className="relative z-40 bg-[var(--bg-main)] overflow-visible h-[200vh] md:h-[300vh]">
                 <div className="sticky top-0 h-screen w-full flex items-center justify-center overflow-hidden">
                   <div className="max-w-5xl w-full px-8 mx-auto flex flex-col h-full relative">
-                    <div className="absolute inset-0 flex items-center justify-center md:justify-start px-6 md:px-10 z-0 pointer-events-none">
-                      <motion.div style={{ y: yContactImageSticky, opacity: opacityContact }} className="relative w-full max-w-md aspect-[4/3] rounded-2xl overflow-hidden shadow-2xl">
+                    {/* Gambar Belakang: Diperkecil di mobile (max-w-[70%]) dan rata kiri (justify-start) */}
+                    <div className="absolute inset-0 flex items-center justify-start md:justify-start px-6 md:px-10 z-0 pointer-events-none">
+                      <motion.div style={{ y: yContactImageSticky, opacity: opacityContact }} className="relative w-full max-w-[70%] md:max-w-md aspect-[4/3] overflow-hidden shadow-2xl">
                         {contactImages.map((src, idx) => {
                           const range = getTransitionRange(idx);
                           return (
@@ -448,11 +449,10 @@ function App() {
                     <div className="relative w-full h-full flex items-center justify-center md:justify-end z-20 md:-ml-10">
                       <motion.div style={{ y: yContactListScroll, opacity: opacityContact, filter: blurContact }} className="flex flex-col gap-9 md:gap-14 w-full max-w-xl mt-[100px] md:mt-[170px]">
                         
-                        {/* 3. PERBAIKAN UKURAN TEKS KONTAK DI DEVICE BESAR: lg:text-4xl & lg:text-5xl */}
                         {/* SERVICES */}
-                        <div className="flex flex-col md:flex-row gap-2 md:gap-6 items-start">
-                          <span className="text-3xl md:text-xl italic shrink-0 w-full md:w-32 text-left" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>Services</span>
-                          <div className="flex flex-col gap-2 items-start">
+                        <div className="flex flex-col md:flex-row gap-2 md:gap-6 items-end md:items-start text-right md:text-left">
+                          <span className="text-3xl md:text-xl italic shrink-0 w-full md:w-32" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>Services</span>
+                          <div className="flex flex-col gap-2 items-end md:items-start">
                             {['Custom Web Apps', 'Portfolio Design', 'Landingpage', 'UI UX'].map((item) => (
                               <span key={item} className="text-xl md:text-3xl lg:text-4xl font-medium tracking-tight" style={{ color: 'var(--text-bold)' }}>{item}</span>
                             ))}
@@ -460,9 +460,9 @@ function App() {
                         </div>
 
                         {/* CONNECT */}
-                        <div className="flex flex-col md:flex-row gap-2 md:gap-6 items-start">
-                          <span className="text-3xl md:text-xl italic shrink-0 w-full md:w-32 text-left" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>Connect</span>
-                          <div className="flex flex-col gap-2 items-start">
+                        <div className="flex flex-col md:flex-row gap-2 md:gap-6 items-end md:items-start text-right md:text-left">
+                          <span className="text-3xl md:text-xl italic shrink-0 w-full md:w-32" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>Connect</span>
+                          <div className="flex flex-col gap-2 items-end md:items-start">
                             <a href="mailto:fatahabdilahh@gmail.com" className="text-xl md:text-3xl lg:text-4xl font-medium tracking-tight hover:italic transition-all duration-300" style={{ color: 'var(--text-bold)' }}>fatahabdilahh@gmail.com</a>
                             <a href="https://www.linkedin.com/in/fataabdilah/" target="_blank" rel="noopener noreferrer" className="text-xl md:text-3xl lg:text-4xl font-medium tracking-tight hover:italic transition-all duration-300" style={{ color: 'var(--text-bold)' }}>LinkedIn</a>
                             <a href="https://github.com/fatahabdilah" target="_blank" rel="noopener noreferrer" className="text-xl md:text-3xl lg:text-4xl font-medium tracking-tight hover:italic transition-all duration-300" style={{ color: 'var(--text-bold)' }}>Github</a>
@@ -471,9 +471,9 @@ function App() {
                         </div>
 
                         {/* LOCATION */}
-                        <div className="flex flex-col md:flex-row gap-2 md:gap-6 items-start">
-                          <span className="text-3xl md:text-xl italic shrink-0 w-full md:w-32 text-left" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>Location</span>
-                          <div className="flex flex-col gap-2 items-start">
+                        <div className="flex flex-col md:flex-row gap-2 md:gap-6 items-end md:items-start text-right md:text-left">
+                          <span className="text-3xl md:text-xl italic shrink-0 w-full md:w-32" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>Location</span>
+                          <div className="flex flex-col gap-2 items-end md:items-start">
                             <span className="text-xl md:text-3xl lg:text-4xl font-medium tracking-tight" style={{ color: 'var(--text-bold)' }}>Tangerang City, Indonesia</span>
                             <span className="text-xl md:text-3xl lg:text-4xl font-medium tracking-tight opacity-40" style={{ color: 'var(--text-bold)' }}>Available Worldwide</span>
                           </div>
