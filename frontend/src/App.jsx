@@ -313,7 +313,7 @@ function App() {
                     <span className="text-[10px] font-black uppercase tracking-[0.5em] mb-2 md:mb-4 block opacity-40" style={{ color: 'var(--text-bold)' }}>About — I</span>
                     <h2 className="text-4xl md:text-6xl font-bold opacity-80" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>About Me</h2>
                   </div>
-                  <div className="flex flex-col gap-3 md:gap-4 text-base md:text-xl leading-relaxed md:leading-[1.8] font-light tracking-tight" style={{ color: 'var(--text-bold)' }}><p>About Me I am a Computer Science student at Pamulang University focusing on Full-stack Web Development. I bridge the gap between Figma designs and functional API integrations to build end-to-end digital solutions.</p><p>With over 40 projects completed, I specialize in creating high-performance web applications through effective team collaboration. My goal is to deliver clean, user-centric interfaces that drive results.</p></div>
+                  <div className="flex flex-col gap-3 md:gap-4 text-base md:text-xl leading-relaxed md:leading-[1.8] font-light tracking-tight" style={{ color: 'var(--text-bold)' }}><p>I am a Computer Science student at Pamulang University specializing in Full-stack Web Development. My expertise lies in understanding the entire web development lifecycle to build comprehensive and well-integrated digital solutions.</p><p>Having completed over 40 projects, I focus on delivering high-performance web applications through effective team collaboration. I am committed to creating clean, efficient, and result-driven interfaces.</p></div>
                 </div>
               </div>
             </section>
@@ -445,13 +445,13 @@ function App() {
                       </motion.div>
                     </div>
                     <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none"><motion.div style={{ y: yContactListScroll, opacity: opacityContact, filter: blurContact }} className="-translate-y-75 md:-translate-y-80"><h2 className="text-6xl md:text-[clamp(4rem,8vw,10rem)] font-bold tracking-tighter leading-none text-center" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>Contact — V</h2></motion.div></div>
-                    <div className="relative w-full h-full flex items-center justify-center md:justify-end z-20">
-                      <motion.div style={{ y: yContactListScroll, opacity: opacityContact, filter: blurContact }} className="flex flex-col gap-10 md:gap-14 w-full max-w-xl md:-ml-20 mt-[100px] md:mt-[200px]">
+                    <div className="relative w-full h-full flex items-center justify-center md:justify-end z-20 md:-ml-10">
+                      <motion.div style={{ y: yContactListScroll, opacity: opacityContact, filter: blurContact }} className="flex flex-col gap-9 md:gap-14 w-full max-w-xl mt-[100px] md:mt-[170px]">
                         
                         {/* 3. PERBAIKAN UKURAN TEKS KONTAK DI DEVICE BESAR: lg:text-4xl & lg:text-5xl */}
                         {/* SERVICES */}
                         <div className="flex flex-col md:flex-row gap-2 md:gap-6 items-start">
-                          <span className="text-xl italic shrink-0 w-full md:w-32 text-left" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>Services</span>
+                          <span className="text-3xl md:text-xl italic shrink-0 w-full md:w-32 text-left" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>Services</span>
                           <div className="flex flex-col gap-2 items-start">
                             {['Custom Web Apps', 'Portfolio Design', 'Landingpage', 'UI UX'].map((item) => (
                               <span key={item} className="text-xl md:text-3xl lg:text-4xl font-medium tracking-tight" style={{ color: 'var(--text-bold)' }}>{item}</span>
@@ -461,18 +461,18 @@ function App() {
 
                         {/* CONNECT */}
                         <div className="flex flex-col md:flex-row gap-2 md:gap-6 items-start">
-                          <span className="text-xl italic shrink-0 w-full md:w-32 text-left" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>Connect</span>
+                          <span className="text-3xl md:text-xl italic shrink-0 w-full md:w-32 text-left" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>Connect</span>
                           <div className="flex flex-col gap-2 items-start">
-                            <a href="mailto:fatahabdilahh@gmail.com" className="text-xl md:text-3xl lg:text-5xl font-medium tracking-tight hover:italic transition-all duration-300" style={{ color: 'var(--text-bold)' }}>fatahabdilahh@gmail.com</a>
-                            <a href="https://www.linkedin.com/in/fataabdilah/" target="_blank" rel="noopener noreferrer" className="text-xl md:text-3xl lg:text-5xl font-medium tracking-tight hover:italic transition-all duration-300" style={{ color: 'var(--text-bold)' }}>LinkedIn</a>
-                            <a href="https://github.com/fatahabdilah" target="_blank" rel="noopener noreferrer" className="text-xl md:text-3xl lg:text-5xl font-medium tracking-tight hover:italic transition-all duration-300" style={{ color: 'var(--text-bold)' }}>Github</a>
-                            <a href="https://www.instagram.com/fatahhhhhhhhhhhhhh" target="_blank" rel="noopener noreferrer" className="text-xl md:text-3xl lg:text-5xl font-medium tracking-tight hover:italic transition-all duration-300" style={{ color: 'var(--text-bold)' }}>Instagram</a>
+                            <a href="mailto:fatahabdilahh@gmail.com" className="text-xl md:text-3xl lg:text-4xl font-medium tracking-tight hover:italic transition-all duration-300" style={{ color: 'var(--text-bold)' }}>fatahabdilahh@gmail.com</a>
+                            <a href="https://www.linkedin.com/in/fataabdilah/" target="_blank" rel="noopener noreferrer" className="text-xl md:text-3xl lg:text-4xl font-medium tracking-tight hover:italic transition-all duration-300" style={{ color: 'var(--text-bold)' }}>LinkedIn</a>
+                            <a href="https://github.com/fatahabdilah" target="_blank" rel="noopener noreferrer" className="text-xl md:text-3xl lg:text-4xl font-medium tracking-tight hover:italic transition-all duration-300" style={{ color: 'var(--text-bold)' }}>Github</a>
+                            <a href="https://www.instagram.com/fatahhhhhhhhhhhhhh" target="_blank" rel="noopener noreferrer" className="text-xl md:text-3xl lg:text-4xl font-medium tracking-tight hover:italic transition-all duration-300" style={{ color: 'var(--text-bold)' }}>Instagram</a>
                           </div>
                         </div>
 
                         {/* LOCATION */}
                         <div className="flex flex-col md:flex-row gap-2 md:gap-6 items-start">
-                          <span className="text-xl italic shrink-0 w-full md:w-32 text-left" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>Location</span>
+                          <span className="text-3xl md:text-xl italic shrink-0 w-full md:w-32 text-left" style={{ fontFamily: 'var(--font-logo)', color: 'var(--text-bold)' }}>Location</span>
                           <div className="flex flex-col gap-2 items-start">
                             <span className="text-xl md:text-3xl lg:text-4xl font-medium tracking-tight" style={{ color: 'var(--text-bold)' }}>Tangerang City, Indonesia</span>
                             <span className="text-xl md:text-3xl lg:text-4xl font-medium tracking-tight opacity-40" style={{ color: 'var(--text-bold)' }}>Available Worldwide</span>
