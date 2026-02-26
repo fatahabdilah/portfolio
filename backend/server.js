@@ -66,7 +66,7 @@ app.use(async (req, res, next) => {
 
 // --- CONFIGURASI CORS ---
 const allowedOrigins = [
-  "https://fatahabdilah.site",
+  "https://fatahabdilah.my.id",
   "http://localhost:5173",
   "http://localhost:3000"
 ];

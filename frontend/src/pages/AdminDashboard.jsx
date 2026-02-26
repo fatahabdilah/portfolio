@@ -39,7 +39,7 @@ const AdminDashboard = () => {
     demoUrl: '' // repoUrl dihapus
   });
 
-  const API_URL = import.meta.env.VITE_API_URL || 'https://api.fatahabdilah.site/api';
+  const API_URL = import.meta.env.VITE_API_URL || 'https://api.fatahabdilah.my.id/api';
   const token = localStorage.getItem('token');
 
   useEffect(() => {
